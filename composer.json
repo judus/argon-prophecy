@@ -1,0 +1,12 @@
+{
+    "name": "maduser/argon-prophecy",
+    "description": "A strict, DI-first and PSR-compliant PHP runtime, for the law-abiding Prophets.",
+    "type": "library",
+    "authors": [
+        {
+            "name": "Julien Duseyau",
+            "email": "julien.duseyau@gmail.com"
+        }
+    ],
+    "require": {}
+}

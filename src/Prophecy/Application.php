@@ -56,6 +56,8 @@ final class Application
         }
 
         $container = $this->getContainer();
+        $container->boot();
+
         $kernel = $this->getKernel($container);
 
         $kernel->setup();

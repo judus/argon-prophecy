@@ -15,7 +15,7 @@ final class ArgonRouteAdapter implements RouterInterface
     /** @var array<string, list<array{path: string, handler: string|callable, middleware: list<string>}>> */
     private array $routes = [];
 
-    public function add(string $method, string $path, string|callable $handler, array $middleware = []): void
+    public function add(string $method, string $path, string|array|callable $handler, array $middleware = []): void
     {
         $method = strtoupper($method);
         $this->routes[$method][] = [
@@ -28,16 +28,23 @@ final class ArgonRouteAdapter implements RouterInterface
     public function match(ServerRequestInterface $request): ResolvedRouteInterface
     {
         $method = strtoupper($request->getMethod());
-        $uri = $this->stripIndex($request->getUri()->getPath());
+        $uri = $request->getUri()->getPath();
+
+        if (str_starts_with($uri, '/index.php')) {
+            $uri = substr($uri, strlen('/index.php'));
+        }
+
+        $uri = '/' . ltrim($uri, '/');
 
         foreach ($this->routes[$method] ?? [] as $route) {
             $params = [];
 
+            $routePath = '/' . ltrim($route['path'], '/'); // always start with /
             $regex = '#^' . preg_replace_callback('/{(\w+)}/', function ($m) {
                     return '(?P<' . $m[1] . '>[^/]+)';
-                }, $route['path']) . '$#';
+                }, $routePath) . '$#';
 
-            if (preg_match($regex, trim($uri, '/'), $matches)) {
+            if (preg_match($regex, $uri, $matches)) {
                 foreach ($matches as $key => $value) {
                     if (!is_int($key)) {
                         $params[$key] = $value;
@@ -46,7 +53,7 @@ final class ArgonRouteAdapter implements RouterInterface
 
                 return new MatchedRoute(
                     handler: $route['handler'],
-                    middleware: $route['middleware'],
+                    middleware: $route['middleware'] ?? [],
                     parameters: $params
                 );
             }

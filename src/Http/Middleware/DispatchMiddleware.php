@@ -36,19 +36,15 @@ final readonly class DispatchMiddleware implements MiddlewareInterface
         }
 
         $handlerDef = $route->getHandler();
+        $routeArgs = $route->getParameters() ?? [];
 
-        $controller = match (true) {
-            is_string($handlerDef) && class_exists($handlerDef) => fn () => $this->invokeInvokableClass($handlerDef),
-            is_callable($handlerDef) => fn () => $this->invokeCallable($handlerDef),
-            is_array($handlerDef) && is_callable($handlerDef) => fn () => $this->invokeCallable($handlerDef),
-            default => throw new \RuntimeException('Invalid route handler.'),
-        };
+        $controller = fn () => $this->invokeCallable($handlerDef, $routeArgs);
 
         $result = $this->runner->run(
             $route->getMiddleware(),
             $controller,
             $request,
-            $handler // ← the downstream handler
+            $handler // the downstream handler
         );
 
         return $result;
@@ -58,19 +54,24 @@ final readonly class DispatchMiddleware implements MiddlewareInterface
      * @throws ContainerException
      * @throws NotFoundException
      */
-    private function invokeInvokableClass(string $class): mixed
+    private function invokeCallable(callable|array|string $handler, array $routeArgs): mixed
     {
-        $instance = $this->container->get($class);
-
-        if (!is_callable($instance)) {
-            throw new \RuntimeException("Handler class $class is not invokable.");
+        if (is_array($handler)) {
+            [$classOrCallable, $method] = [$handler[0], $handler[1] ?? null];
+            return $this->container->invoke($classOrCallable, $method, $routeArgs);
         }
 
-        return $instance();
-    }
+        if (is_string($handler) && class_exists($handler)) {
+            return $this->container->invoke($handler, '__invoke', $routeArgs);
+        }
 
-    private function invokeCallable(callable $callable): mixed
-    {
-        return $callable();
+        if (is_callable($handler)) {
+            return $this->container->invoke($handler, null, $routeArgs);
+        }
+
+        throw new \RuntimeException(sprintf(
+            'Invalid route handler provided: [%s]',
+            get_debug_type($handler)
+        ));
     }
 }

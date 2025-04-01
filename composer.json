@@ -2,11 +2,66 @@
     "name": "maduser/argon-prophecy",
     "description": "A strict, DI-first and PSR-compliant PHP runtime, for the law-abiding Prophets.",
     "type": "library",
+    "autoload": {
+        "psr-4": {
+            "Maduser\\Argon\\": "src/"
+        }
+    },
     "authors": [
         {
             "name": "Julien Duseyau",
             "email": "julien.duseyau@gmail.com"
         }
     ],
-    "require": {}
+    "require": {
+
+    },
+    "require-dev": {
+        "dealerdirect/phpcodesniffer-composer-installer": "^1.0",
+        "phpunit/phpunit": "^9.6",
+        "slevomat/coding-standard": "^8.16",
+        "squizlabs/php_codesniffer": "^3.8",
+        "vimeo/psalm": "^5.26"
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "Tests\\Mocks\\": "tests/resources/mocks/",
+            "Tests\\Unit\\": "tests/unit/",
+            "Tests\\Integration\\": "tests/integration/"
+        }
+    },
+    "scripts": {
+        "test": "vendor/bin/phpunit --coverage-clover=coverage.xml",
+        "lint": "vendor/bin/phpcs --standard=phpcs.xml",
+        "analyze": "vendor/bin/psalm --output-format=github",
+        "fix": [
+            "vendor/bin/phpcbf --standard=phpcs.xml"
+        ],
+        "coverage": "vendor/bin/phpunit --coverage-html coverage-report && open coverage-report/index.html",
+        "check": [
+            "@test",
+            "@analyze",
+            "@lint"
+        ],
+        "ci": [
+            "@test",
+            "@analyze",
+            "@lint"
+        ],
+        "watch": "find src/ | entr -r composer check",
+        "watch:test": "find src/ | entr -r composer test",
+        "watch:fix": "find src/ | entr -r composer fix"
+    },
+    "config": {
+        "optimize-autoloader": true,
+        "sort-packages": true,
+        "allow-plugins": {
+            "dealerdirect/phpcodesniffer-composer-installer": true
+        },
+        "platform": {
+            "php": "8.2"
+        }
+    },
+    "minimum-stability": "stable",
+    "prefer-stable": true
 }

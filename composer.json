@@ -13,11 +13,9 @@
             "email": "julien.duseyau@gmail.com"
         }
     ],
-    "require": {
-
-    },
     "require-dev": {
         "dealerdirect/phpcodesniffer-composer-installer": "^1.0",
+        "maduser/argon": "dev-master",
         "phpunit/phpunit": "^9.6",
         "slevomat/coding-standard": "^8.16",
         "squizlabs/php_codesniffer": "^3.8",

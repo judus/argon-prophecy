@@ -4,33 +4,59 @@ declare(strict_types=1);
 
 namespace Maduser\Argon\Routing\Adapters;
 
-use App\Middlewares\DumbMiddleware;
-use Maduser\Argon\Http\Controllers\ArgonController;
-use Maduser\Argon\Routing\Contracts\ResolvedRouteInterface;
 use Maduser\Argon\Routing\Contracts\RouterInterface;
+use Maduser\Argon\Routing\Contracts\ResolvedRouteInterface;
 use Maduser\Argon\Routing\MatchedRoute;
 use Psr\Http\Message\ServerRequestInterface;
+use RuntimeException;
 
 final class ArgonRouteAdapter implements RouterInterface
 {
+    /** @var array<string, list<array{path: string, handler: string|callable, middleware: list<string>}>> */
+    private array $routes = [];
+
+    public function add(string $method, string $path, string|callable $handler, array $middleware = []): void
+    {
+        $method = strtoupper($method);
+        $this->routes[$method][] = [
+            'path' => trim($path, '/'),
+            'handler' => $handler,
+            'middleware' => $middleware,
+        ];
+    }
+
     public function match(ServerRequestInterface $request): ResolvedRouteInterface
     {
-        $path = $request->getUri()->getPath();
-        $method = $request->getMethod();
+        $method = strtoupper($request->getMethod());
+        $uri = $this->stripIndex($request->getUri()->getPath());
 
-        // 🔥 HARD-CODED for now — this is just a placeholder
-        if ($path === '/' && $method === 'GET') {
-            return new MatchedRoute(
-                handler: ArgonController::class,
-                middleware: [DumbMiddleware::class],
-                parameters: []
-            );
+        foreach ($this->routes[$method] ?? [] as $route) {
+            $params = [];
+
+            $regex = '#^' . preg_replace_callback('/{(\w+)}/', function ($m) {
+                    return '(?P<' . $m[1] . '>[^/]+)';
+                }, $route['path']) . '$#';
+
+            if (preg_match($regex, trim($uri, '/'), $matches)) {
+                foreach ($matches as $key => $value) {
+                    if (!is_int($key)) {
+                        $params[$key] = $value;
+                    }
+                }
+
+                return new MatchedRoute(
+                    handler: $route['handler'],
+                    middleware: $route['middleware'],
+                    parameters: $params
+                );
+            }
         }
 
-        throw new \RuntimeException(sprintf(
-            'No route matched %s %s',
-            $method,
-            $path
-        ));
+        throw new RuntimeException("No route matched: {$method} {$uri}");
+    }
+
+    private function stripIndex(string $path): string
+    {
+        return preg_replace('#^/?index\.php#', '', $path) ?? $path;
     }
 }

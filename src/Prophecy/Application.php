@@ -11,7 +11,6 @@ use Maduser\Argon\Container\Compiler\ContainerCompiler;
 use Maduser\Argon\Container\Exceptions\ContainerException;
 use Maduser\Argon\Container\Exceptions\NotFoundException;
 use Maduser\Argon\Kernel\Contracts\KernelInterface;
-use Maduser\Argon\Kernel\Contracts\KernelResolverInterface;
 use ReflectionException;
 use RuntimeException;
 
@@ -98,16 +97,12 @@ final class Application
         return $this->container;
     }
 
-    /**
-     * @param ArgonContainer $container
-     * @return KernelInterface
-     *
-     * @throws ContainerException
-     * @throws NotFoundException
-     */
-    private function getKernel(ArgonContainer $container): KernelInterface
+    private function detectKernel(): string
     {
-        return $this->container->get(KernelResolverInterface::class)->resolve();
+        return match (php_sapi_name()) {
+            'cli', 'phpdbg' => 'kernel.cli',
+            default => 'kernel.http',
+        };
     }
 
     /**
@@ -190,5 +185,17 @@ final class Application
         );
     }
 
-
+    /**
+     * @param ArgonContainer $container
+     * @return KernelInterface
+     *
+     * @throws ContainerException
+     * @throws NotFoundException
+     */
+    private function getKernel(ArgonContainer $container): KernelInterface
+    {
+        /** @var class-string<KernelInterface> $kernelId */
+        $kernelId = $this->detectKernel();
+        return $container->get($kernelId);
+    }
 }

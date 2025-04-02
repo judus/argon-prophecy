@@ -14,7 +14,7 @@
     <!-- Coverage configuration (optional) -->
     <coverage processUncoveredFiles="true">
         <include>
-            <directory suffix=".php">src/Container</directory>
+            <directory suffix=".php">src/</directory>
         </include>
         <report>
             <clover outputFile="build/logs/clover.xml"/>

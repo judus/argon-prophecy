@@ -8,6 +8,9 @@ use Maduser\Argon\Container\AbstractServiceProvider;
 use Maduser\Argon\Container\ArgonContainer;
 use Maduser\Argon\Container\Exceptions\ContainerException;
 use Maduser\Argon\Container\Exceptions\NotFoundException;
+use Maduser\Argon\Kernel\ArgonKernelResolver;
+use Maduser\Argon\Kernel\Contracts\KernelInterface;
+use Maduser\Argon\Kernel\Contracts\KernelResolverInterface;
 
 class ArgonKernelBindings extends AbstractServiceProvider
 {
@@ -17,9 +20,7 @@ class ArgonKernelBindings extends AbstractServiceProvider
      */
     public function register(ArgonContainer $container): void
     {
-        match (php_sapi_name()) {
-            'cli', 'phpdbg' => $container->register(ArgonCliFoundation::class),
-            default => $container->register(ArgonHttpFoundation::class),
-        };
+        $container->singleton(KernelResolverInterface::class, ArgonKernelResolver::class);
+
     }
 }

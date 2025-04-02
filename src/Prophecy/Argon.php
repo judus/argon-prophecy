@@ -15,7 +15,6 @@ final class Argon
     /**
      * @throws NotFoundException
      * @throws ReflectionException
-     * @throws ErrorException
      * @throws ContainerException
      */
     public static function boot(Closure $callback): void

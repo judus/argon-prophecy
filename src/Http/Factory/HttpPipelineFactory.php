@@ -8,7 +8,7 @@ use Maduser\Argon\Container\Exceptions\NotFoundException;
 use Maduser\Argon\Http\Middleware\MiddlewarePipeline;
 use Psr\Http\Server\MiddlewareInterface;
 
-final readonly class HttpMiddlewarePipelineFactory
+final readonly class HttpPipelineFactory
 {
     public function __construct(
         private ArgonContainer $container

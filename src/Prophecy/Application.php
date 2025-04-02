@@ -97,12 +97,16 @@ final class Application
         return $this->container;
     }
 
-    private function detectKernel(): string
+    /**
+     * @param ArgonContainer $container
+     * @return KernelInterface
+     *
+     * @throws ContainerException
+     * @throws NotFoundException
+     */
+    private function getKernel(ArgonContainer $container): KernelInterface
     {
-        return match (php_sapi_name()) {
-            'cli', 'phpdbg' => 'kernel.cli',
-            default => 'kernel.http',
-        };
+        return $this->container->get(KernelInterface::class);
     }
 
     /**
@@ -185,17 +189,5 @@ final class Application
         );
     }
 
-    /**
-     * @param ArgonContainer $container
-     * @return KernelInterface
-     *
-     * @throws ContainerException
-     * @throws NotFoundException
-     */
-    private function getKernel(ArgonContainer $container): KernelInterface
-    {
-        /** @var class-string<KernelInterface> $kernelId */
-        $kernelId = $this->detectKernel();
-        return $container->get($kernelId);
-    }
+
 }

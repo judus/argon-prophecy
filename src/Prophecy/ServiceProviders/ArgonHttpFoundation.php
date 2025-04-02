@@ -4,11 +4,10 @@ declare(strict_types=1);
 
 namespace Maduser\Argon\Prophecy\ServiceProviders;
 
+use Maduser\Argon\Container\AbstractServiceProvider;
 use Maduser\Argon\Container\ArgonContainer;
-use Maduser\Argon\Container\Contracts\ServiceProviderInterface;
 use Maduser\Argon\Container\Exceptions\ContainerException;
-use Maduser\Argon\Http\Factory\HttpMiddlewarePipelineFactory;
-use Maduser\Argon\Http\Factory\ResponseFactory;
+use Maduser\Argon\Http\Factory\HttpPipelineFactory;
 use Maduser\Argon\Http\Factory\ServerRequestFactory;
 use Maduser\Argon\Http\Factory\StreamFactory;
 use Maduser\Argon\Http\Factory\UploadedFileFactory;
@@ -17,7 +16,6 @@ use Maduser\Argon\Http\Message\Response;
 use Maduser\Argon\Http\Message\ServerRequest;
 use Maduser\Argon\Http\Message\Stream;
 use Maduser\Argon\Http\Middleware\DispatchMiddleware;
-use Maduser\Argon\Http\Middleware\FinalResponderMiddleware;
 use Maduser\Argon\Http\Middleware\HtmlResponderMiddleware;
 use Maduser\Argon\Http\Middleware\JsonResponderMiddleware;
 use Maduser\Argon\Http\Middleware\MiddlewarePipeline;
@@ -35,7 +33,7 @@ use Psr\Http\Message\UploadedFileFactoryInterface;
 use Psr\Http\Message\UriFactoryInterface;
 use Psr\Http\Server\RequestHandlerInterface;
 
-class ArgonHttpFoundation implements ServiceProviderInterface
+class ArgonHttpFoundation extends AbstractServiceProvider
 {
     /**
      * @throws ContainerException
@@ -72,7 +70,7 @@ class ArgonHttpFoundation implements ServiceProviderInterface
             ->tag(['http', 'psr-17', 'uploaded_file']);
 
         $container->singleton(RequestHandlerInterface::class, MiddlewarePipeline::class)
-            ->useFactory(HttpMiddlewarePipelineFactory::class, 'create')
+            ->useFactory(HttpPipelineFactory::class, 'create')
             ->tag(['http', 'psr-15', 'request_handler']);
 
         // Kernel bindings
@@ -91,12 +89,7 @@ class ArgonHttpFoundation implements ServiceProviderInterface
         $container->singleton(HtmlResponderMiddleware::class)
             ->tag(['middleware.http']);
 
-        $container->singleton('kernel.http', HttpKernel::class)
+        $container->singleton(HttpKernel::class)
             ->tag(['kernel.http']);
-    }
-
-    public function boot(ArgonContainer $container): void
-    {
-        // No-op. This provider has no boot-time logic.
     }
 }

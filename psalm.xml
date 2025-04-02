@@ -16,7 +16,6 @@
         <directory name="tests"/>
         <ignoreFiles>
             <directory name="vendor"/>
-            <directory name="tests/resources/cache"/>
         </ignoreFiles>
     </projectFiles>
 
@@ -27,8 +26,6 @@
         <PossiblyUnusedMethod errorLevel="info">
             <errorLevel type="suppress">
                 <directory name="tests"/>
-                <!-- Method setStore is only used in the compiled container -->
-                <file name="src/Container/Contracts/ParameterStoreInterface.php"/>
             </errorLevel>
         </PossiblyUnusedMethod>
         <UnusedBaselineEntry>

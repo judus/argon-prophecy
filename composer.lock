@@ -1063,12 +1063,12 @@
             "source": {
                 "type": "git",
                 "url": "https://github.com/judus/argon.git",
-                "reference": "e2a50060b57844bcacd4a236ee561b6681ba4b1b"
+                "reference": "d1c186b1cca221ad4bc829caf4f6d42c8f39de98"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/judus/argon/zipball/e2a50060b57844bcacd4a236ee561b6681ba4b1b",
-                "reference": "e2a50060b57844bcacd4a236ee561b6681ba4b1b",
+                "url": "https://api.github.com/repos/judus/argon/zipball/d1c186b1cca221ad4bc829caf4f6d42c8f39de98",
+                "reference": "d1c186b1cca221ad4bc829caf4f6d42c8f39de98",
                 "shasum": ""
             },
             "require": {
@@ -1104,7 +1104,7 @@
                 "issues": "https://github.com/judus/argon/issues",
                 "source": "https://github.com/judus/argon/tree/test"
             },
-            "time": "2025-04-01T19:19:02+00:00"
+            "time": "2025-04-01T23:11:23+00:00"
         },
         {
             "name": "myclabs/deep-copy",

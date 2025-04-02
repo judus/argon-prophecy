@@ -42,7 +42,6 @@ class ArgonCliFoundation extends AbstractServiceProvider
         $container->singleton(ConsoleInterface::class, ArgonConsoleAdapter::class)
             ->tag(['console.adapter']);
 
-        $container->singleton(CliKernel::class)
-            ->tag('kernel.cli');
+        $container->singleton('kernel.cli', CliKernel::class);
     }
 }

@@ -89,7 +89,6 @@ class ArgonHttpFoundation extends AbstractServiceProvider
         $container->singleton(HtmlResponderMiddleware::class)
             ->tag(['middleware.http']);
 
-        $container->singleton(HttpKernel::class)
-            ->tag(['kernel.http']);
+        $container->singleton('kernel.http', HttpKernel::class);
     }
 }

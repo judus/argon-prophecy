@@ -16,7 +16,6 @@ class ArgonKernelBindings extends AbstractServiceProvider
 {
     /**
      * @throws ContainerException
-     * @throws NotFoundException
      */
     public function register(ArgonContainer $container): void
     {

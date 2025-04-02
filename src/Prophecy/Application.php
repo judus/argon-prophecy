@@ -11,6 +11,7 @@ use Maduser\Argon\Container\Compiler\ContainerCompiler;
 use Maduser\Argon\Container\Exceptions\ContainerException;
 use Maduser\Argon\Container\Exceptions\NotFoundException;
 use Maduser\Argon\Kernel\Contracts\KernelInterface;
+use Maduser\Argon\Kernel\Contracts\KernelResolverInterface;
 use ReflectionException;
 use RuntimeException;
 
@@ -106,7 +107,7 @@ final class Application
      */
     private function getKernel(ArgonContainer $container): KernelInterface
     {
-        return $this->container->get(KernelInterface::class);
+        return $this->container->get(KernelResolverInterface::class)->resolve();
     }
 
     /**

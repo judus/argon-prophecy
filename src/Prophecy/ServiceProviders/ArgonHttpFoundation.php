@@ -15,6 +15,7 @@ use Maduser\Argon\Http\Factory\UriFactory;
 use Maduser\Argon\Http\Message\Response;
 use Maduser\Argon\Http\Message\ServerRequest;
 use Maduser\Argon\Http\Message\Stream;
+use Maduser\Argon\Http\Message\Uri;
 use Maduser\Argon\Http\Middleware\DispatchMiddleware;
 use Maduser\Argon\Http\Middleware\HtmlResponderMiddleware;
 use Maduser\Argon\Http\Middleware\JsonResponderMiddleware;
@@ -31,6 +32,7 @@ use Psr\Http\Message\StreamFactoryInterface;
 use Psr\Http\Message\StreamInterface;
 use Psr\Http\Message\UploadedFileFactoryInterface;
 use Psr\Http\Message\UriFactoryInterface;
+use Psr\Http\Message\UriInterface;
 use Psr\Http\Server\RequestHandlerInterface;
 
 class ArgonHttpFoundation extends AbstractServiceProvider
@@ -48,6 +50,10 @@ class ArgonHttpFoundation extends AbstractServiceProvider
             ->useFactory(ServerRequestFactory::class, 'fromGlobals')
             ->tag(['http', 'psr-7', 'server_request']);
 
+        $container->singleton(ServerRequest::class, ServerRequest::class)
+            ->useFactory(ServerRequestFactory::class, 'fromGlobals')
+            ->tag(['http', 'psr-7', 'server_request']);
+
         // PSR-7: Response
         $container->singleton(ResponseInterface::class, Response::class)
             ->tag(['http', 'psr-7', 'response']);
@@ -61,6 +67,10 @@ class ArgonHttpFoundation extends AbstractServiceProvider
 
         // PSR-17: UriFactory
         $container->singleton(UriFactoryInterface::class, UriFactory::class)
+            ->useFactory(UriFactory::class, 'createUri')
+            ->tag(['http', 'psr-17', 'uri']);
+
+        $container->singleton(UriInterface::class, Uri::class)
             ->useFactory(UriFactory::class, 'createUri')
             ->tag(['http', 'psr-17', 'uri']);
 

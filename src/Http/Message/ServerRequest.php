@@ -25,7 +25,7 @@ final class ServerRequest implements ServerRequestInterface
         private array $cookieParams = [],
         private array $queryParams = [],
         private array $uploadedFiles = [],
-        private null|array|object $parsedBody = null,
+        private mixed $parsedBody = '',
         private array $attributes = [],
     ) {
         $this->method = $method ?? $_SERVER['REQUEST_METHOD'] ?? 'GET';

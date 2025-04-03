@@ -38,6 +38,13 @@ final readonly class DispatchMiddleware implements MiddlewareInterface
         $handlerDef = $route->getHandler();
         $routeArgs = $route->getParameters() ?? [];
 
+        // Let's fetch this thing from CompiledContainer
+        // $this->container is the CompiledContainer
+        //$controller = $this->container->get($handlerDef[0]); // Fetches the class instance with constructor dependencies
+        //echo $controller->routeTest(); // return "test string" as expected
+        //die(); // stop here... invokeCallable below does not work, because it has no knowledge of the compiled serviceMap
+
+        // But... Now it works because we gave the CompiledContainer it's own invoke() method, still a bit wacky though
         $controller = fn () => $this->invokeCallable($handlerDef, $routeArgs);
 
         $result = $this->runner->run(

@@ -149,7 +149,11 @@ final class Application
         /** @psalm-suppress UnresolvableInclude */
         require_once $this->compiledFilePath;
 
-        if (!class_exists($this->compiledClass)) {
+        $fqcn = $this->compiledNamespace
+            ? $this->compiledNamespace . '\\' . $this->compiledClass
+            : $this->compiledClass;
+
+        if (!class_exists($fqcn)) {
             throw new RuntimeException(
                 "Compiled container class '$this->compiledClass' not found."
             );
@@ -157,8 +161,7 @@ final class Application
 
         /** It says "if !class_exists" right up there... */
         /** @psalm-suppress MixedMethodCall */
-        $container = new $this->compiledClass();
-
+        $container = new $fqcn();
         if (!$container instanceof ArgonContainer) {
             throw new RuntimeException(
                 "Compiled container must extend ArgonContainer."

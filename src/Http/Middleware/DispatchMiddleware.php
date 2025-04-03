@@ -32,6 +32,7 @@ final readonly class DispatchMiddleware implements MiddlewareInterface
         }
 
         $handlerDef = $route->getHandler();
+
         $routeArgs = $route->getParameters() ?? [];
 
         $controller = fn() => $this->invokeHandler($handlerDef, $request, $routeArgs);

@@ -4,35 +4,78 @@ declare(strict_types=1);
 
 namespace Maduser\Argon\Routing\Adapters;
 
+use Maduser\Argon\Container\ArgonContainer;
+use Maduser\Argon\Container\Exceptions\ContainerException;
+use Maduser\Argon\Container\Exceptions\NotFoundException;
 use Maduser\Argon\Routing\Contracts\RouterInterface;
 use Maduser\Argon\Routing\Contracts\ResolvedRouteInterface;
 use Maduser\Argon\Routing\MatchedRoute;
+use Maduser\Argon\Routing\RouteHandler;
 use Psr\Http\Message\ServerRequestInterface;
 use RuntimeException;
 
 final class ArgonRouteAdapter implements RouterInterface
 {
+    public function __construct(
+        private readonly ArgonContainer $container
+    ) {
+    }
+
     /** @var array<string, list<array{path: string, handler: string|callable, middleware: list<string>}>> */
     private array $routes = [];
 
     private array $groupMiddleware = [];
     private string $groupPrefix = '';
 
-    // Core route registration method
+    /**
+     * @throws ContainerException
+     */
     public function add(string $method, string $path, string|array|callable $handler, array $middleware = []): void
     {
         $method = strtoupper($method);
 
-        $fullPath = trim($this->groupPrefix . '/' . trim($path, '/'), '/');
+        $fullPath = rtrim($this->groupPrefix, '/') . '/' . ltrim($path, '/');
 
         $this->routes[$method][] = [
             'path' => $fullPath,
             'handler' => $handler,
             'middleware' => [...$this->groupMiddleware, ...$middleware],
         ];
+
+        $this->registerRoute($method, $fullPath, $handler, $middleware);
     }
 
-    // Route group handling with prefix and shared middleware
+    /**
+     * @throws ContainerException
+     */
+    private function registerRoute(string $method, string $path, callable|array|string $handler, array $middleware = []): void
+    {
+        $tag = 'route.' . strtolower($method);
+
+        $args = [];
+
+        if (is_array($handler)) {
+            $args = [
+                'handler' => $handler[0],
+                'method' => $handler[1] ?? '__invoke',
+                'middleware' => $middleware,
+            ];
+        } else {
+            $args = [
+                'handler' => $handler,
+                'method' => '__invoke',
+                'middleware' => $middleware,
+            ];
+        }
+
+        $this->container->getArgumentMap()->set($path, $args);
+
+        $this->container
+            ->singleton($path, RouteHandler::class)
+            ->tag([$tag]);
+
+    }
+
     public function group(array $middleware, string $prefix, callable $callback): void
     {
         $prevPrefix = $this->groupPrefix;
@@ -47,7 +90,6 @@ final class ArgonRouteAdapter implements RouterInterface
         $this->groupMiddleware = $prevMiddleware;
     }
 
-    // HTTP verb shortcut methods
     public function get(string $path, string|array|callable $handler, array $middleware = []): void
     {
         $this->add('GET', $path, $handler, $middleware);
@@ -79,10 +121,29 @@ final class ArgonRouteAdapter implements RouterInterface
     }
 
     // Route matching implementation
+
+    /**
+     * @throws ContainerException
+     * @throws NotFoundException
+     */
     public function match(ServerRequestInterface $request): ResolvedRouteInterface
     {
+        // Merge compiled/container-defined routes (tagged services) with local $this->routes
         $method = strtoupper($request->getMethod());
-        $uri = $request->getUri()->getPath();
+        $uri = $this->stripIndex($request->getUri()->getPath());
+        $uri = '/' . ltrim($uri, '/');
+
+        $compiledRoutes = $this->container->getTaggedIds('route.' . strtolower($method));
+
+        // Add container-defined routes to internal route map (lazy-resolving)
+        foreach ($compiledRoutes as $routePath) {
+            $routePath = trim($routePath, '/');
+            $this->routes[$method][] = [
+                'path' => $routePath,
+                'handler' => null, // will resolve at match-time via container
+                'middleware' => [],
+            ];
+        }
 
         $uri = $this->stripIndex($uri);
         $uri = '/' . ltrim($uri, '/');
@@ -102,9 +163,11 @@ final class ArgonRouteAdapter implements RouterInterface
                     }
                 }
 
+                $handler = $route['handler'] ?? $this->container->get($routePath);
+
                 return new MatchedRoute(
-                    handler: $route['handler'],
-                    middleware: $route['middleware'] ?? [],
+                    handler: $handler,
+                    middleware: $handler->getMiddleware() ?? $route['middleware'],
                     parameters: $params
                 );
             }

@@ -1,7 +1,8 @@
 <?php
 
-namespace Maduser\Argon\Console\Middleware;
+declare(strict_types=1);
 
+namespace Maduser\Argon\Console\Middleware;
 
 use Maduser\Argon\Console\Contracts\ConsoleInputInterface;
 use Maduser\Argon\Console\Contracts\ConsoleOutputInterface;

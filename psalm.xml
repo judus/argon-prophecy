@@ -101,7 +101,7 @@
         </MixedArrayAccess>
         <UnusedParam>
             <errorLevel type="suppress">
-                <directory name="tests/integration/Mocks"/>
+                <directory name="tests/"/>
             </errorLevel>
         </UnusedParam>
     </issueHandlers>

@@ -14,7 +14,9 @@ use Maduser\Argon\Prophecy\ServiceProviders\ArgonHttpFoundation;
 
 final readonly class ArgonKernelResolver implements KernelResolverInterface
 {
-    public function __construct(private ArgonContainer $container) {}
+    public function __construct(private ArgonContainer $container)
+    {
+    }
 
     /**
      * @throws ContainerException

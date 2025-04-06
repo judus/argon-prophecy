@@ -7,8 +7,7 @@ namespace Maduser\Argon\Http\Middleware;
 use Maduser\Argon\Container\ArgonContainer;
 use Maduser\Argon\Container\Exceptions\ContainerException;
 use Maduser\Argon\Container\Exceptions\NotFoundException;
-use Maduser\Argon\Routing\RouteHandler;
-use Maduser\Argon\Routing\Contracts\ResolvedRouteInterface;
+use Maduser\Argon\Routing\Contracts\MatchedRouteInterface;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
 use Psr\Http\Server\MiddlewareInterface;
@@ -20,57 +19,37 @@ final readonly class DispatchMiddleware implements MiddlewareInterface
     public function __construct(
         private ArgonContainer $container,
         private PerRouteMiddlewareRunner $runner
-    ) {}
-
-    public function process(ServerRequestInterface $request, RequestHandlerInterface $handler): ResponseInterface
-    {
-        /** @var ResolvedRouteInterface|null $route */
-        $route = $request->getAttribute(ResolvedRouteInterface::class);
-
-        if (!$route instanceof ResolvedRouteInterface) {
-            throw new RuntimeException('No resolved route found in request.');
-        }
-
-        $handlerDef = $route->getHandler();
-
-        $routeArgs = $route->getParameters() ?? [];
-
-        $controller = fn() => $this->invokeHandler($handlerDef, $request, $routeArgs);
-
-        return $this->runner->run(
-            $route->getMiddleware(),
-            $controller,
-            $request,
-            $handler
-        );
+    ) {
     }
 
     /**
-     * @throws NotFoundException
      * @throws ContainerException
+     * @throws NotFoundException
      */
-    private function invokeHandler(RouteHandler|callable|array|string $handler, ServerRequestInterface $request, array $routeArgs): mixed
+    public function process(ServerRequestInterface $request, RequestHandlerInterface $handler): ResponseInterface
     {
-        if ($handler instanceof RouteHandler) {
-            return $handler($request);
+        /** @var MatchedRouteInterface|null $route */
+        $route = $request->getAttribute(MatchedRouteInterface::class);
+
+        if (!$route instanceof MatchedRouteInterface) {
+            throw new RuntimeException('No resolved route found in request.');
         }
 
-        if (is_array($handler)) {
-            [$classOrCallable, $method] = [$handler[0], $handler[1] ?? null];
-            return $this->container->invoke($classOrCallable, $method, $routeArgs);
+        $serviceId = $route->getHandler();
+        $invoker = $this->container->get($serviceId);
+
+        if (!is_callable($invoker)) {
+            throw new RuntimeException("Handler for route [{$serviceId}] is not callable.");
         }
 
-        if (is_string($handler) && class_exists($handler)) {
-            return $this->container->invoke($handler, '__invoke', $routeArgs);
-        }
+        // Wrap it for lazy execution
+        $callable = fn(): mixed => $invoker($route->getArguments());
 
-        if (is_callable($handler)) {
-            return $this->container->invoke($handler, null, $routeArgs);
-        }
-
-        throw new RuntimeException(sprintf(
-            'Invalid route handler provided: [%s]',
-            get_debug_type($handler)
-        ));
+        return $this->runner->run(
+            $route->getMiddleware(),
+            $callable,
+            $request,
+            $handler
+        );
     }
 }

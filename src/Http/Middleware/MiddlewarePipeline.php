@@ -44,14 +44,15 @@ final class MiddlewarePipeline implements RequestHandlerInterface
             return $this->finalHandler;
         }
 
-        return new class(
+        return new class (
             $this->middleware[$index],
             $this->createHandler($index + 1)
         ) implements RequestHandlerInterface {
             public function __construct(
                 private MiddlewareInterface $middleware,
                 private RequestHandlerInterface $next
-            ) {}
+            ) {
+            }
 
             public function handle(ServerRequestInterface $request): ResponseInterface
             {

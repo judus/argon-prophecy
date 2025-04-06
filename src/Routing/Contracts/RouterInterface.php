@@ -14,5 +14,5 @@ interface RouterInterface
      *
      * @throws RuntimeException if no match is found
      */
-    public function match(ServerRequestInterface $request): ResolvedRouteInterface;
+    public function match(ServerRequestInterface $request): MatchedRouteInterface;
 }

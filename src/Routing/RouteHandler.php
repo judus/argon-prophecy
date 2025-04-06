@@ -7,17 +7,18 @@ namespace Maduser\Argon\Routing;
 use Maduser\Argon\Container\ArgonContainer;
 use Maduser\Argon\Container\Exceptions\ContainerException;
 use Maduser\Argon\Container\Exceptions\NotFoundException;
-use Maduser\Argon\Routing\Contracts\ResolvedRouteInterface;
+use Maduser\Argon\Routing\Contracts\MatchedRouteInterface;
 use Psr\Http\Message\ServerRequestInterface;
 
 readonly class RouteHandler
 {
     public function __construct(
         private ArgonContainer $container,
-        private string|object  $handler,
-        private ?string        $method = null,
+        private string|object $handler,
+        private ?string $method = null,
         private array $middleware = []
-    ) {}
+    ) {
+    }
 
     /**
      * @throws NotFoundException
@@ -26,7 +27,7 @@ readonly class RouteHandler
     public function __invoke(ServerRequestInterface $request): mixed
     {
         $args = $request
-            ->getAttribute(ResolvedRouteInterface::class)
+            ->getAttribute(MatchedRouteInterface::class)
             ?->getParameters() ?? [];
 
         return $this->container->invoke($this->handler, $this->method, $args);

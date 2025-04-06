@@ -20,6 +20,7 @@ use Maduser\Argon\Http\Middleware\DispatchMiddleware;
 use Maduser\Argon\Http\Middleware\HtmlResponderMiddleware;
 use Maduser\Argon\Http\Middleware\JsonResponderMiddleware;
 use Maduser\Argon\Http\Middleware\MiddlewarePipeline;
+use Maduser\Argon\Http\Middleware\PerRouteMiddlewareRunner;
 use Maduser\Argon\Http\Middleware\RoutingMiddleware;
 use Maduser\Argon\Kernel\Exception\ExceptionHandlerInterface;
 use Maduser\Argon\Kernel\Exception\HttpExceptionHandler;
@@ -89,6 +90,9 @@ class ArgonHttpFoundation extends AbstractServiceProvider
 
         $container->singleton(RoutingMiddleware::class)
             ->tag(['middleware.http']);
+
+        $container->singleton(PerRouteMiddlewareRunner::class)
+            ->tag(['middleware.router']);
 
         $container->singleton(DispatchMiddleware::class)
             ->tag(['middleware.http']);

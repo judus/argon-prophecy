@@ -14,7 +14,8 @@ final readonly class PerRouteMiddlewareRunner
 {
     public function __construct(
         private ArgonContainer $container
-    ) {}
+    ) {
+    }
 
     public function run(array $middleware, callable $controller, ServerRequestInterface $request, RequestHandlerInterface $final): ResponseInterface
     {
@@ -24,11 +25,12 @@ final readonly class PerRouteMiddlewareRunner
 
     private function buildMiddlewareStack(array $middlewareClasses, callable $controller, RequestHandlerInterface $final): RequestHandlerInterface
     {
-        $finalHandler = new class($controller, $final) implements RequestHandlerInterface {
+        $finalHandler = new class ($controller, $final) implements RequestHandlerInterface {
             public function __construct(
                 private $controller,
                 private RequestHandlerInterface $next
-            ) {}
+            ) {
+            }
 
             public function handle(ServerRequestInterface $request): ResponseInterface
             {
@@ -42,11 +44,12 @@ final readonly class PerRouteMiddlewareRunner
         return array_reduce(
             array_reverse($middlewareClasses),
             fn(RequestHandlerInterface $next, string $middlewareClass) =>
-            new class($this->container->get($middlewareClass), $next) implements RequestHandlerInterface {
+            new class ($this->container->get($middlewareClass), $next) implements RequestHandlerInterface {
                 public function __construct(
                     private MiddlewareInterface $middleware,
                     private RequestHandlerInterface $next
-                ) {}
+                ) {
+                }
 
                 public function handle(ServerRequestInterface $request): ResponseInterface
                 {
@@ -56,5 +59,4 @@ final readonly class PerRouteMiddlewareRunner
             $finalHandler
         );
     }
-
 }

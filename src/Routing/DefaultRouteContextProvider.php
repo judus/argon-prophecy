@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace Maduser\Argon\Routing;
 
-use Maduser\Argon\Routing\Contracts\ResolvedRouteInterface;
+use Maduser\Argon\Routing\Contracts\MatchedRouteInterface;
 use Maduser\Argon\Routing\Contracts\RouteContextProviderInterface;
 use Psr\Http\Message\ServerRequestInterface;
 
@@ -15,11 +15,11 @@ final readonly class DefaultRouteContextProvider implements RouteContextProvider
     ) {
     }
 
-    public function getRoute(): ResolvedRouteInterface
+    public function getRoute(): MatchedRouteInterface
     {
-        $route = $this->request->getAttribute(ResolvedRouteInterface::class);
+        $route = $this->request->getAttribute(MatchedRouteInterface::class);
 
-        if (!$route instanceof ResolvedRouteInterface) {
+        if (!$route instanceof MatchedRouteInterface) {
             throw new \RuntimeException('Route not resolved in request.');
         }
 

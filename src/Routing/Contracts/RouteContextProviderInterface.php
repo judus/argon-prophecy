@@ -6,5 +6,5 @@ namespace Maduser\Argon\Routing\Contracts;
 
 interface RouteContextProviderInterface
 {
-    public function getRoute(): ResolvedRouteInterface;
+    public function getRoute(): MatchedRouteInterface;
 }

@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Maduser\Argon\Http\Factory;
 
 use Maduser\Argon\Container\ArgonContainer;
@@ -12,7 +14,8 @@ final readonly class HttpPipelineFactory
 {
     public function __construct(
         private ArgonContainer $container
-    ) {}
+    ) {
+    }
 
     /**
      * @throws NotFoundException

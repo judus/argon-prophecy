@@ -4,7 +4,9 @@ declare(strict_types=1);
 
 namespace Maduser\Argon\Routing\Contracts;
 
-interface ResolvedRouteInterface
+use Closure;
+
+interface MatchedRouteInterface
 {
     /**
      * Returns the handler for this route.
@@ -14,9 +16,11 @@ interface ResolvedRouteInterface
      * - callable
      * - [class-string, method-string]
      *
-     * @return class-string|callable|array{0: class-string, 1: string}
+     * @return class-string|array{0: class-string, 1: string}|Closure
      */
-    public function getHandler(): string|callable|array;
+    public function getHandler(): string|array|Closure;
+
+    public function getMethod(): string;
 
     /**
      * Returns middleware service IDs for this route.
@@ -30,5 +34,5 @@ interface ResolvedRouteInterface
      *
      * @return array<string, scalar>
      */
-    public function getParameters(): array;
+    public function getArguments(): array;
 }

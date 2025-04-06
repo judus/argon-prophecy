@@ -18,7 +18,8 @@ final class UploadedFile implements UploadedFileInterface
         private readonly int $error = \UPLOAD_ERR_OK,
         private readonly ?string $clientFilename = null,
         private readonly ?string $clientMediaType = null
-    ) {}
+    ) {
+    }
 
     public function getStream(): StreamInterface
     {

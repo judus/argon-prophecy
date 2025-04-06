@@ -31,7 +31,6 @@ final class Argon
             }
 
             $app->handle();
-
         } catch (Throwable $e) {
             echo sprintf(
                 "<pre>An unexpected error occurred: \n\n%s \n\nIn File: %s:%d\n\n%s</pre>",

@@ -197,8 +197,16 @@ final class Application
      */
     private function getKernel(ArgonContainer $container): KernelInterface
     {
-        /** @var class-string<KernelInterface> $kernelId */
-        $kernelId = $this->detectKernel();
-        return $container->get($kernelId);
+        if (!$container->has(KernelInterface::class)) {
+            throw new RuntimeException("No kernel registered. Expected binding for KernelInterface.");
+        }
+
+        $kernel = $container->get(KernelInterface::class);
+
+        if (!$kernel instanceof KernelInterface) {
+            throw new RuntimeException("Service bound to KernelInterface must implement KernelInterface.");
+        }
+
+        return $kernel;
     }
 }

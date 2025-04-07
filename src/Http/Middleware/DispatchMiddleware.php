@@ -4,10 +4,12 @@ declare(strict_types=1);
 
 namespace Maduser\Argon\Http\Middleware;
 
+use Closure;
 use Maduser\Argon\Container\ArgonContainer;
 use Maduser\Argon\Container\Exceptions\ContainerException;
 use Maduser\Argon\Container\Exceptions\NotFoundException;
 use Maduser\Argon\Routing\Contracts\MatchedRouteInterface;
+use Maduser\Argon\Routing\RouteMiddlewarePipeline;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
 use Psr\Http\Server\MiddlewareInterface;
@@ -18,7 +20,7 @@ final readonly class DispatchMiddleware implements MiddlewareInterface
 {
     public function __construct(
         private ArgonContainer $container,
-        private PerRouteMiddlewareRunner $runner
+        private RouteMiddlewarePipeline $pipeline
     ) {
     }
 
@@ -35,17 +37,25 @@ final readonly class DispatchMiddleware implements MiddlewareInterface
             throw new RuntimeException('No resolved route found in request.');
         }
 
-        $serviceId = $route->getHandler();
+        $routeHandler = $route->getHandler();
+
+        if ($routeHandler instanceof Closure) {
+            // TODO: Future support for closure handlers
+            throw new RuntimeException('Closure route handlers are not yet supported.');
+        }
+
+        $serviceId = (string) $routeHandler;
+
         $invoker = $this->container->get($serviceId);
 
         if (!is_callable($invoker)) {
-            throw new RuntimeException("Handler for route [{$serviceId}] is not callable.");
+            $type = get_debug_type($invoker);
+            throw new RuntimeException("Handler [$serviceId] is not callable (got: $type).");
         }
 
-        // Wrap it for lazy execution
         $callable = fn(): mixed => $invoker($route->getArguments());
 
-        return $this->runner->run(
+        return $this->pipeline->handle(
             $route->getMiddleware(),
             $callable,
             $request,

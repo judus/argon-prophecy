@@ -12,7 +12,6 @@ interface RouterInterface
      * @throws ReflectionException
      */
     public function add(string $method, string $path, string|array|callable $handler, array $middleware = []): void;
-    public function normalizePath(string $path): string;
     public function group(array $middleware, string $prefix, callable $callback): void;
     public function get(string $path, string|array|callable $handler, array $middleware = []): void;
     public function post(string $path, string|array|callable $handler, array $middleware = []): void;
@@ -20,5 +19,4 @@ interface RouterInterface
     public function delete(string $path, string|array|callable $handler, array $middleware = []): void;
     public function patch(string $path, string|array|callable $handler, array $middleware = []): void;
     public function options(string $path, string|array|callable $handler, array $middleware = []): void;
-    public function match(ServerRequestInterface $request): MatchedRouteInterface;
 }

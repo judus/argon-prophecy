@@ -22,7 +22,7 @@ final class MiddlewarePipeline implements RequestHandlerInterface
         $this->finalHandler = $finalHandler ?? new class () implements RequestHandlerInterface {
             public function handle(ServerRequestInterface $request): ResponseInterface
             {
-                return ResponseFactory::text('Nobody cared about your request', 200);
+                return ResponseFactory::text('Unhandled request: no middleware produced a response', 200);
             }
         };
     }
@@ -49,8 +49,8 @@ final class MiddlewarePipeline implements RequestHandlerInterface
             $this->createHandler($index + 1)
         ) implements RequestHandlerInterface {
             public function __construct(
-                private MiddlewareInterface $middleware,
-                private RequestHandlerInterface $next
+                private readonly MiddlewareInterface $middleware,
+                private readonly RequestHandlerInterface $next
             ) {
             }
 

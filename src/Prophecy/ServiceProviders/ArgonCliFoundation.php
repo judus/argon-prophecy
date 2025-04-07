@@ -18,6 +18,7 @@ use Maduser\Argon\Container\AbstractServiceProvider;
 use Maduser\Argon\Container\ArgonContainer;
 use Maduser\Argon\Container\Exceptions\ContainerException;
 use Maduser\Argon\Kernel\CliKernel;
+use Maduser\Argon\Kernel\Contracts\KernelInterface;
 
 class ArgonCliFoundation extends AbstractServiceProvider
 {
@@ -41,6 +42,6 @@ class ArgonCliFoundation extends AbstractServiceProvider
         $container->singleton(ConsoleInterface::class, ArgonConsoleAdapter::class)
             ->tag(['console.adapter']);
 
-        $container->singleton('kernel.cli', CliKernel::class);
+        $container->singleton(KernelInterface::class, CliKernel::class);
     }
 }

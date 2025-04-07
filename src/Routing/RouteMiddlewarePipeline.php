@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Maduser\Argon\Http\Middleware;
+namespace Maduser\Argon\Routing;
 
 use Maduser\Argon\Container\ArgonContainer;
 use Psr\Http\Message\ResponseInterface;
@@ -10,14 +10,14 @@ use Psr\Http\Message\ServerRequestInterface;
 use Psr\Http\Server\RequestHandlerInterface;
 use Psr\Http\Server\MiddlewareInterface;
 
-final readonly class PerRouteMiddlewareRunner
+final readonly class RouteMiddlewarePipeline
 {
     public function __construct(
         private ArgonContainer $container
     ) {
     }
 
-    public function run(array $middleware, callable $controller, ServerRequestInterface $request, RequestHandlerInterface $final): ResponseInterface
+    public function handle(array $middleware, callable $controller, ServerRequestInterface $request, RequestHandlerInterface $final): ResponseInterface
     {
         $pipeline = $this->buildMiddlewareStack($middleware, $controller, $final);
         return $pipeline->handle($request);

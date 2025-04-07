@@ -20,12 +20,15 @@ use Maduser\Argon\Http\Middleware\DispatchMiddleware;
 use Maduser\Argon\Http\Middleware\HtmlResponderMiddleware;
 use Maduser\Argon\Http\Middleware\JsonResponderMiddleware;
 use Maduser\Argon\Http\Middleware\MiddlewarePipeline;
-use Maduser\Argon\Http\Middleware\PerRouteMiddlewareRunner;
-use Maduser\Argon\Http\Middleware\RoutingMiddleware;
+use Maduser\Argon\Routing\Contracts\RouteMatcherInterface;
+use Maduser\Argon\Routing\RouteMatcher;
+use Maduser\Argon\Routing\RouteMiddlewarePipeline;
+use Maduser\Argon\Routing\RouteMatcherMiddleware;
+use Maduser\Argon\Kernel\Contracts\KernelInterface;
 use Maduser\Argon\Kernel\Exception\ExceptionHandlerInterface;
 use Maduser\Argon\Kernel\Exception\HttpExceptionHandler;
 use Maduser\Argon\Kernel\HttpKernel;
-use Maduser\Argon\Routing\Adapters\ArgonRouteAdapter;
+use Maduser\Argon\Routing\ArgonRouter;
 use Maduser\Argon\Routing\Contracts\RouterInterface;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
@@ -43,30 +46,37 @@ class ArgonHttpFoundation extends AbstractServiceProvider
      */
     public function register(ArgonContainer $container): void
     {
+        /**
+         * PSR-15: Exception handler (custom)
+         */
         $container->singleton(ExceptionHandlerInterface::class, HttpExceptionHandler::class)
             ->tag(['exception.handler']);
 
-        // PSR-7: ServerRequest
+        /**
+         * PSR-7: ServerRequest (from globals)
+         */
         $container->singleton(ServerRequestInterface::class, ServerRequest::class)
             ->useFactory(ServerRequestFactory::class, 'fromGlobals')
             ->tag(['http', 'psr-7', 'server_request']);
 
-        $container->singleton(ServerRequest::class, ServerRequest::class)
-            ->useFactory(ServerRequestFactory::class, 'fromGlobals')
-            ->tag(['http', 'psr-7', 'server_request']);
-
-        // PSR-7: Response
+        /**
+         * PSR-7: Response
+         */
         $container->singleton(ResponseInterface::class, Response::class)
             ->tag(['http', 'psr-7', 'response']);
 
-        // PSR-17: StreamFactory
+        /**
+         * PSR-17: StreamFactory + Stream
+         */
         $container->singleton(StreamFactoryInterface::class, StreamFactory::class)
             ->tag(['http', 'psr-17', 'stream']);
 
         $container->singleton(StreamInterface::class, Stream::class)
             ->tag(['http', 'psr-17', 'stream']);
 
-        // PSR-17: UriFactory
+        /**
+         * PSR-17: UriFactory + Uri
+         */
         $container->singleton(UriFactoryInterface::class, UriFactory::class)
             ->useFactory(UriFactory::class, 'createUri')
             ->tag(['http', 'psr-17', 'uri']);
@@ -75,23 +85,37 @@ class ArgonHttpFoundation extends AbstractServiceProvider
             ->useFactory(UriFactory::class, 'createUri')
             ->tag(['http', 'psr-17', 'uri']);
 
-        // PSR-17: UploadedFileFactory
+        /**
+         * PSR-17: UploadedFileFactory
+         */
         $container->singleton(UploadedFileFactoryInterface::class, UploadedFileFactory::class)
             ->useFactory(UploadedFileFactory::class, 'createUploadedFile')
             ->tag(['http', 'psr-17', 'uploaded_file']);
 
+        /**
+         * PSR-15: RequestHandler (middleware pipeline)
+         */
         $container->singleton(RequestHandlerInterface::class, MiddlewarePipeline::class)
             ->useFactory(HttpPipelineFactory::class, 'create')
             ->tag(['http', 'psr-15', 'request_handler']);
 
-        // Kernel bindings
-        $container->singleton(RouterInterface::class, ArgonRouteAdapter::class)
+        /**
+         * Internal: Kernel and routing
+         */
+        $container->singleton(KernelInterface::class, HttpKernel::class);
+
+        $container->singleton(RouterInterface::class, ArgonRouter::class)
             ->tag(['routing.adapter']);
 
-        $container->singleton(RoutingMiddleware::class)
+        /**
+         * Internal: HTTP middleware
+         */
+        $container->singleton(RouteMatcherInterface::class, RouteMatcher::class);
+
+        $container->singleton(RouteMatcherMiddleware::class)
             ->tag(['middleware.http']);
 
-        $container->singleton(PerRouteMiddlewareRunner::class)
+        $container->singleton(RouteMiddlewarePipeline::class)
             ->tag(['middleware.router']);
 
         $container->singleton(DispatchMiddleware::class)
@@ -103,6 +127,6 @@ class ArgonHttpFoundation extends AbstractServiceProvider
         $container->singleton(HtmlResponderMiddleware::class)
             ->tag(['middleware.http']);
 
-        $container->singleton('kernel.http', HttpKernel::class);
+
     }
 }

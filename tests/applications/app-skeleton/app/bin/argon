@@ -1,0 +1,16 @@
+#!/usr/bin/env php
+<?php
+
+declare(strict_types=1);
+
+use App\Providers\AppServiceProvider;
+use Maduser\Argon\Container\ArgonContainer;
+use Maduser\Argon\Prophecy\Argon;
+use Maduser\Argon\Prophecy\ServiceProviders\ArgonKernelBindings;
+
+require_once __DIR__ . '/../vendor/autoload.php';
+
+Argon::boot(function(ArgonContainer $container) {
+    $container->register(ArgonKernelBindings::class);
+    $container->register(AppServiceProvider::class);
+});

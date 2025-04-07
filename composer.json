@@ -1,79 +1,87 @@
 {
-    "name": "maduser/argon-prophecy",
-    "description": "A strict, DI-first and PSR-compliant PHP runtime, for the law-abiding Prophets.",
-    "type": "library",
-    "autoload": {
-        "psr-4": {
-            "Maduser\\Argon\\": "src/"
-        }
-    },
-    "authors": [
-        {
-            "name": "Julien Duseyau",
-            "email": "julien.duseyau@gmail.com"
-        }
+  "name": "maduser/argon-prophecy",
+  "description": "A strict, DI-first and PSR-compliant PHP runtime, for the law-abiding Prophets.",
+  "type": "library",
+  "autoload": {
+    "psr-4": {
+      "Maduser\\Argon\\": "src/"
+    }
+  },
+  "authors": [
+    {
+      "name": "Julien Duseyau",
+      "email": "julien.duseyau@gmail.com"
+    }
+  ],
+  "repositories": [
+    {
+      "type": "path",
+      "url": "~/workspace/argon/packages/maduser-argon"
+    }
+  ],
+  "require": {
+    "psr/http-factory": "^1.1",
+    "psr/http-message": "^2.0",
+    "psr/http-server-handler": "^1.0",
+    "psr/http-server-middleware": "^1.0",
+    "psr/log": "^3.0"
+  },
+  "require-dev": {
+    "ext-pcntl": "*",
+    "ext-posix": "*",
+    "dealerdirect/phpcodesniffer-composer-installer": "^1.0",
+    "filp/whoops": "^2.18",
+    "guzzlehttp/guzzle": "^7.9",
+    "illuminate/database": "12.6.*",
+    "maduser/argon": "dev-test",
+    "phpunit/phpunit": "^9.6",
+    "slevomat/coding-standard": "^8.16",
+    "squizlabs/php_codesniffer": "^3.8",
+    "symfony/var-dumper": "^7.2",
+    "vimeo/psalm": "^5.26",
+    "vlucas/phpdotenv": "^5.6"
+  },
+  "autoload-dev": {
+    "psr-4": {
+      "App\\": "tests/applications/app-skeleton/app/src/",
+      "Tests\\Applications\\AppSkeleton\\": "tests/applications/app-skeleton/tests/",
+      "Tests\\Mocks\\": "tests/resources/mocks/",
+      "Tests\\Unit\\": "tests/unit/",
+      "Tests\\Integration\\": "tests/integration/"
+    }
+  },
+  "scripts": {
+    "test": "vendor/bin/phpunit --coverage-clover=coverage.xml",
+    "lint": "vendor/bin/phpcs --standard=phpcs.xml",
+    "analyze": "vendor/bin/psalm --output-format=github",
+    "fix": [
+      "vendor/bin/phpcbf --standard=phpcs.xml"
     ],
-    "repositories": [
-        {
-            "type": "path",
-            "url": "~/workspace/argon/packages/maduser-argon"
-        }
+    "coverage": "vendor/bin/phpunit --coverage-html coverage-report && open coverage-report/index.html",
+    "check": [
+      "@test",
+      "@analyze",
+      "@lint"
     ],
-    "require": {
-        "psr/http-factory": "^1.1",
-        "psr/http-message": "^2.0",
-        "psr/http-server-handler": "^1.0",
-        "psr/http-server-middleware": "^1.0",
-        "psr/log": "^3.0"
+    "ci": [
+      "@test",
+      "@analyze",
+      "@lint"
+    ],
+    "watch": "find src/ | entr -r composer check",
+    "watch:test": "find src/ | entr -r composer test",
+    "watch:fix": "find src/ | entr -r composer fix"
+  },
+  "config": {
+    "optimize-autoloader": true,
+    "sort-packages": true,
+    "allow-plugins": {
+      "dealerdirect/phpcodesniffer-composer-installer": true
     },
-    "require-dev": {
-        "dealerdirect/phpcodesniffer-composer-installer": "^1.0",
-        "maduser/argon": "dev-test",
-        "phpunit/phpunit": "^9.6",
-        "slevomat/coding-standard": "^8.16",
-        "squizlabs/php_codesniffer": "^3.8",
-        "symfony/var-dumper": "^7.2",
-        "vimeo/psalm": "^5.26"
-    },
-    "autoload-dev": {
-        "psr-4": {
-            "Tests\\Mocks\\": "tests/resources/mocks/",
-            "Tests\\Unit\\": "tests/unit/",
-            "Tests\\Integration\\": "tests/integration/"
-        }
-    },
-    "scripts": {
-        "test": "vendor/bin/phpunit --coverage-clover=coverage.xml",
-        "lint": "vendor/bin/phpcs --standard=phpcs.xml",
-        "analyze": "vendor/bin/psalm --output-format=github",
-        "fix": [
-            "vendor/bin/phpcbf --standard=phpcs.xml"
-        ],
-        "coverage": "vendor/bin/phpunit --coverage-html coverage-report && open coverage-report/index.html",
-        "check": [
-            "@test",
-            "@analyze",
-            "@lint"
-        ],
-        "ci": [
-            "@test",
-            "@analyze",
-            "@lint"
-        ],
-        "watch": "find src/ | entr -r composer check",
-        "watch:test": "find src/ | entr -r composer test",
-        "watch:fix": "find src/ | entr -r composer fix"
-    },
-    "config": {
-        "optimize-autoloader": true,
-        "sort-packages": true,
-        "allow-plugins": {
-            "dealerdirect/phpcodesniffer-composer-installer": true
-        },
-        "platform": {
-            "php": "8.2"
-        }
-    },
-    "minimum-stability": "stable",
-    "prefer-stable": true
+    "platform": {
+      "php": "8.2"
+    }
+  },
+  "minimum-stability": "stable",
+  "prefer-stable": true
 }

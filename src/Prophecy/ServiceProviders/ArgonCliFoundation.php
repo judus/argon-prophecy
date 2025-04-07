@@ -34,8 +34,7 @@ class ArgonCliFoundation extends AbstractServiceProvider
             ->tag(['cli.pipeline']);
 
         $container->singleton(ConsoleOutputInterface::class, ArgonConsoleOutput::class);
-        $container->singleton(ConsoleInputInterface::class, ArgonConsoleInput::class);
-        $container->getArgumentMap()->set(ArgonConsoleInput::class, [
+        $container->singleton(ConsoleInputInterface::class, ArgonConsoleInput::class, [
             'argv' => $_SERVER['argv'] ?? [],
         ]);
 

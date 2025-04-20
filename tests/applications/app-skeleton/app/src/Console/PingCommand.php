@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace App\Console;
 
-use Maduser\Argon\Console\Contracts\CommandInterface;
+use Maduser\Argon\Contracts\Console\CommandInterface;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
 

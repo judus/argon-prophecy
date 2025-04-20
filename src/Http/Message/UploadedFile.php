@@ -7,6 +7,7 @@ namespace Maduser\Argon\Http\Message;
 use InvalidArgumentException;
 use Psr\Http\Message\StreamInterface;
 use Psr\Http\Message\UploadedFileInterface;
+use RuntimeException;
 
 final class UploadedFile implements UploadedFileInterface
 {
@@ -24,7 +25,7 @@ final class UploadedFile implements UploadedFileInterface
     public function getStream(): StreamInterface
     {
         if ($this->moved) {
-            throw new \RuntimeException('Cannot retrieve stream after file has been moved.');
+            throw new RuntimeException('Cannot retrieve stream after file has been moved.');
         }
 
         return $this->stream;
@@ -33,11 +34,21 @@ final class UploadedFile implements UploadedFileInterface
     public function moveTo(string $targetPath): void
     {
         if ($this->moved) {
-            throw new \RuntimeException('File has already been moved.');
+            throw new RuntimeException('File has already been moved.');
         }
 
-        if (!is_writable(dirname($targetPath))) {
-            throw new \RuntimeException("Target directory is not writable: $targetPath");
+        if ($targetPath === '') {
+            throw new InvalidArgumentException('Target path must not be empty.');
+        }
+
+        $directory = dirname($targetPath);
+
+        if ($directory === false || !is_dir($directory)) {
+            throw new RuntimeException("Invalid target directory: $targetPath");
+        }
+
+        if (!is_writable($directory)) {
+            throw new RuntimeException("Target directory is not writable: $targetPath");
         }
 
         $stream = $this->getStream();
@@ -45,11 +56,15 @@ final class UploadedFile implements UploadedFileInterface
 
         $dest = fopen($targetPath, 'wb');
         if ($dest === false) {
-            throw new \RuntimeException("Unable to open target path: $targetPath");
+            throw new RuntimeException("Unable to open target path: $targetPath");
         }
 
         while (!$stream->eof()) {
-            fwrite($dest, $stream->read(8192));
+            $chunk = $stream->read(8192);
+            if (fwrite($dest, $chunk) === false) {
+                fclose($dest);
+                throw new RuntimeException("Failed to write to target path: $targetPath");
+            }
         }
 
         fclose($dest);

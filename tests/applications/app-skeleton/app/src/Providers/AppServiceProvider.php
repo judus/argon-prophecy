@@ -5,24 +5,24 @@ declare(strict_types=1);
 namespace App\Providers;
 
 use App\Console\GreetCommand;
-use App\Console\PingCommand;
 use App\Console\SymfonyCommand;
-use App\Exception\WhoopsExceptionHandler;
+use App\Exceptions\WhoopsExceptionHandler;
 use App\Http\Controllers\HomeController;
 use App\Http\Controllers\TestClass;
 use App\Http\Controllers\TestClassInterface;
-use App\Middlewares\DumbMiddleware;
-use Maduser\Argon\Console\ArgonConsoleInput;
-use Maduser\Argon\Console\Contracts\ConsoleInterface;
-use Maduser\Argon\Console\SymfonyConsoleAdapter;
 use Maduser\Argon\Container\AbstractServiceProvider;
 use Maduser\Argon\Container\ArgonContainer;
-use Maduser\Argon\Container\Contracts\ServiceProviderInterface;
+use Maduser\Argon\Container\Contracts\ParameterStoreInterface;
 use Maduser\Argon\Container\Exceptions\ContainerException;
 use Maduser\Argon\Container\Exceptions\NotFoundException;
-use Maduser\Argon\Kernel\Exception\ExceptionHandlerInterface;
+use Maduser\Argon\Exception\ExceptionDispatcher;
+use Maduser\Argon\Contracts\Http\Exception\ExceptionHandlerInterface;
 use Maduser\Argon\Routing\Contracts\RouterInterface;
-use Psr\Container\ContainerInterface;
+use Maduser\Argon\View\Provider\ViewServiceProvider;
+use Psr\Http\Message\ServerRequestInterface;
+use Psr\Log\LoggerInterface;
+use RuntimeException;
+use Throwable;
 
 class AppServiceProvider extends AbstractServiceProvider
 {
@@ -32,28 +32,37 @@ class AppServiceProvider extends AbstractServiceProvider
      */
     public function register(ArgonContainer $container): void
     {
-        $container->singleton(ExceptionHandlerInterface::class, WhoopsExceptionHandler::class)
-            ->tag(['exception.handler']);
+        $this->configureParameters($container);
 
-        $container->singleton(ConsoleInterface::class, SymfonyConsoleAdapter::class);
+        $parameters = $container->getParameters();
 
-//        $container->singleton(DumbMiddleware::class)
-//            ->tag(['middleware.route']);
+        if ($parameters->get('debug')) {
+            $container->set(ExceptionHandlerInterface::class, WhoopsExceptionHandler::class);
+        }
 
-        $container->singleton(SymfonyCommand::class)
-            ->tag(['cli.command']);
-
-        $container->singleton(GreetCommand::class)
-            ->tag(['cli.command']);
+        $container->set(HomeController::class);
+        $container->set(TestClassInterface::class, TestClass::class);
 
         $container->register(EloquentServiceProvider::class);
-
-        $container->singleton(TestClassInterface::class, TestClass::class);
-
-        $container->singleton(HomeController::class);
+        $container->register(ViewServiceProvider::class);
 
         $this->registerRoutes($container);
+        $this->registerExceptionHandling($container);
+    }
 
+    /**
+     * @param ArgonContainer $container
+     */
+    public function configureParameters(ArgonContainer $container): void
+    {
+        $parameters = $container->getParameters();
+
+        $debug = filter_var(
+            $_ENV['APP_DEBUG'] ?? false,
+            FILTER_VALIDATE_BOOL
+        );
+
+        $parameters->set('debug', $debug);
     }
 
     /**
@@ -72,6 +81,29 @@ class AppServiceProvider extends AbstractServiceProvider
             $router->get('/injected/{id}', [HomeController::class, 'injectedAndParams']);
             $router->get('/error', [HomeController::class, 'throws']);
             $router->get('/plain', [HomeController::class, 'stringResponse']);
+            $router->get('/response/object', [HomeController::class, 'responseObject']);
+            $router->get('/twig', [HomeController::class, 'twigResponse']);
         });
+    }
+
+    /**
+     * @throws ContainerException
+     * @throws NotFoundException
+     */
+    private function registerExceptionHandling(ArgonContainer $container): void
+    {
+        $dispatcher = $container->get(ExceptionDispatcher::class);
+        $logger = $container->get(LoggerInterface::class);
+
+        $dispatcher->register(
+            RuntimeException::class,
+            function (Throwable $exception, ServerRequestInterface $request) use ($logger) {
+                $logger->critical('ALEEEERT!!', [
+                    'exception' => get_class($exception),
+                    'message' => $exception->getMessage(),
+                    'uri' => $request->getUri()->getPath(),
+                ]);
+            }
+        );
     }
 }

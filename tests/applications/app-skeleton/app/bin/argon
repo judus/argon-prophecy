@@ -4,16 +4,18 @@
 declare(strict_types=1);
 
 use App\Providers\AppServiceProvider;
+use App\Providers\ConsoleServiceProvider;
 use Dotenv\Dotenv;
 use Maduser\Argon\Container\ArgonContainer;
+use Maduser\Argon\Logging\LoggerServiceProvider;
 use Maduser\Argon\Prophecy\Argon;
-use Maduser\Argon\Prophecy\ServiceProviders\ArgonCliFoundation;
+use Maduser\Argon\Prophecy\Provider\ArgonCliFoundation;
 
 require __DIR__ . '/../../../../../vendor/autoload.php';
 
 Dotenv::createImmutable(__DIR__ . '/../')->load();
 
 Argon::prophecy(function (ArgonContainer $container): void {
-    $container->register(ArgonCliFoundation::class); // KernelInterface => CliKernel
-    $container->register(AppServiceProvider::class);
-}, $_ENV['APP_COMPILE_CONTAINER']);
+    $container->register(ArgonCliFoundation::class);
+    $container->register(ConsoleServiceProvider::class);
+}, 'false');

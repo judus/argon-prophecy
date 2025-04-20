@@ -6,13 +6,25 @@ namespace App\Http\Controllers;
 
 use App\Http\Controllers\TestClassInterface;
 use JsonSerializable;
+use Maduser\Argon\Container\Exceptions\ContainerException;
+use Maduser\Argon\Container\Exceptions\NotFoundException;
+use Maduser\Argon\Http\Message\Factory\ResponseFactory;
+use Maduser\Argon\Http\Message\Response;
+use Maduser\Argon\View\Contracts\HtmlableInterface;
+use Maduser\Argon\View\Contracts\TemplateEngineInterface;
+use Maduser\Argon\View\Response\ViewResponse;
+use Maduser\Argon\View\View;
+use Psr\Http\Message\ResponseFactoryInterface;
+use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
 use RuntimeException;
 
 readonly class HomeController
 {
-    public function __construct(private ServerRequestInterface $request)
-    {
+    public function __construct(
+        private ServerRequestInterface $request,
+        private View $view
+    ) {
     }
 
     public function index(): JsonSerializable
@@ -20,7 +32,9 @@ readonly class HomeController
         $request = $this->request;
 
         return new class($request) implements JsonSerializable {
-            public function __construct(private ServerRequestInterface $request) {}
+            public function __construct(private readonly ServerRequestInterface $request)
+            {
+            }
 
             public function jsonSerialize(): array
             {
@@ -39,6 +53,8 @@ readonly class HomeController
                         'di + param' => "$baseUrl/demo/injected/123",
                         'two params' => "$baseUrl/demo/params/456/important",
                         'html/plain' => "$baseUrl/demo/plain",
+                        'response object' => "$baseUrl/demo/response/object",
+                        'twig response' => "$baseUrl/demo/twig",
                         'throws exception' => "$baseUrl/demo/error",
                     ],
                 ];
@@ -77,5 +93,19 @@ readonly class HomeController
     public function stringResponse(): string
     {
         return 'Just a plain string response';
+    }
+
+    public function responseObject(): ResponseInterface
+    {
+        return Response::text('Steve is a nerd');
+    }
+
+    /**
+     * @throws ContainerException
+     * @throws NotFoundException
+     */
+    public function twigResponse(): HtmlableInterface
+    {
+        return $this->view->render('pages/home.twig', ['user' => 'Prophets']);
     }
 }

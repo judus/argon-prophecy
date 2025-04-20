@@ -5,19 +5,23 @@ declare(strict_types=1);
 namespace Maduser\Argon\Prophecy;
 
 use Closure;
-use ErrorException;
 use Maduser\Argon\Container\ArgonContainer;
 use Maduser\Argon\Container\Compiler\ContainerCompiler;
 use Maduser\Argon\Container\Exceptions\ContainerException;
 use Maduser\Argon\Container\Exceptions\NotFoundException;
-use Maduser\Argon\Kernel\Contracts\KernelInterface;
+use Maduser\Argon\Contracts\ApplicationInterface;
+use Maduser\Argon\Contracts\KernelInterface;
+use Maduser\Argon\Prophecy\Exception\BootstrapExceptionHandler;
+use Psr\Log\LoggerInterface;
 use ReflectionException;
 use RuntimeException;
+use Throwable;
 
-final class Application
+final class Application implements ApplicationInterface
 {
-    private ?ArgonContainer $container;
-    private ?Closure $callback = null;
+    protected ?ArgonContainer $container = null;
+    protected ?LoggerInterface $logger = null;
+    private ?Closure $configureContainer = null;
 
     private ?string $compiledFilePath = null;
     private ?string $compiledClass = null;
@@ -25,29 +29,33 @@ final class Application
 
     private bool $booted = false;
 
-    /**
-     * @throws ErrorException
-     */
-    public function __construct(?ArgonContainer $container = null)
-    {
-        $this->setupErrorHandling();
-
+    public function __construct(
+        ?ArgonContainer $container = null,
+        ?LoggerInterface $logger = null
+    ) {
+        $this->logger = $logger;
+        (new BootstrapExceptionHandler($this->logger))->register();
         $this->container = $container;
     }
 
-    /**
-     * @param Closure $callback Must accept ArgonContainer
-     */
-    public function register(Closure $callback): self
+    public function register(Closure $closure): self
     {
-        $this->callback = $callback;
+        $this->configureContainer = $closure;
+        return $this;
+    }
+
+    public function compile(string $filePath, string $className, string $namespace = ''): self
+    {
+        $this->compiledFilePath = $filePath;
+        $this->compiledClass = $className;
+        $this->compiledNamespace = $namespace;
         return $this;
     }
 
     /**
-     * @throws ReflectionException
      * @throws ContainerException
      * @throws NotFoundException
+     * @throws ReflectionException
      */
     public function handle(): void
     {
@@ -56,17 +64,21 @@ final class Application
         }
 
         $container = $this->getContainer();
+
+        if ($container->has(LoggerInterface::class)) {
+            $this->logger = $container->get(LoggerInterface::class);
+        }
+
+        $this->logContainerLoadedEvent();
+
         $container->boot();
+        $this->logContainerBootedEvent();
 
         $kernel = $this->getKernel($container);
-
-        $kernel->setup();
-        $kernel->boot();
-
         $this->booted = true;
 
+        $this->logKernelReadyEvent();
         $kernel->handle();
-        $kernel->terminate();
     }
 
     /**
@@ -79,30 +91,30 @@ final class Application
             return $this->container;
         }
 
-        $compiledContainer = $this->loadCompiledContainer();
-
-        if ($compiledContainer !== null) {
-            $this->container = $compiledContainer;
-            return $this->container;
+        if ($compiled = $this->loadCompiledContainer()) {
+            return $this->container = $compiled;
         }
 
-        $this->container = new ArgonContainer();
-
-        if ($this->callback !== null) {
-            ($this->callback)($this->container);
-        }
-
-        $this->compileIfConfigured();
-
-        return $this->container;
+        return $this->container = $this->buildContainer();
     }
 
-    private function detectKernel(): string
+    /**
+     * @throws ReflectionException
+     * @throws ContainerException
+     */
+    private function buildContainer(): ArgonContainer
     {
-        return match (php_sapi_name()) {
-            'cli', 'phpdbg' => 'kernel.cli',
-            default => 'kernel.http',
-        };
+        $container = new ArgonContainer();
+        $container->getParameters()->set('basePath', $this->getBasePath());
+
+        if ($this->configureContainer !== null) {
+            ($this->configureContainer)($container);
+        }
+
+        $this->container = $container;
+        $this->compileIfConfigured();
+
+        return $container;
     }
 
     /**
@@ -111,11 +123,7 @@ final class Application
      */
     private function compileIfConfigured(): void
     {
-        if (
-            $this->container === null ||
-            $this->compiledFilePath === null ||
-            $this->compiledClass === null
-        ) {
+        if ($this->container === null || $this->compiledFilePath === null || $this->compiledClass === null) {
             return;
         }
 
@@ -125,14 +133,6 @@ final class Application
             $this->compiledClass,
             $this->compiledNamespace ?? ''
         );
-    }
-
-    public function compile(string $filePath, string $className, string $namespace = ''): self
-    {
-        $this->compiledFilePath = $filePath;
-        $this->compiledClass = $className;
-        $this->compiledNamespace = $namespace;
-        return $this;
     }
 
     private function loadCompiledContainer(): ?ArgonContainer
@@ -145,53 +145,31 @@ final class Application
             return null;
         }
 
-        /** It says "if !file_exists" right up there... */
+        $this->logger?->info('Loading compiled container...');
+
         /** @psalm-suppress UnresolvableInclude */
         require_once $this->compiledFilePath;
 
-        $fqcn = $this->compiledNamespace
+        $fqcn = $this->compiledNamespace !== null
             ? $this->compiledNamespace . '\\' . $this->compiledClass
             : $this->compiledClass;
 
         if (!class_exists($fqcn)) {
-            throw new RuntimeException(
-                "Compiled container class '$this->compiledClass' not found."
-            );
+            throw new RuntimeException("Compiled container class '$this->compiledClass' not found.");
         }
 
-        /** It says "if !class_exists" right up there... */
         /** @psalm-suppress MixedMethodCall */
         $container = new $fqcn();
         if (!$container instanceof ArgonContainer) {
-            throw new RuntimeException(
-                "Compiled container must extend ArgonContainer."
-            );
+            throw new RuntimeException("Compiled container must extend ArgonContainer.");
         }
+
+        $this->logger?->info('Compiled container loaded.');
 
         return $container;
     }
 
-    private function setupErrorHandling(): void
-    {
-        set_error_handler(
-        /**
-         * @throws ErrorException
-         */
-            static function (
-                int $severity,
-                string $message,
-                string $file,
-                int $line
-            ): bool {
-                throw new ErrorException($message, 0, $severity, $file, $line);
-            }
-        );
-    }
-
     /**
-     * @param ArgonContainer $container
-     * @return KernelInterface
-     *
      * @throws ContainerException
      * @throws NotFoundException
      */
@@ -208,5 +186,71 @@ final class Application
         }
 
         return $kernel;
+    }
+
+    private function getBasePath(): string
+    {
+        return dirname($_SERVER['SCRIPT_FILENAME'] ?? __DIR__, 2);
+    }
+
+    private function logContainerLoadedEvent(): void
+    {
+        if ($this->logger && $this->container) {
+            $this->logger->info('Container loaded.', [
+                'class' => get_class($this->container),
+            ]);
+
+            $this->logContainerDebugInfo('loaded');
+        }
+    }
+
+    private function logContainerBootedEvent(): void
+    {
+        if ($this->logger && $this->container) {
+            $this->logger->info('Container booted.', [
+                'class' => get_class($this->container),
+            ]);
+
+            $this->logContainerDebugInfo('booted');
+        }
+    }
+
+    private function logKernelReadyEvent(): void
+    {
+        if ($this->logger && $this->container) {
+            $this->logger->info('Kernel is ready.', [
+                'container' => get_class($this->container),
+            ]);
+
+            $this->logContainerDebugInfo('kernel_ready');
+        }
+    }
+
+    private function logContainerDebugInfo(string $stage): void
+    {
+        if ($this->logger && $this->container) {
+            $info = [
+                'parameters'       => $this->container->getParameters()->all(),
+                'bindings'         => $this->container->getBindings(),
+                'preInterceptors'  => $this->container->getPreInterceptors(),
+                'postInterceptors' => $this->container->getPostInterceptors(),
+            ];
+
+            if (
+                get_class($this->container) !== ArgonContainer::class &&
+                method_exists($this->container, 'getServiceMap')
+            ) {
+                $info['compiled'] = true;
+                try {
+                    $info['serviceMap'] = (array) $this->container->getServiceMap();
+                } catch (Throwable) {
+                    $info['serviceMap'] = ['error' => 'Could not fetch service map'];
+                }
+            } else {
+                $info['compiled'] = false;
+            }
+
+            $this->logger->debug("Container [$stage] debug info:", $info);
+        }
     }
 }

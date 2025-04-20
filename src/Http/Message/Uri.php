@@ -20,8 +20,9 @@ final class Uri implements UriInterface
     public function __construct(string $uri = '')
     {
         if ($uri !== '') {
-            $parts = parse_url($uri);
+            $this->validate($uri);
 
+            $parts = parse_url($uri);
             if ($parts === false) {
                 throw new InvalidArgumentException("Malformed URI: $uri");
             }
@@ -36,6 +37,26 @@ final class Uri implements UriInterface
             $this->path = $parts['path'] ?? '';
             $this->query = $parts['query'] ?? '';
             $this->fragment = $parts['fragment'] ?? '';
+        }
+    }
+
+    private function validate(string $uri): void
+    {
+        $parts = parse_url($uri);
+        if ($parts === false) {
+            throw new InvalidArgumentException("Unable to parse URI: $uri");
+        }
+
+        if (!isset($parts['host']) && !isset($parts['scheme']) && !str_starts_with($uri, '/')) {
+            throw new InvalidArgumentException("Malformed relative URI: $uri");
+        }
+
+        if (isset($parts['scheme']) && !preg_match('#^[a-z][a-z0-9+\-.]*$#i', $parts['scheme'])) {
+            throw new InvalidArgumentException("Invalid scheme in URI: $uri");
+        }
+
+        if (isset($parts['port']) && ($parts['port'] < 1 || $parts['port'] > 65535)) {
+            throw new InvalidArgumentException("Invalid port in URI: $uri");
         }
     }
 

@@ -1,13 +1,15 @@
 <?php
- namespace Maduser\Argon\Routing\Contracts;
+
+declare(strict_types=1);
+
+namespace Maduser\Argon\Routing\Contracts;
 
 use Maduser\Argon\Container\Exceptions\ContainerException;
-use Psr\Http\Message\ServerRequestInterface;
 use ReflectionException;
 
 interface RouterInterface
 {
-/**
+    /**
      * @throws ContainerException
      * @throws ReflectionException
      */

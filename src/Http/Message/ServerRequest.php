@@ -4,16 +4,19 @@ declare(strict_types=1);
 
 namespace Maduser\Argon\Http\Message;
 
-use Psr\Http\Message\ServerRequestInterface;
-use Psr\Http\Message\UriInterface;
-use Psr\Http\Message\StreamInterface;
 use InvalidArgumentException;
+use Maduser\Argon\Http\Message\Stream;
+use Maduser\Argon\Http\Message\Uri;
+use Psr\Http\Message\ServerRequestInterface;
+use Psr\Http\Message\StreamInterface;
+use Psr\Http\Message\UriInterface;
 
 final class ServerRequest implements ServerRequestInterface
 {
     private string $method;
-    private Stream $body;
+    private StreamInterface $body;
     private UriInterface $uri;
+    private string $requestTarget = '';
 
     public function __construct(
         ?string $method = null,
@@ -25,12 +28,13 @@ final class ServerRequest implements ServerRequestInterface
         private array $cookieParams = [],
         private array $queryParams = [],
         private array $uploadedFiles = [],
-        private mixed $parsedBody = '',
+        private null|array|object $parsedBody = null,
         private array $attributes = [],
     ) {
-        $this->method = $method ?? $_SERVER['REQUEST_METHOD'] ?? 'GET';
-        $this->body = new Stream(fopen('php://temp', 'r+'));
+        $this->method = strtoupper($method ?? $_SERVER['REQUEST_METHOD'] ?? 'GET');
+        $this->body = $body ?? new Stream(fopen('php://temp', 'r+'));
         $this->uri = $uri ?? new Uri('');
+        $this->headers = array_change_key_case($headers, CASE_LOWER);
     }
 
     public function getProtocolVersion(): string
@@ -57,8 +61,7 @@ final class ServerRequest implements ServerRequestInterface
 
     public function getHeader($name): array
     {
-        $name = strtolower($name);
-        return $this->headers[$name] ?? [];
+        return $this->headers[strtolower($name)] ?? [];
     }
 
     public function getHeaderLine($name): string
@@ -76,12 +79,8 @@ final class ServerRequest implements ServerRequestInterface
     public function withAddedHeader($name, $value): self
     {
         $clone = clone $this;
-        $name = strtolower($name);
-        if (!isset($clone->headers[$name])) {
-            $clone->headers[$name] = [];
-        }
-
-        $clone->headers[$name] = array_merge($clone->headers[$name], (array)$value);
+        $lower = strtolower($name);
+        $clone->headers[$lower] = array_merge($clone->headers[$lower] ?? [], (array)$value);
         return $clone;
     }
 
@@ -106,12 +105,20 @@ final class ServerRequest implements ServerRequestInterface
 
     public function getRequestTarget(): string
     {
-        return $this->uri->getPath() . ($this->uri->getQuery() ? '?' . $this->uri->getQuery() : '');
+        return $this->requestTarget !== ''
+            ? $this->requestTarget
+            : ($this->uri->getPath() . ($this->uri->getQuery() ? '?' . $this->uri->getQuery() : ''));
     }
 
     public function withRequestTarget($requestTarget): self
     {
-        throw new \LogicException('Not implemented: withRequestTarget');
+        if (!is_string($requestTarget)) {
+            throw new InvalidArgumentException('Request target must be a string');
+        }
+
+        $clone = clone $this;
+        $clone->requestTarget = $requestTarget;
+        return $clone;
     }
 
     public function getMethod(): string
@@ -138,7 +145,7 @@ final class ServerRequest implements ServerRequestInterface
 
         if (!$preserveHost) {
             $host = $uri->getHost();
-            if ($host) {
+            if ($host !== '') {
                 $clone->headers['host'] = [$host];
             }
         }

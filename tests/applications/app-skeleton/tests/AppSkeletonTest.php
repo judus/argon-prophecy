@@ -10,6 +10,9 @@ use PHPUnit\Framework\TestCase;
 
 class AppSkeletonTest extends AbstractHttpTestCase
 {
+    /**
+     * @throws GuzzleException
+     */
     public function testIndexReturnsJsonSerializable(): void
     {
         $response = self::$client->get('/');
@@ -71,7 +74,7 @@ class AppSkeletonTest extends AbstractHttpTestCase
         $response = self::$client->get('/demo/plain');
 
         $this->assertSame(200, $response->getStatusCode());
-        $this->assertStringContainsString('text/html', $response->getHeaderLine('Content-Type'));
+        $this->assertStringContainsString('text/plain', $response->getHeaderLine('Content-Type'));
         $this->assertStringContainsString('Just a plain string', (string) $response->getBody());
     }
 

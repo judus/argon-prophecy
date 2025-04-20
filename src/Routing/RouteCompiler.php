@@ -46,9 +46,9 @@ final readonly class RouteCompiler
 
         $descriptor = $this->container->has($class)
             ? $this->container->getDescriptor($class)
-            : $this->container->bind($class, $class, false, []);
+            : $this->container->set($class, $class, false, []);
 
-        $descriptor->setMethod($methodName, $args);
+        $descriptor->defineInvocation($methodName, $args);
 
         $normalizedPath = '/' . ltrim($path, '/');
         $normalizedMethod = strtolower($method);
@@ -56,14 +56,14 @@ final readonly class RouteCompiler
         $routeTag = "route.$normalizedMethod";
 
         // Register invoker for the route
-        $this->container->bind($normalizedPath, ServiceInvoker::class, args: [
+        $this->container->set($normalizedPath, ServiceInvoker::class, args: [
             'serviceId' => $class,
             'method' => $methodName,
         ])->tag($routeTag);
 
         // Register each middleware under its own middleware tag
         foreach ($middlewares as $middleware) {
-            $this->container->bind($middleware)->tag($middlewareTag);
+            $this->container->set($middleware)->tag($middlewareTag);
         }
     }
 }

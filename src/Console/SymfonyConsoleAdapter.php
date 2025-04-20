@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace Maduser\Argon\Console;
 
 use Exception;
-use Maduser\Argon\Console\Contracts\ConsoleInterface;
+use Maduser\Argon\Contracts\Console\ConsoleInterface;
 use Maduser\Argon\Container\ArgonContainer;
 use Symfony\Component\Console\Application;
 use Symfony\Component\Console\Command\Command;

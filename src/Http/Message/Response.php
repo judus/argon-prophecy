@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Maduser\Argon\Http\Message;
 
+use Maduser\Argon\Http\Message\Stream;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\StreamInterface;
 
@@ -29,11 +30,37 @@ final class Response implements ResponseInterface
         $this->reasonPhrase = $reasonPhrase;
     }
 
+    public static function create(): static
+    {
+        return new static();
+    }
+
+    public static function text(string $text, int $status = 200): static
+    {
+        return static::create()
+            ->withText($text)
+            ->withStatus($status);
+    }
+
+    public static function html(string $html, int $status = 200): static
+    {
+        return static::create()
+            ->withHtml($html)
+            ->withStatus($status);
+    }
+
+    public static function json(mixed $data, int $status = 200): static
+    {
+        return static::create()
+            ->withJson($data)
+            ->withStatus($status);
+    }
+
     private function normalizeHeaders(array $headers): array
     {
         $normalized = [];
         foreach ($headers as $name => $value) {
-            $normalized[strtolower($name)] = (array)$value;
+            $normalized[strtolower($name)] = (array) $value;
         }
         return $normalized;
     }
@@ -73,7 +100,7 @@ final class Response implements ResponseInterface
     public function withHeader($name, $value): static
     {
         $clone = clone $this;
-        $clone->headers[strtolower($name)] = (array)$value;
+        $clone->headers[strtolower($name)] = (array) $value;
         return $clone;
     }
 
@@ -81,7 +108,7 @@ final class Response implements ResponseInterface
     {
         $clone = clone $this;
         $lower = strtolower($name);
-        $clone->headers[$lower] = array_merge($clone->headers[$lower] ?? [], (array)$value);
+        $clone->headers[$lower] = array_merge($clone->headers[$lower] ?? [], (array) $value);
         return $clone;
     }
 
@@ -104,9 +131,11 @@ final class Response implements ResponseInterface
         return $clone;
     }
 
-    public function getStatusCode(): int
+    public function appendBody(string $chunk): static
     {
-        return $this->status;
+        $clone = clone $this;
+        $clone->body->write($chunk);
+        return $clone;
     }
 
     public function withStatus($code, $reasonPhrase = ''): static
@@ -117,9 +146,50 @@ final class Response implements ResponseInterface
         return $clone;
     }
 
+    public function withStatusMessage(string $message): static
+    {
+        $clone = clone $this;
+        $clone->reasonPhrase = $message;
+        return $clone;
+    }
+
+    public function getStatusCode(): int
+    {
+        return $this->status;
+    }
+
     public function getReasonPhrase(): string
     {
         return $this->reasonPhrase;
+    }
+
+    public function withJson(mixed $data, int $flags = JSON_THROW_ON_ERROR): static
+    {
+        $clone = clone $this;
+
+        $json = json_encode($data, $flags);
+        if ($json === false) {
+            throw new \RuntimeException('Failed to encode JSON.');
+        }
+
+        $stream = new Stream($json);
+        return $clone
+            ->withBody($stream)
+            ->withHeader('Content-Type', 'application/json');
+    }
+
+    public function withHtml(string $html): static
+    {
+        return $this
+            ->withBody(new Stream($html))
+            ->withHeader('Content-Type', 'text/html; charset=UTF-8');
+    }
+
+    public function withText(string $text): static
+    {
+        return $this
+            ->withBody(new Stream($text))
+            ->withHeader('Content-Type', 'text/plain; charset=UTF-8');
     }
 
     private function getDefaultReasonPhrase(int $code): string
@@ -134,6 +204,7 @@ final class Response implements ResponseInterface
             401 => 'Unauthorized',
             403 => 'Forbidden',
             404 => 'Not Found',
+            418 => 'I\'m a teapot',
             500 => 'Internal Server Error',
             502 => 'Bad Gateway',
             503 => 'Service Unavailable',

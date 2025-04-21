@@ -108,8 +108,6 @@ readonly class HomeController
      */
     public function twigResponse(): HtmlableInterface
     {
-        dump($this->container);
-
         return $this->view->render('pages/home.twig', [
             'user' => 'Prophets',
         ]);

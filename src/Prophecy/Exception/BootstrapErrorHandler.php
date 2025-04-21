@@ -8,7 +8,7 @@ use ErrorException;
 use Psr\Log\LoggerInterface;
 use Throwable;
 
-final class BootstrapExceptionHandler
+final class BootstrapErrorHandler
 {
     private ?LoggerInterface $logger;
 

@@ -7,9 +7,6 @@ namespace Maduser\Argon\Routing;
 use Closure;
 use Maduser\Argon\Routing\Contracts\MatchedRouteInterface;
 
-/**
- * Immutable value object representing a resolved route match.
- */
 final readonly class MatchedRoute implements MatchedRouteInterface
 {
     /**
@@ -22,19 +19,8 @@ final readonly class MatchedRoute implements MatchedRouteInterface
         private string $method = '__invoke',
         private array $middleware = [],
         private array $arguments = []
-    ) {
-    }
+    ) {}
 
-    /**
-     * Returns the handler for this route.
-     *
-     * Can be:
-     * - class-string
-     * - callable
-     * - [class-string, method-string]
-     *
-     * @return class-string|array{0: class-string, 1: string}|Closure
-     */
     public function getHandler(): string|array|Closure
     {
         return $this->handler;
@@ -45,19 +31,46 @@ final readonly class MatchedRoute implements MatchedRouteInterface
         return $this->method;
     }
 
-    /**
-     * @return list<class-string>
-     */
     public function getMiddleware(): array
     {
         return $this->middleware;
     }
 
-    /**
-     * @return array<string, scalar>
-     */
     public function getArguments(): array
     {
         return $this->arguments;
+    }
+
+    public function toArray(): array
+    {
+        return [
+            'handler' => $this->stringifyHandler(),
+            'method' => $this->method,
+            'middleware' => $this->middleware,
+            'arguments' => $this->arguments,
+        ];
+    }
+
+    public function __toString(): string
+    {
+        $handler = $this->stringifyHandler();
+
+        return sprintf(
+            'MatchedRoute(handler=%s, method=%s, middleware=%d, args=%d)',
+            $handler,
+            $this->method,
+            count($this->middleware),
+            count($this->arguments),
+        );
+    }
+
+    private function stringifyHandler(): string
+    {
+        return match (true) {
+            is_array($this->handler) => implode('@', $this->handler),
+            is_string($this->handler) => $this->handler,
+            $this->handler instanceof Closure => 'Closure<' . spl_object_id($this->handler) . '>',
+            default => 'UnknownHandler',
+        };
     }
 }

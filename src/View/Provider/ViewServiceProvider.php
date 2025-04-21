@@ -34,7 +34,10 @@ class ViewServiceProvider extends AbstractServiceProvider
 
         // Register HTML middleware
         $container->set(HtmlResponderMiddleware::class)
-            ->tag(['middleware.http']);
+            ->tag(['middleware.http' => [
+                'priority' => 2200,
+                'group' => ['web'],
+            ]]);
     }
 
     /**

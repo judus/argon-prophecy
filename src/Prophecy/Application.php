@@ -11,7 +11,7 @@ use Maduser\Argon\Container\Exceptions\ContainerException;
 use Maduser\Argon\Container\Exceptions\NotFoundException;
 use Maduser\Argon\Contracts\ApplicationInterface;
 use Maduser\Argon\Contracts\KernelInterface;
-use Maduser\Argon\Prophecy\Exception\BootstrapExceptionHandler;
+use Maduser\Argon\Prophecy\Exception\BootstrapErrorHandler;
 use Psr\Log\LoggerInterface;
 use ReflectionException;
 use RuntimeException;
@@ -34,7 +34,7 @@ final class Application implements ApplicationInterface
         ?LoggerInterface $logger = null
     ) {
         $this->logger = $logger;
-        (new BootstrapExceptionHandler($this->logger))->register();
+        (new BootstrapErrorHandler($this->logger))->register();
         $this->container = $container;
     }
 

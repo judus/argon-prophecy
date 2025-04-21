@@ -12,6 +12,17 @@ use Maduser\Argon\Http\Exception\ExceptionFormatter;
 use Maduser\Argon\Contracts\Http\Exception\ExceptionFormatterInterface;
 use Maduser\Argon\Http\Server\Middleware\PlainTextResponder;
 use Maduser\Argon\Http\Message\UploadedFile;
+use Maduser\Argon\Middleware\Contracts\MiddlewareLoaderInterface;
+use Maduser\Argon\Middleware\Contracts\MiddlewareResolverInterface;
+use Maduser\Argon\Middleware\Contracts\PipelineStoreInterface;
+use Maduser\Argon\Middleware\Loader\TaggedMiddlewareLoader;
+use Maduser\Argon\Middleware\Resolver\ContainerMiddlewareResolver;
+use Maduser\Argon\Middleware\Store\ContainerStore;
+use Maduser\Argon\Routing\Contracts\RequestHandlerResolverInterface;
+use Maduser\Argon\Routing\Contracts\RouteContextInterface;
+use Maduser\Argon\Routing\Middleware\RouteDispatcherMiddleware;
+use Maduser\Argon\Routing\RequestHandlerResolver;
+use Maduser\Argon\Routing\RouteContext;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestFactoryInterface;
 use Psr\Http\Message\ServerRequestInterface;
@@ -116,6 +127,14 @@ final class ArgonHttpFoundation extends AbstractServiceProvider
         /**
          * PSR-15: Middleware Pipeline
          */
+        $container->set(MiddlewareResolverInterface::class, ContainerMiddlewareResolver::class)
+            ->tag(['middleware.resolver']);
+
+//        $container->set(MiddlewareLoaderInterface::class, TaggedMiddlewareLoader::class)
+//            ->tag(['middleware.loader']);
+
+        $container->set(PipelineStoreInterface::class, ContainerStore::class);
+
         $container->set(RequestHandlerFactory::class);
 
         $container->set(RequestHandlerInterface::class, MiddlewarePipeline::class)
@@ -123,33 +142,36 @@ final class ArgonHttpFoundation extends AbstractServiceProvider
             ->tag(['http', 'psr-15', 'middleware_pipeline']);
 
         /**
+         * PSR-15: Routed Middleware Pipelines
+         */
+        $container->set(RouteMatcherInterface::class, RouteMatcher::class)
+            ->tag(['routing.matcher']);
+
+        $container->set(RouteContextInterface::class, RouteContext::class)
+            ->tag(['routing.context']);
+
+
+        $container->set(RouterInterface::class, ArgonRouter::class)
+            ->tag(['routing.adapter']);
+
+        $container->set(RequestHandlerResolverInterface::class, RequestHandlerResolver::class);
+
+        /**
          * Kernel and Routing
          */
         $container->set(KernelInterface::class, Kernel::class)
             ->tag(['kernel.http']);
 
-        $container->set(RouterInterface::class, ArgonRouter::class)
-            ->tag(['routing.adapter']);
-
-        $container->set(RouteMatcherInterface::class, RouteMatcher::class)
-            ->tag(['routing.matcher']);
-
-        $container->set(RoutePipeline::class)
-            ->tag(['routing.middleware']);
-
         /**
          * HTTP Middleware
          */
-        $container->set(RouteMatcherMiddleware::class)
-            ->tag(['middleware.http']);
-
-        $container->set(DispatchMiddleware::class)
-            ->tag(['middleware.http']);
+        $container->set(RouteDispatcherMiddleware::class)
+            ->tag(['middleware.http' => ['priority' => 3000, 'group' => ['api', 'web']]]);
 
         $container->set(JsonResponder::class)
-            ->tag(['middleware.http']);
+            ->tag(['middleware.http' => ['priority' => 2300, 'group' => ['api', 'web']]]);
 
         $container->set(PlainTextResponder::class)
-            ->tag(['middleware.http']);
+            ->tag(['middleware.http' => ['priority' => 2100, 'group' => 'web']]);
     }
 }

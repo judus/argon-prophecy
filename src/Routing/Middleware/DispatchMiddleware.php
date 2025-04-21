@@ -53,6 +53,10 @@ final readonly class DispatchMiddleware implements MiddlewareInterface
             throw new RuntimeException("Handler [$serviceId] is not callable (got: $type).");
         }
 
+        if ($serviceId === DispatchMiddleware::class) {
+            throw new RuntimeException("Infinite DispatchMiddleware loop detected.");
+        }
+
         $callable = fn(): mixed => $invoker($route->getArguments());
 
         return $this->pipeline->handle(

@@ -16,6 +16,8 @@ use Throwable;
  */
 interface ExceptionHandlerInterface
 {
+    public function register(): void;
+
     /**
      * Handles an exception by logging it and returning a response.
      *

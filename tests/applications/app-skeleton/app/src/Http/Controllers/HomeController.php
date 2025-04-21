@@ -6,6 +6,7 @@ namespace App\Http\Controllers;
 
 use App\Http\Controllers\TestClassInterface;
 use JsonSerializable;
+use Maduser\Argon\Container\ArgonContainer;
 use Maduser\Argon\Container\Exceptions\ContainerException;
 use Maduser\Argon\Container\Exceptions\NotFoundException;
 use Maduser\Argon\Http\Message\Factory\ResponseFactory;
@@ -22,6 +23,7 @@ use RuntimeException;
 readonly class HomeController
 {
     public function __construct(
+        private ArgonContainer $container,
         private ServerRequestInterface $request,
         private View $view
     ) {
@@ -106,6 +108,10 @@ readonly class HomeController
      */
     public function twigResponse(): HtmlableInterface
     {
-        return $this->view->render('pages/home.twig', ['user' => 'Prophets']);
+        dump($this->container);
+
+        return $this->view->render('pages/home.twig', [
+            'user' => 'Prophets',
+        ]);
     }
 }

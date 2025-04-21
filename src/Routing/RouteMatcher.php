@@ -23,7 +23,10 @@ final readonly class RouteMatcher implements RouteMatcherInterface
         $uri = $this->normalizeUri($request->getUri()->getPath());
         $routeTag = "route." . strtolower($method);
 
-        foreach ($this->container->getTaggedIds($routeTag) as $routePath) {
+        //dump(['RouteMatcher::match() 1' => $this->container]);
+        //dump(['RouteMatcher::match() 2' => $this->container->getTaggedMeta($routeTag)]);
+
+        foreach ($this->container->getTaggedMeta($routeTag) as $routePath => $routeMeta) {
             $routePath = $this->normalizeRoute($routePath);
             $pattern = $this->compileRoutePattern($routePath);
             $middlewareTag = "route.middleware." . strtolower($routePath);
@@ -31,7 +34,7 @@ final readonly class RouteMatcher implements RouteMatcherInterface
             if (preg_match($pattern, $uri, $matches)) {
                 return new MatchedRoute(
                     handler: $routePath,
-                    middleware: $this->container->getTaggedIds($middlewareTag),
+                    middleware: $routeMeta['middleware'] ?? [],
                     arguments: $this->extractParams($matches)
                 );
             }

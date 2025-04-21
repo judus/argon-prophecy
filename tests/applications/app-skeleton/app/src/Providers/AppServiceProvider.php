@@ -17,6 +17,8 @@ use Maduser\Argon\Container\Exceptions\ContainerException;
 use Maduser\Argon\Container\Exceptions\NotFoundException;
 use Maduser\Argon\Exception\ExceptionDispatcher;
 use Maduser\Argon\Contracts\Http\Exception\ExceptionHandlerInterface;
+use Maduser\Argon\Http\Server\Middleware\JsonResponder;
+use Maduser\Argon\Http\Server\Middleware\PlainTextResponder;
 use Maduser\Argon\Routing\Contracts\RouterInterface;
 use Maduser\Argon\View\Provider\ViewServiceProvider;
 use Psr\Http\Message\ServerRequestInterface;
@@ -73,10 +75,12 @@ class AppServiceProvider extends AbstractServiceProvider
     {
         $router = $container->get(RouterInterface::class);
 
-        $router->get('/', [HomeController::class, 'index']);
+        $router->get('/', [HomeController::class, 'index'], ['api', 'web']);
 
-        $router->group([], '/demo', function (RouterInterface $router) {
-            $router->get('/params/{id}/{cat}', [HomeController::class, 'onlyParams']);
+        //dump(['RegisterRoutes()' => $container]);
+
+        $router->group(['web'], '/demo', function (RouterInterface $router) {
+            $router->get('/params/{id}/{cat}', [HomeController::class, 'onlyParams'], [JsonResponder::class]);
             $router->get('/injected', [HomeController::class, 'injectedDependency']);
             $router->get('/injected/{id}', [HomeController::class, 'injectedAndParams']);
             $router->get('/error', [HomeController::class, 'throws']);

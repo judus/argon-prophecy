@@ -16,27 +16,32 @@ use Whoops\Run;
 
 final class WhoopsExceptionHandler implements ExceptionHandlerInterface
 {
+    private ?Run $whoops = null;
+
     public function __construct(
         private LoggerInterface $logger,
     ) {
     }
+
+    public function register(): void
+    {
+        $this->whoops = new Run();
+        $this->whoops->pushHandler(new PrettyPageHandler());
+        $this->whoops->register();
+    }
+
     public function handle(Throwable $e, ServerRequestInterface $request): ResponseInterface
     {
-        $this->logger->error('Unhandled exception', [
-            'exception' => $e,
+        $this->logger->error('Unhandled exception', ['exception' => $e]);
+
+        $html = ($this->whoops ?? (fn() => tap(new Run(), function (Run $w) {
+            $w->pushHandler(new PrettyPageHandler());
+            $w->writeToOutput(false);
+            $w->allowQuit(false);
+        }))())->handleException($e);
+
+        return new Response(new Stream($html), 500, [
+            'Content-Type' => ['text/html'],
         ]);
-
-        $whoops = new Run();
-        $whoops->pushHandler(new PrettyPageHandler());
-        $whoops->writeToOutput(false);
-        $whoops->allowQuit(false);
-
-        $html = $whoops->handleException($e);
-
-        return new Response(
-            new Stream($html),
-            500,
-            ['Content-Type' => ['text/html']]
-        );
     }
 }

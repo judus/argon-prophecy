@@ -14,7 +14,7 @@ final class ArgonRouter implements RouterInterface
     private string $groupPrefix = '';
 
     public function __construct(
-        private readonly RouteCompiler $compiler
+        private readonly RouteCompiler $compiler,
     ) {}
 
     /**

@@ -5,25 +5,23 @@ declare(strict_types=1);
 namespace Maduser\Argon\Routing;
 
 use Maduser\Argon\Container\ArgonContainer;
+use Maduser\Argon\Container\Exceptions\ContainerException;
 use Maduser\Argon\Container\Support\ReflectionUtils;
 use Maduser\Argon\Container\Support\ServiceInvoker;
-use Maduser\Argon\Container\Exceptions\ContainerException;
+use Maduser\Argon\Middleware\Contracts\PipelineStoreInterface;
+use Maduser\Argon\Middleware\MiddlewareStack;
+use Maduser\Argon\Routing\Contracts\RouteCompilerInterface;
 use ReflectionException;
 
-final readonly class RouteCompiler
+final readonly class RouteCompiler implements RouteCompilerInterface
 {
     public function __construct(
-        private ArgonContainer $container
-    ) {}
+        private ArgonContainer         $container,
+        private PipelineStoreInterface $pipelineStore,
+    ) {
+    }
 
     /**
-     * Compiles and registers a route handler and its middleware into the container.
-     *
-     * @param string $method HTTP method, e.g. 'GET'
-     * @param string $path Route path, used as service ID
-     * @param string|array|callable $handler Controller class or [class, method]
-     * @param string[] $middlewares Middleware service IDs
-     *
      * @throws ContainerException
      * @throws ReflectionException
      */
@@ -52,18 +50,80 @@ final readonly class RouteCompiler
 
         $normalizedPath = '/' . ltrim($path, '/');
         $normalizedMethod = strtolower($method);
-        $middlewareTag = "route.middleware." . strtolower($normalizedPath);
         $routeTag = "route.$normalizedMethod";
 
-        // Register invoker for the route
+        $stack = $this->prepareMiddlewareStack($middlewares);
+
+        // 1. Register controller invoker for the route
         $this->container->set($normalizedPath, ServiceInvoker::class, args: [
             'serviceId' => $class,
             'method' => $methodName,
-        ])->tag($routeTag);
+        ])->tag([
+            $routeTag => [
+                'pipeline'   => $stack->getId(),
+                'middleware' => $stack->toArray(),
+            ]
+        ]);
 
-        // Register each middleware under its own middleware tag
-        foreach ($middlewares as $middleware) {
-            $this->container->set($middleware)->tag($middlewareTag);
+        // 2. Register pipeline immediately
+        $this->pipelineStore->register($stack);
+    }
+
+    private function prepareMiddlewareStack(array $middlewares): MiddlewareStack
+    {
+        if (empty($middlewares)) {
+            return new MiddlewareStack([]);
         }
+
+        $meta = $this->container->getTaggedMeta('middleware.http');
+
+        $expanded = $this->expandGroupAliases($middlewares, $meta);
+        return $this->buildSortedStack($expanded, $meta);
+    }
+
+    /**
+     * @param array<string> $input
+     * @param array<string, array> $meta
+     * @return array<string>
+     */
+    private function expandGroupAliases(array $input, array $meta): array
+    {
+        $expanded = [];
+
+        foreach ($input as $alias) {
+            foreach ($meta as $class => $attributes) {
+                $groups = [];
+
+                if (isset($attributes['group'])) {
+                    $groups = is_array($attributes['group'])
+                        ? $attributes['group']
+                        : array_map('trim', explode(',', (string) $attributes['group']));
+                }
+
+                if (in_array($alias, $groups, true)) {
+                    $expanded[] = $class;
+                }
+            }
+        }
+
+        return $expanded !== [] ? array_unique($expanded) : $input;
+    }
+
+    /**
+     * @param array<string> $middleware
+     * @param array<string, array> $meta
+     */
+    private function buildSortedStack(array $middleware, array $meta): MiddlewareStack
+    {
+        $withPriority = [];
+
+        foreach ($middleware as $class) {
+            $priority = $meta[$class]['priority'] ?? 0;
+            $withPriority[] = ['class' => $class, 'priority' => (int) $priority];
+        }
+
+        usort($withPriority, fn ($a, $b) => $b['priority'] <=> $a['priority']);
+
+        return new MiddlewareStack(array_column($withPriority, 'class'));
     }
 }

@@ -75,9 +75,7 @@ class AppServiceProvider extends AbstractServiceProvider
     {
         $router = $container->get(RouterInterface::class);
 
-        $router->get('/', [HomeController::class, 'index'], ['api', 'web']);
-
-        //dump(['RegisterRoutes()' => $container]);
+        $router->get('/', [HomeController::class, 'index'], ['api']);
 
         $router->group(['web'], '/demo', function (RouterInterface $router) {
             $router->get('/params/{id}/{cat}', [HomeController::class, 'onlyParams'], [JsonResponder::class]);

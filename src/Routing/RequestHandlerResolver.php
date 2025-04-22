@@ -27,15 +27,11 @@ final readonly class RequestHandlerResolver implements RequestHandlerResolverInt
     {
         $route = $this->matcher->match($request);
 
-        //dump(['RequestHandlerResolver::resolve()' => $route->toArray()]);
-
         $request = $this->context->set($request, $route);
 
         $this->logger->debug('Matched route', [$route->toArray()]);
 
         $middlewareStack = new MiddlewareStack($route->getMiddleware());
-
-        //dump(['RequestHandlerResolver::resolve()' => $middlewareStack->toArray()]);
 
         $pipeline = $this->pipelines->get($middlewareStack);
 

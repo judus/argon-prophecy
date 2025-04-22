@@ -12,9 +12,11 @@ use Maduser\Argon\Http\Exception\ExceptionFormatter;
 use Maduser\Argon\Contracts\Http\Exception\ExceptionFormatterInterface;
 use Maduser\Argon\Http\Server\Middleware\PlainTextResponder;
 use Maduser\Argon\Http\Message\UploadedFile;
+use Maduser\Argon\Http\Server\Middleware\ResponseResponder;
 use Maduser\Argon\Middleware\Contracts\MiddlewareLoaderInterface;
 use Maduser\Argon\Middleware\Contracts\MiddlewareResolverInterface;
 use Maduser\Argon\Middleware\Contracts\PipelineStoreInterface;
+use Maduser\Argon\Middleware\Factory\RequestHandlerFactory;
 use Maduser\Argon\Middleware\Loader\TaggedMiddlewareLoader;
 use Maduser\Argon\Middleware\Resolver\ContainerMiddlewareResolver;
 use Maduser\Argon\Middleware\Store\ContainerStore;
@@ -43,7 +45,6 @@ use Maduser\Argon\Http\Message\Factory\ServerRequestFactory;
 use Maduser\Argon\Http\Message\Factory\StreamFactory;
 use Maduser\Argon\Http\Message\Factory\UriFactory;
 use Maduser\Argon\Http\Message\Factory\UploadedFileFactory;
-use Maduser\Argon\Http\Server\Factory\RequestHandlerFactory;
 use Maduser\Argon\Http\Server\MiddlewarePipeline;
 use Maduser\Argon\Http\Server\Middleware\JsonResponder;
 use Maduser\Argon\View\Middleware\HtmlResponderMiddleware;
@@ -127,15 +128,12 @@ final class ArgonHttpFoundation extends AbstractServiceProvider
         /**
          * PSR-15: Middleware Pipeline
          */
+        $container->set(RequestHandlerFactory::class);
+
         $container->set(MiddlewareResolverInterface::class, ContainerMiddlewareResolver::class)
             ->tag(['middleware.resolver']);
 
-//        $container->set(MiddlewareLoaderInterface::class, TaggedMiddlewareLoader::class)
-//            ->tag(['middleware.loader']);
-
         $container->set(PipelineStoreInterface::class, ContainerStore::class);
-
-        $container->set(RequestHandlerFactory::class);
 
         $container->set(RequestHandlerInterface::class, MiddlewarePipeline::class)
             ->factory(RequestHandlerFactory::class, 'create')
@@ -149,7 +147,6 @@ final class ArgonHttpFoundation extends AbstractServiceProvider
 
         $container->set(RouteContextInterface::class, RouteContext::class)
             ->tag(['routing.context']);
-
 
         $container->set(RouterInterface::class, ArgonRouter::class)
             ->tag(['routing.adapter']);
@@ -173,5 +170,8 @@ final class ArgonHttpFoundation extends AbstractServiceProvider
 
         $container->set(PlainTextResponder::class)
             ->tag(['middleware.http' => ['priority' => 2100, 'group' => 'web']]);
+
+        $container->set(ResponseResponder::class)
+            ->tag(['middleware.http' => ['priority' => 1100, 'group' => ['api', 'web']]]);
     }
 }

@@ -33,12 +33,6 @@ final readonly class PipelineCompiler
 
         $sortedStack = $this->buildSortedStack($expanded, $meta);
 
-//        dump(['PipelineCompiler' => [
-//            'Stack from route: ' => $stack,
-//            'tagged middlewares in container' => $meta,
-//            'Sorted middlewares: ' => $sortedStack
-//        ]]);
-
         $this->store->register($sortedStack);
     }
 

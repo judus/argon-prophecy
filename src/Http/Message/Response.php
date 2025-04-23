@@ -28,6 +28,11 @@ final class Response implements ResponseInterface
         $this->headers = $this->normalizeHeaders($headers);
         $this->protocol = $protocol;
         $this->reasonPhrase = $reasonPhrase;
+
+        $size = $this->body->getSize();
+        if ($size !== null && !$this->hasHeader('Content-Length')) {
+            $this->headers['content-length'] = [(string) $size];
+        }
     }
 
     public static function create(): static

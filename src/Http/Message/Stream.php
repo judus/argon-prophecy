@@ -73,6 +73,7 @@ final class Stream implements StreamInterface
         }
 
         $this->resource = $resource;
+        $this->updateSize();
     }
 
     public function __toString(): string

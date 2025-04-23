@@ -77,7 +77,7 @@ final class Application implements ApplicationInterface
         $kernel = $this->getKernel($container);
         $this->booted = true;
 
-        $this->logKernelReadyEvent();
+        $this->logKernelReadyEvent($kernel);
         $kernel->handle();
     }
 
@@ -215,11 +215,11 @@ final class Application implements ApplicationInterface
         }
     }
 
-    private function logKernelReadyEvent(): void
+    private function logKernelReadyEvent(KernelInterface $kernel): void
     {
         if ($this->logger && $this->container) {
-            $this->logger->info('Kernel is ready.', [
-                'container' => get_class($this->container),
+            $this->logger->info('Kernel resolved.', [
+                'class' => get_class($kernel),
             ]);
 
             $this->logContainerDebugInfo('kernel_ready');

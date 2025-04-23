@@ -4,15 +4,15 @@ declare(strict_types=1);
 
 namespace Maduser\Argon\Middleware\Contracts;
 
-use Maduser\Argon\Middleware\MiddlewareStack;
+use Maduser\Argon\Contracts\MiddlewareStackInterface;
 use Psr\Http\Server\RequestHandlerInterface;
 
 interface PipelineStoreInterface
 {
     /**
-     * @param MiddlewareStack|string $keyOrStack
+     * @param MiddlewareStackInterface|string $keyOrStack
      */
-    public function get(MiddlewareStack|string $keyOrStack): RequestHandlerInterface;
+    public function get(MiddlewareStackInterface|string $keyOrStack): RequestHandlerInterface;
 
-    public function register(MiddlewareStack $stack): self;
+    public function register(MiddlewareStackInterface $stack): self;
 }

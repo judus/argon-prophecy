@@ -11,6 +11,7 @@ use Maduser\Argon\Container\Exceptions\NotFoundException;
 use Maduser\Argon\Http\Message\Uri;
 use Maduser\Argon\Logging\LoggerServiceProvider;
 use Maduser\Argon\Prophecy\Provider\ArgonHttpFoundation;
+use Maduser\Argon\Routing\RequestHandlerResolver;
 use Maduser\Argon\View\Provider\ViewServiceProvider;
 use PHPUnit\Framework\TestCase;
 use Psr\Http\Message\ResponseInterface;
@@ -47,9 +48,9 @@ abstract class AbstractArgonTestCase extends TestCase
         $request = $this->container->get(ServerRequestInterface::class);
         $request = $request->withMethod($method)->withUri(new Uri($uri));
 
-        $handler = $this->container->get(RequestHandlerInterface::class);
+        $resolved = $this->container->get(RequestHandlerResolver::class)->resolve($request);
 
-        return $handler->handle($request);
+        return $resolved->getHandler()->handle($resolved->getRequest());
     }
 
     /**

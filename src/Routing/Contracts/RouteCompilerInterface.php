@@ -11,5 +11,5 @@ interface RouteCompilerInterface
      * @throws ContainerException
      * @throws ReflectionException
      */
-    public function compile(string $method, string $path, string|array|callable $handler, array $middlewares = []): void;
+    public function compile(string $method, string $pattern, string|array|callable $handler, array $middlewares = []): void;
 }

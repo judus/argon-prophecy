@@ -21,6 +21,7 @@ final readonly class Kernel implements KernelInterface
         private LoggerInterface $logger,
     ) {
         $this->exceptionHandler->register();
+        $this->logger->info('Exception handler registered', ['class' => get_class($this->exceptionHandler)]);
     }
 
     public function handle(): void
@@ -50,12 +51,20 @@ final readonly class Kernel implements KernelInterface
         $this->logger->info('Emitting response', [
             'status' => $response->getStatusCode(),
             'type' => $response->getHeaderLine('Content-Type'),
-            'length' => $response->getBody()->getSize(),
+            'size' => $response->getBody()->getSize(),
         ]);
 
         http_response_code($response->getStatusCode());
 
         foreach ($response->getHeaders() as $name => $values) {
+            if (strtolower((string) $name) === 'content-length') {
+                $size = $response->getBody()->getSize();
+                if ($size !== null) {
+                    header("Content-Length: $size", false);
+                }
+                continue;
+            }
+
             foreach ($values as $value) {
                 header("$name: $value", false);
             }

@@ -13,7 +13,7 @@ final readonly class TaggedMiddlewareLoader implements MiddlewareLoaderInterface
 {
     public function __construct(
         private ArgonContainer $container,
-        private string $tag
+        private ?string $tag = null,
     ) {
     }
 
@@ -22,6 +22,10 @@ final readonly class TaggedMiddlewareLoader implements MiddlewareLoaderInterface
      */
     public function load(): array
     {
+        if ($this->tag === null) {
+            throw new MiddlewareException('No tag provided for loading middleware.');
+        }
+
         $tagged = $this->container->getTaggedMeta($this->tag);
 
         $definitions = [];

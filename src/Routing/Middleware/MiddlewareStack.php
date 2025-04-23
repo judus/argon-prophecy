@@ -1,12 +1,10 @@
 <?php
 
-declare(strict_types=1);
-
-namespace Maduser\Argon\Middleware;
+namespace Maduser\Argon\Routing\Middleware;
 
 use Maduser\Argon\Contracts\MiddlewareStackInterface;
 
-final readonly class MiddlewareStack implements MiddlewareStackInterface
+readonly class MiddlewareStack implements MiddlewareStackInterface
 {
     /**
      * @param list<class-string> $middlewares

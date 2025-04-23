@@ -34,12 +34,12 @@ class AppSkeletonTest extends AbstractHttpTestCase
 
     public function testRouteParamsAreInjected(): void
     {
-        $response = self::$client->get('/demo/params/foo/bar');
+        $response = self::$client->get('/demo/params/123/foo/bar');
         $data = json_decode((string) $response->getBody(), true);
 
         $this->assertSame(200, $response->getStatusCode());
-        $this->assertSame('foo', $data['id']);
-        $this->assertSame('bar', $data['category']);
+        $this->assertSame('123', $data['id']);
+        $this->assertSame('foo/bar', $data['category']);
     }
 
     public function testDependencyIsInjected(): void

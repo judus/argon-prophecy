@@ -7,10 +7,10 @@ namespace Maduser\Argon\Middleware\Store;
 use Maduser\Argon\Container\ArgonContainer;
 use Maduser\Argon\Container\Exceptions\ContainerException;
 use Maduser\Argon\Container\Exceptions\NotFoundException;
+use Maduser\Argon\Contracts\MiddlewareStackInterface;
 use Maduser\Argon\Middleware\Contracts\PipelineStoreInterface;
 use Maduser\Argon\Middleware\Factory\RequestHandlerFactory;
 use Maduser\Argon\Middleware\MiddlewarePipeline;
-use Maduser\Argon\Middleware\MiddlewareStack;
 use Psr\Http\Server\RequestHandlerInterface;
 use RuntimeException;
 
@@ -22,12 +22,12 @@ final readonly class ContainerStore implements PipelineStoreInterface
     }
 
     /**
-     * @param string|MiddlewareStack $keyOrStack
+     * @param MiddlewareStackInterface|string $keyOrStack
      * @return RequestHandlerInterface
      * @throws ContainerException
      * @throws NotFoundException
      */
-    public function get(string|MiddlewareStack $keyOrStack): RequestHandlerInterface
+    public function get(MiddlewareStackInterface|string $keyOrStack): RequestHandlerInterface
     {
         $pipelineId = is_string($keyOrStack)
             ? $keyOrStack
@@ -35,7 +35,7 @@ final readonly class ContainerStore implements PipelineStoreInterface
         //dump(['ContainerStore::get()' => $pipelineId]);
         if (!$this->container->has($pipelineId)) {
             //dump('[ContainerStore::get()] Registering new pipeline');
-            if ($keyOrStack instanceof MiddlewareStack) {
+            if ($keyOrStack instanceof MiddlewareStackInterface) {
                 //dump(['Stack: ' => $keyOrStack->toArray()]);
                 $this->register($keyOrStack);
             }
@@ -51,7 +51,7 @@ final readonly class ContainerStore implements PipelineStoreInterface
     /**
      * @throws ContainerException
      */
-    public function register(MiddlewareStack $stack): self
+    public function register(MiddlewareStackInterface $stack): self
     {
         $pipelineId = $stack->getId();
 

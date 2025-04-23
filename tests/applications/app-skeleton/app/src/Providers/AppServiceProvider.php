@@ -19,7 +19,13 @@ use Maduser\Argon\Exception\ExceptionDispatcher;
 use Maduser\Argon\Contracts\Http\Exception\ExceptionHandlerInterface;
 use Maduser\Argon\Http\Server\Middleware\JsonResponder;
 use Maduser\Argon\Http\Server\Middleware\PlainTextResponder;
+use Maduser\Argon\Middleware\PipelineManager;
+use Maduser\Argon\Routing\ArgonRouter;
 use Maduser\Argon\Routing\Contracts\RouterInterface;
+use Maduser\Argon\Routing\Contracts\RouteStoreInterface;
+use Maduser\Argon\Routing\RouteManager;
+use Maduser\Argon\Routing\Store\ContainerStore as RouteStoreAlias;
+use Maduser\Argon\Middleware\Store\ContainerStore as PipelineStoreAlias;
 use Maduser\Argon\View\Provider\ViewServiceProvider;
 use Psr\Http\Message\ServerRequestInterface;
 use Psr\Log\LoggerInterface;
@@ -39,8 +45,20 @@ class AppServiceProvider extends AbstractServiceProvider
         $parameters = $container->getParameters();
 
         if ($parameters->get('debug')) {
-            $container->set(ExceptionHandlerInterface::class, WhoopsExceptionHandler::class);
+            //$container->set(ExceptionHandlerInterface::class, WhoopsExceptionHandler::class);
         }
+
+        $container->set(RouteManager::class, args: [
+            'store' => RouteStoreAlias::class
+        ]);
+
+        $container->set(PipelineManager::class, args: [
+            'store' => PipelineStoreAlias::class
+        ]);
+
+        $container->set(RouterInterface::class, ArgonRouter::class, args: [
+            'pipelines' => PipelineManager::class
+        ]);
 
         $container->set(HomeController::class);
         $container->set(TestClassInterface::class, TestClass::class);
@@ -78,13 +96,14 @@ class AppServiceProvider extends AbstractServiceProvider
         $router->get('/', [HomeController::class, 'index'], ['api']);
 
         $router->group(['web'], '/demo', function (RouterInterface $router) {
-            $router->get('/params/{id}/{cat}', [HomeController::class, 'onlyParams'], [JsonResponder::class]);
+            $router->get('/params/{id:\d+}/{cat:.*}', [HomeController::class, 'onlyParams'], [JsonResponder::class]);
             $router->get('/injected', [HomeController::class, 'injectedDependency']);
             $router->get('/injected/{id}', [HomeController::class, 'injectedAndParams']);
             $router->get('/error', [HomeController::class, 'throws']);
             $router->get('/plain', [HomeController::class, 'stringResponse']);
             $router->get('/response/object', [HomeController::class, 'responseObject']);
             $router->get('/twig', [HomeController::class, 'twigResponse']);
+            $router->get('/container/dump/{arg?}', [HomeController::class, 'dumpContainer'], [], 'container.dump');
         });
     }
 

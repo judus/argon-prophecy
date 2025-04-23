@@ -27,7 +27,7 @@ final readonly class RouteMatcherMiddleware implements MiddlewareInterface
 
         $this->logger->info('Route matched', [
             'handler' => $route->getHandler(),
-            'middlewares' => $route->getMiddleware(),
+            'middlewares' => $route->getMiddlewares(),
             'arguments' => $route->getArguments(),
         ]);
 

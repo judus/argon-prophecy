@@ -5,30 +5,8 @@ declare(strict_types=1);
 namespace Maduser\Argon\Routing\Contracts;
 
 use Closure;
+use Maduser\Argon\Routing\Contracts\RouteInterface;
 
-interface MatchedRouteInterface
+interface MatchedRouteInterface extends RouteInterface
 {
-    /**
-     * @return class-string|array{0: class-string, 1: string}|Closure
-     */
-    public function getHandler(): string|array|Closure;
-
-    public function getMethod(): string;
-
-    /**
-     * @return list<class-string>
-     */
-    public function getMiddleware(): array;
-
-    /**
-     * @return array<string, scalar>
-     */
-    public function getArguments(): array;
-
-    /**
-     * @return array<string, mixed>
-     */
-    public function toArray(): array;
-
-    public function __toString(): string;
 }

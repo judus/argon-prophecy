@@ -11,6 +11,7 @@ use Maduser\Argon\Container\Exceptions\ContainerException;
 use Maduser\Argon\Container\Exceptions\NotFoundException;
 use Maduser\Argon\Http\Message\Factory\ResponseFactory;
 use Maduser\Argon\Http\Message\Response;
+use Maduser\Argon\Routing\Contracts\RouteContextInterface;
 use Maduser\Argon\View\Contracts\HtmlableInterface;
 use Maduser\Argon\View\Contracts\TemplateEngineInterface;
 use Maduser\Argon\View\Response\ViewResponse;
@@ -25,6 +26,7 @@ readonly class HomeController
     public function __construct(
         private ArgonContainer $container,
         private ServerRequestInterface $request,
+        private RouteContextInterface $routeContext,
         private View $view
     ) {
     }
@@ -58,6 +60,7 @@ readonly class HomeController
                         'response object' => "$baseUrl/demo/response/object",
                         'twig response' => "$baseUrl/demo/twig",
                         'throws exception' => "$baseUrl/demo/error",
+                        'dump container' => "$baseUrl/demo/container/dump",
                     ],
                 ];
             }
@@ -111,5 +114,15 @@ readonly class HomeController
         return $this->view->render('pages/home.twig', [
             'user' => 'Prophets',
         ]);
+    }
+
+    public function dumpContainer(): Response
+    {
+        ob_start();
+        dump($this->container->toArray());
+        dump($this->routeContext);
+        $content = ob_get_clean();
+
+        return Response::html($content);
     }
 }

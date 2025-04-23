@@ -14,17 +14,22 @@ use Maduser\Argon\Http\Server\Middleware\PlainTextResponder;
 use Maduser\Argon\Http\Message\UploadedFile;
 use Maduser\Argon\Http\Server\Middleware\ResponseResponder;
 use Maduser\Argon\Middleware\Contracts\MiddlewareLoaderInterface;
+use Maduser\Argon\Middleware\Contracts\MiddlewarePipelineCacheInterface;
 use Maduser\Argon\Middleware\Contracts\MiddlewareResolverInterface;
 use Maduser\Argon\Middleware\Contracts\PipelineStoreInterface;
 use Maduser\Argon\Middleware\Factory\RequestHandlerFactory;
 use Maduser\Argon\Middleware\Loader\TaggedMiddlewareLoader;
+use Maduser\Argon\Middleware\MiddlewarePipelineCache;
+use Maduser\Argon\Middleware\PipelineManager;
 use Maduser\Argon\Middleware\Resolver\ContainerMiddlewareResolver;
-use Maduser\Argon\Middleware\Store\ContainerStore;
+use Maduser\Argon\Middleware\Store\ContainerStore as MiddlewareStoreAlias;
 use Maduser\Argon\Routing\Contracts\RequestHandlerResolverInterface;
 use Maduser\Argon\Routing\Contracts\RouteContextInterface;
+use Maduser\Argon\Routing\Contracts\RouteStoreInterface;
 use Maduser\Argon\Routing\Middleware\RouteDispatcherMiddleware;
 use Maduser\Argon\Routing\RequestHandlerResolver;
 use Maduser\Argon\Routing\RouteContext;
+use Maduser\Argon\Routing\Store\ContainerStore as RouteStoreAlias;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestFactoryInterface;
 use Psr\Http\Message\ServerRequestInterface;
@@ -128,28 +133,40 @@ final class ArgonHttpFoundation extends AbstractServiceProvider
         /**
          * PSR-15: Middleware Pipeline
          */
-        $container->set(RequestHandlerFactory::class);
+        $container->set(RequestHandlerFactory::class)
+            ->tag(['middleware.factory']);
+
+        $container->set(MiddlewareLoaderInterface::class, TaggedMiddlewareLoader::class)
+            ->tag(['middleware.loader']);
+
+        $container->set(MiddlewarePipelineCacheInterface::class, MiddlewarePipelineCache::class)
+            ->tag(['middleware.cache']);
 
         $container->set(MiddlewareResolverInterface::class, ContainerMiddlewareResolver::class)
             ->tag(['middleware.resolver']);
 
-        $container->set(PipelineStoreInterface::class, ContainerStore::class);
+        $container->set(PipelineStoreInterface::class, MiddlewareStoreAlias::class)
+            ->tag(['middleware.store']);
+
+        $container->set(PipelineManager::class);
 
         $container->set(RequestHandlerInterface::class, MiddlewarePipeline::class)
             ->factory(RequestHandlerFactory::class, 'create')
-            ->tag(['http', 'psr-15', 'middleware_pipeline']);
+            ->tag(['middleware.pipeline', 'psr-15']);
 
         /**
          * PSR-15: Routed Middleware Pipelines
          */
+        $container->set(RouteStoreInterface::class, RouteStoreAlias::class);
+
         $container->set(RouteMatcherInterface::class, RouteMatcher::class)
             ->tag(['routing.matcher']);
 
         $container->set(RouteContextInterface::class, RouteContext::class)
             ->tag(['routing.context']);
 
-        $container->set(RouterInterface::class, ArgonRouter::class)
-            ->tag(['routing.adapter']);
+        $container->set(RouterInterface::class, ArgonRouter::class, [
+        ])->tag(['routing.adapter']);
 
         $container->set(RequestHandlerResolverInterface::class, RequestHandlerResolver::class);
 

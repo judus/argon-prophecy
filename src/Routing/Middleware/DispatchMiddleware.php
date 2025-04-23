@@ -60,7 +60,7 @@ final readonly class DispatchMiddleware implements MiddlewareInterface
         $callable = fn(): mixed => $invoker($route->getArguments());
 
         return $this->pipeline->handle(
-            $route->getMiddleware(),
+            $route->getMiddlewares(),
             $callable,
             $request,
             $handler

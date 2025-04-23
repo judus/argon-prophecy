@@ -26,16 +26,21 @@ final readonly class RequestHandlerResolver implements RequestHandlerResolverInt
     public function resolve(ServerRequestInterface $request): ResolvedRequestHandler
     {
         $route = $this->matcher->match($request);
-
         $request = $this->context->set($request, $route);
 
-        $this->logger->debug('Matched route', [$route->toArray()]);
+        $this->logger->info('Matched route', [
+            'name' => $route->getName(),
+            'arguments' => $route->getArguments(),
+            'pipelineId' => $route->getPipelineId(),
+        ]);
 
-        $middlewareStack = new MiddlewareStack($route->getMiddleware());
+        $pipeline = $route->getPipelineId() !== null
+            ? $this->pipelines->get($route->getPipelineId())
+            : $this->pipelines->get(new MiddlewareStack($route->getMiddlewares()));
 
-        $pipeline = $this->pipelines->get($middlewareStack);
-
-        $this->logger->debug('Pipeline resolved', [$middlewareStack->toArray()]);
+        $this->logger->info('RequestHandler resolved', [
+            'pipeline' => $route->getPipelineId() ?? (new MiddlewareStack($route->getMiddlewares()))->toArray(),
+        ]);
 
         return new ResolvedRequestHandler($pipeline, $request);
     }

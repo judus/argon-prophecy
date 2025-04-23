@@ -40,7 +40,7 @@ final readonly class RouteDispatcherMiddleware implements MiddlewareInterface
                 throw new RuntimeException('Infinite RouteDispatcherMiddleware loop detected.');
             }
 
-            $invoker = $this->container->get($serviceId);
+            $invoker = $this->container->get($route->getPattern());
 
             if (!is_callable($invoker)) {
                 $type = get_debug_type($invoker);

@@ -2,32 +2,35 @@
 
 declare(strict_types=1);
 
-namespace Maduser\Argon\View\Middleware;
+namespace Maduser\Argon\Http\Server\Middleware;
 
-use Maduser\Argon\View\Contracts\HtmlableInterface;
+use Maduser\Argon\Contracts\Http\Server\Middleware\HtmlResponderInterface;
+use Maduser\Argon\Contracts\Http\Server\Middleware\HtmlableInterface;
+use Maduser\Argon\Contracts\Support\ResultContextInterface;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
 use Psr\Http\Message\StreamFactoryInterface;
 use Psr\Http\Server\MiddlewareInterface;
 use Psr\Http\Server\RequestHandlerInterface;
 
-final readonly class HtmlResponderMiddleware implements MiddlewareInterface
+final readonly class HtmlResponder implements MiddlewareInterface, HtmlResponderInterface
 {
     public function __construct(
-        private ResponseInterface      $response,
-        private StreamFactoryInterface $streamFactory
+        private ResponseInterface $response,
+        private StreamFactoryInterface $streamFactory,
+        private ResultContextInterface $result,
     ) {
     }
 
     public function process(ServerRequestInterface $request, RequestHandlerInterface $handler): ResponseInterface
     {
-        $result = $request->getAttribute('rawResult');
+        /** @var HtmlableInterface $result */
+        $result = $this->result->get();
 
         if ($result instanceof HtmlableInterface) {
             return $this->respondWithHtml($result->toHtml());
         }
 
-        // Pass through to next middleware
         return $handler->handle($request);
     }
 

@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace Maduser\Argon\Http\Server;
 
+use Closure;
+use Maduser\Argon\Http\Exception\EmptyMiddlewareChainException;
 use Maduser\Argon\Http\Message\Factory\ResponseFactory;
 use Maduser\Argon\Http\Message\Stream;
 use Psr\Http\Message\ResponseFactoryInterface;
@@ -19,31 +21,33 @@ final class MiddlewarePipeline implements RequestHandlerInterface
     /** @var MiddlewareInterface[] */
     private array $middleware = [];
 
-    private RequestHandlerInterface $finalHandler;
-
     public function __construct(
-        private readonly LoggerInterface $logger,
-        ?RequestHandlerInterface $finalHandler = null,
+        private readonly ?LoggerInterface $logger = null,
+        private ?RequestHandlerInterface $finalHandler = null,
     ) {
-        $this->finalHandler = $finalHandler ?? new class implements RequestHandlerInterface {
-            public function handle(ServerRequestInterface $request): ResponseInterface
-            {
-                $result = $request->getAttribute('rawResult');
-
-                if ($result instanceof ResponseInterface) {
-                    return $result;
+        if ($this->finalHandler === null) {
+            $this->finalHandler = new class ($this->logger) implements RequestHandlerInterface {
+                public function __construct(
+                    private readonly ?LoggerInterface $logger = null,
+                ) {
+                    $this->logger?->info('Creating final middleware');
                 }
 
-                throw new RuntimeException('No middleware produced a valid response.');
-            }
-        };
+                public function handle(ServerRequestInterface $request): ResponseInterface
+                {
+                    $this->logger?->info('Middleware chain completed but no response was set.');
+
+                    throw new EmptyMiddlewareChainException();
+                }
+            };
+        }
     }
 
     public function pipe(MiddlewareInterface $middleware): self
     {
         $this->middleware[] = $middleware;
 
-        $this->logger->info('Middleware registered', ['class' => get_class($middleware)]);
+        $this->logger?->info('Middleware registered', ['class' => get_class($middleware)]);
 
         return $this;
     }
@@ -56,11 +60,10 @@ final class MiddlewarePipeline implements RequestHandlerInterface
     private function createHandler(int $index): RequestHandlerInterface
     {
         if (!isset($this->middleware[$index])) {
-            $this->logger->info('Executing final middleware');
             return $this->finalHandler;
         }
 
-        $this->logger->info('Executing middleware', ['middleware' => $this->middleware[$index]]);
+        $this->logger?->info('Executing middleware', ['middleware' => $this->middleware[$index]]);
 
         return new class (
             $this->middleware[$index],
@@ -68,7 +71,7 @@ final class MiddlewarePipeline implements RequestHandlerInterface
         ) implements RequestHandlerInterface {
             public function __construct(
                 private readonly MiddlewareInterface $middleware,
-                private readonly RequestHandlerInterface $next
+                private readonly RequestHandlerInterface $next,
             ) {
             }
 

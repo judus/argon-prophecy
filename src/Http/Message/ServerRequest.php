@@ -37,11 +37,13 @@ final class ServerRequest implements ServerRequestInterface
         $this->headers = array_change_key_case($headers, CASE_LOWER);
     }
 
+    /** @inheritdoc */
     public function getProtocolVersion(): string
     {
         return $this->protocol;
     }
 
+    /** @inheritdoc */
     public function withProtocolVersion($version): self
     {
         $clone = clone $this;
@@ -49,26 +51,31 @@ final class ServerRequest implements ServerRequestInterface
         return $clone;
     }
 
+    /** @inheritdoc */
     public function getHeaders(): array
     {
         return $this->headers;
     }
 
+    /** @inheritdoc */
     public function hasHeader($name): bool
     {
         return isset($this->headers[strtolower($name)]);
     }
 
+    /** @inheritdoc */
     public function getHeader($name): array
     {
         return $this->headers[strtolower($name)] ?? [];
     }
 
+    /** @inheritdoc */
     public function getHeaderLine($name): string
     {
         return implode(', ', $this->getHeader($name));
     }
 
+    /** @inheritdoc */
     public function withHeader($name, $value): self
     {
         $clone = clone $this;
@@ -76,6 +83,7 @@ final class ServerRequest implements ServerRequestInterface
         return $clone;
     }
 
+    /** @inheritdoc */
     public function withAddedHeader($name, $value): self
     {
         $clone = clone $this;
@@ -84,6 +92,7 @@ final class ServerRequest implements ServerRequestInterface
         return $clone;
     }
 
+    /** @inheritdoc */
     public function withoutHeader($name): self
     {
         $clone = clone $this;
@@ -91,11 +100,13 @@ final class ServerRequest implements ServerRequestInterface
         return $clone;
     }
 
+    /** @inheritdoc */
     public function getBody(): StreamInterface
     {
         return $this->body;
     }
 
+    /** @inheritdoc */
     public function withBody(StreamInterface $body): self
     {
         $clone = clone $this;
@@ -103,6 +114,7 @@ final class ServerRequest implements ServerRequestInterface
         return $clone;
     }
 
+    /** @inheritdoc */
     public function getRequestTarget(): string
     {
         return $this->requestTarget !== ''
@@ -110,6 +122,7 @@ final class ServerRequest implements ServerRequestInterface
             : ($this->uri->getPath() . ($this->uri->getQuery() ? '?' . $this->uri->getQuery() : ''));
     }
 
+    /** @inheritdoc */
     public function withRequestTarget($requestTarget): self
     {
         if (!is_string($requestTarget)) {
@@ -121,11 +134,13 @@ final class ServerRequest implements ServerRequestInterface
         return $clone;
     }
 
+    /** @inheritdoc */
     public function getMethod(): string
     {
         return $this->method;
     }
 
+    /** @inheritdoc */
     public function withMethod($method): self
     {
         $clone = clone $this;
@@ -133,11 +148,13 @@ final class ServerRequest implements ServerRequestInterface
         return $clone;
     }
 
+    /** @inheritdoc */
     public function getUri(): UriInterface
     {
         return $this->uri;
     }
 
+    /** @inheritdoc */
     public function withUri(UriInterface $uri, $preserveHost = false): self
     {
         $clone = clone $this;
@@ -153,16 +170,19 @@ final class ServerRequest implements ServerRequestInterface
         return $clone;
     }
 
+    /** @inheritdoc */
     public function getServerParams(): array
     {
         return $this->serverParams;
     }
 
+    /** @inheritdoc */
     public function getCookieParams(): array
     {
         return $this->cookieParams;
     }
 
+    /** @inheritdoc */
     public function withCookieParams(array $cookies): self
     {
         $clone = clone $this;
@@ -170,11 +190,13 @@ final class ServerRequest implements ServerRequestInterface
         return $clone;
     }
 
+    /** @inheritdoc */
     public function getQueryParams(): array
     {
         return $this->queryParams;
     }
 
+    /** @inheritdoc */
     public function withQueryParams(array $query): self
     {
         $clone = clone $this;
@@ -182,11 +204,13 @@ final class ServerRequest implements ServerRequestInterface
         return $clone;
     }
 
+    /** @inheritdoc */
     public function getUploadedFiles(): array
     {
         return $this->uploadedFiles;
     }
 
+    /** @inheritdoc */
     public function withUploadedFiles(array $uploadedFiles): self
     {
         $clone = clone $this;
@@ -194,11 +218,13 @@ final class ServerRequest implements ServerRequestInterface
         return $clone;
     }
 
+    /** @inheritdoc */
     public function getParsedBody(): null|array|object
     {
         return $this->parsedBody;
     }
 
+    /** @inheritdoc */
     public function withParsedBody($data): self
     {
         if (!is_array($data) && !is_object($data) && $data !== null) {
@@ -210,16 +236,19 @@ final class ServerRequest implements ServerRequestInterface
         return $clone;
     }
 
+    /** @inheritdoc */
     public function getAttributes(): array
     {
         return $this->attributes;
     }
 
+    /** @inheritdoc */
     public function getAttribute($name, $default = null): mixed
     {
         return $this->attributes[$name] ?? $default;
     }
 
+    /** @inheritdoc */
     public function withAttribute($name, $value): self
     {
         $clone = clone $this;
@@ -227,6 +256,7 @@ final class ServerRequest implements ServerRequestInterface
         return $clone;
     }
 
+    /** @inheritdoc */
     public function withoutAttribute($name): self
     {
         $clone = clone $this;

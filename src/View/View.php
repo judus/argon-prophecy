@@ -8,7 +8,7 @@ use InvalidArgumentException;
 use Maduser\Argon\Container\ArgonContainer;
 use Maduser\Argon\Container\Exceptions\ContainerException;
 use Maduser\Argon\Container\Exceptions\NotFoundException;
-use Maduser\Argon\View\Contracts\HtmlableInterface;
+use Maduser\Argon\Contracts\Http\Server\Middleware\HtmlableInterface;
 use Maduser\Argon\View\Contracts\TemplateEngineInterface;
 use Maduser\Argon\View\Response\ViewResponse;
 use RuntimeException;

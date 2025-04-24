@@ -8,5 +8,5 @@ use Psr\Http\Message\ServerRequestInterface;
 
 interface RouteContextInterface
 {
-    public function getRoute(?ServerRequestInterface $request): RouteInterface;
+    public function getRoute(?ServerRequestInterface $request = null): RouteInterface;
 }

@@ -4,27 +4,22 @@ declare(strict_types=1);
 
 namespace App\Providers;
 
-use App\Console\GreetCommand;
-use App\Console\SymfonyCommand;
 use App\Exceptions\WhoopsExceptionHandler;
 use App\Http\Controllers\HomeController;
 use App\Http\Controllers\TestClass;
 use App\Http\Controllers\TestClassInterface;
 use Maduser\Argon\Container\AbstractServiceProvider;
 use Maduser\Argon\Container\ArgonContainer;
-use Maduser\Argon\Container\Contracts\ParameterStoreInterface;
 use Maduser\Argon\Container\Exceptions\ContainerException;
 use Maduser\Argon\Container\Exceptions\NotFoundException;
 use Maduser\Argon\Exception\ExceptionDispatcher;
 use Maduser\Argon\Contracts\Http\Exception\ExceptionHandlerInterface;
 use Maduser\Argon\Http\Server\Middleware\JsonResponder;
-use Maduser\Argon\Http\Server\Middleware\PlainTextResponder;
+use Maduser\Argon\Middleware\Provider\ArgonMiddlewareServiceProvider;
 use Maduser\Argon\Middleware\PipelineManager;
 use Maduser\Argon\Routing\ArgonRouter;
+use Maduser\Argon\Routing\ArgonRoutingServiceProvider;
 use Maduser\Argon\Routing\Contracts\RouterInterface;
-use Maduser\Argon\Routing\Contracts\RouteStoreInterface;
-use Maduser\Argon\Routing\RouteManager;
-use Maduser\Argon\Routing\Store\ContainerStore as RouteStoreAlias;
 use Maduser\Argon\Middleware\Store\ContainerStore as PipelineStoreAlias;
 use Maduser\Argon\View\Provider\ViewServiceProvider;
 use Psr\Http\Message\ServerRequestInterface;
@@ -42,31 +37,49 @@ class AppServiceProvider extends AbstractServiceProvider
     {
         $this->configureParameters($container);
 
-        $parameters = $container->getParameters();
-
-        if ($parameters->get('debug')) {
-            //$container->set(ExceptionHandlerInterface::class, WhoopsExceptionHandler::class);
+        if ($container->getParameters()->get('debug')) {
+            $container->set(ExceptionHandlerInterface::class, WhoopsExceptionHandler::class);
         }
 
-        $container->set(RouteManager::class, args: [
-            'store' => RouteStoreAlias::class
+        /** Routing */
+        $container->register(ArgonRoutingServiceProvider::class);
+
+        /** Middlewares */
+        $container->register(ArgonMiddlewareServiceProvider::class);
+
+        /** HTTP Response Middlewares */
+        //$container->register(ArgonResponderServiceProvider::class);
+
+        /** Database */
+        $container->register(EloquentServiceProvider::class);
+
+        /** Views */
+        $container->register(ViewServiceProvider::class);
+
+        /**
+         * Overrides
+         */
+        $container->set(RouterInterface::class, ArgonRouter::class, args: [
+            'pipelines' => PipelineManager::class
         ]);
 
         $container->set(PipelineManager::class, args: [
             'store' => PipelineStoreAlias::class
         ]);
 
-        $container->set(RouterInterface::class, ArgonRouter::class, args: [
-            'pipelines' => PipelineManager::class
-        ]);
-
+        /**
+         * App Services
+         */
         $container->set(HomeController::class);
         $container->set(TestClassInterface::class, TestClass::class);
 
-        $container->register(EloquentServiceProvider::class);
-        $container->register(ViewServiceProvider::class);
+        /** App Middlewares */
 
+
+        /** App Routes */
         $this->registerRoutes($container);
+
+        /** Exceptions handlers */
         $this->registerExceptionHandling($container);
     }
 

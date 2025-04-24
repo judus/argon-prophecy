@@ -9,10 +9,10 @@ use JsonSerializable;
 use Maduser\Argon\Container\ArgonContainer;
 use Maduser\Argon\Container\Exceptions\ContainerException;
 use Maduser\Argon\Container\Exceptions\NotFoundException;
+use Maduser\Argon\Contracts\Http\Server\Middleware\HtmlableInterface;
 use Maduser\Argon\Http\Message\Factory\ResponseFactory;
 use Maduser\Argon\Http\Message\Response;
 use Maduser\Argon\Routing\Contracts\RouteContextInterface;
-use Maduser\Argon\View\Contracts\HtmlableInterface;
 use Maduser\Argon\View\Contracts\TemplateEngineInterface;
 use Maduser\Argon\View\Response\ViewResponse;
 use Maduser\Argon\View\View;
@@ -35,7 +35,7 @@ readonly class HomeController
     {
         $request = $this->request;
 
-        return new class($request) implements JsonSerializable {
+        return new class ($request) implements JsonSerializable {
             public function __construct(private readonly ServerRequestInterface $request)
             {
             }
@@ -43,7 +43,7 @@ readonly class HomeController
             public function jsonSerialize(): array
             {
                 $uri = $this->request->getUri();
-                $baseUrl = rtrim($uri->getScheme() . '://' . $uri->getHost() . ':' . (string )$uri->getPort(), '/');
+                $baseUrl = rtrim($uri->getScheme() . '://' . $uri->getHost() . ':' . (string)$uri->getPort(), '/');
 
                 return [
                     'name' => 'Argon Prophecy',

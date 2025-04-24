@@ -5,6 +5,9 @@ declare(strict_types=1);
 namespace Maduser\Argon\Routing\Middleware;
 
 use Closure;
+use Maduser\Argon\Contracts\Support\ResultContextInterface;
+use Maduser\Argon\Routing\Contracts\RouteInterface;
+use Maduser\Argon\Support\ResultContext;
 use Maduser\Argon\Routing\Contracts\MatchedRouteInterface;
 use Maduser\Argon\Routing\Contracts\RouteContextInterface;
 use Psr\Container\ContainerInterface;
@@ -18,14 +21,14 @@ final readonly class RouteDispatcherMiddleware implements MiddlewareInterface
 {
     public function __construct(
         private ContainerInterface $container,
-        private RouteContextInterface $routeContext,
+        private RouteContextInterface $context,
+        private ResultContextInterface $result,
     ) {
     }
 
     public function process(ServerRequestInterface $request, RequestHandlerInterface $handler): ResponseInterface
     {
-        /** @var MatchedRouteInterface $route */
-        $route = $this->routeContext->getRoute();
+        $route = $this->context->getRoute();
 
         $handlerDef = $route->getHandler();
 
@@ -48,9 +51,9 @@ final readonly class RouteDispatcherMiddleware implements MiddlewareInterface
 
         $args = $route->getArguments();
 
-        $rawResult = $invoker($args);
+        $result = $invoker($args);
 
-        $request = $request->withAttribute('rawResult', $rawResult);
+        $this->result->set($result);
 
         return $handler->handle($request);
     }

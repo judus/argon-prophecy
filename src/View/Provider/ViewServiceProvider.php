@@ -8,10 +8,11 @@ use Maduser\Argon\Container\AbstractServiceProvider;
 use Maduser\Argon\Container\ArgonContainer;
 use Maduser\Argon\Container\Exceptions\ContainerException;
 use Maduser\Argon\Container\Exceptions\NotFoundException;
+use Maduser\Argon\Contracts\Http\Server\Middleware\HtmlResponderInterface;
 use Maduser\Argon\View\Contracts\TemplateEngineInterface;
 use Maduser\Argon\View\Engine\TwigEngine;
 use Maduser\Argon\View\View;
-use Maduser\Argon\View\Middleware\HtmlResponderMiddleware;
+use Maduser\Argon\Http\Server\Middleware\HtmlResponder;
 use Twig\Error\LoaderError;
 
 class ViewServiceProvider extends AbstractServiceProvider
@@ -31,13 +32,6 @@ class ViewServiceProvider extends AbstractServiceProvider
 
         // Register the View manager
         $container->set(View::class);
-
-        // Register HTML middleware
-        $container->set(HtmlResponderMiddleware::class)
-            ->tag(['middleware.http' => [
-                'priority' => 2200,
-                'group' => ['web'],
-            ]]);
     }
 
     /**

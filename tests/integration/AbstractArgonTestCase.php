@@ -12,12 +12,9 @@ use Maduser\Argon\Http\Message\Uri;
 use Maduser\Argon\Logging\LoggerServiceProvider;
 use Maduser\Argon\Prophecy\Provider\ArgonHttpFoundation;
 use Maduser\Argon\Routing\RequestHandlerResolver;
-use Maduser\Argon\View\Provider\ViewServiceProvider;
 use PHPUnit\Framework\TestCase;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
-use Psr\Http\Message\StreamInterface;
-use Psr\Http\Server\RequestHandlerInterface;
 
 abstract class AbstractArgonTestCase extends TestCase
 {

@@ -48,9 +48,9 @@ abstract class AbstractArgonTestCase extends TestCase
         $request = $this->container->get(ServerRequestInterface::class);
         $request = $request->withMethod($method)->withUri(new Uri($uri));
 
-        $resolved = $this->container->get(RequestHandlerResolver::class)->resolve($request);
+        $handler = $this->container->get(RequestHandlerResolver::class)->resolve($request);
 
-        return $resolved->getHandler()->handle($resolved->getRequest());
+        return $handler->handle($request);
     }
 
     /**

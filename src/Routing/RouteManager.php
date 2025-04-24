@@ -8,6 +8,7 @@ use Closure;
 use Maduser\Argon\Routing\Contracts\RouteInterface;
 use Maduser\Argon\Routing\Contracts\RouteStoreInterface;
 use Maduser\Argon\Routing\Store\InMemoryStore;
+use Psr\Http\Server\MiddlewareInterface;
 
 final class RouteManager
 {
@@ -28,7 +29,7 @@ final class RouteManager
      *      compiled?: string,
      *      handler: class-string|array{0: class-string, 1: string}|Closure,
      *      pipelineId?: string,
-     *      middlewares?: list<class-string>
+     *      middlewares?: list<class-string<MiddlewareInterface>|MiddlewareInterface>
      *  }>
      */
     public function getRoutesFor(string $method): array

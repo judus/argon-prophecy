@@ -9,6 +9,7 @@ use Maduser\Argon\Contracts\Http\Exception\ExceptionHandlerInterface;
 use Maduser\Argon\Routing\Contracts\RequestHandlerResolverInterface;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
+use Psr\Http\Server\RequestHandlerInterface;
 use Psr\Log\LoggerInterface;
 use Throwable;
 
@@ -16,7 +17,7 @@ final readonly class Kernel implements KernelInterface
 {
     public function __construct(
         private ServerRequestInterface $request,
-        private RequestHandlerResolverInterface $resolver,
+        private RequestHandlerInterface $handler,
         private ExceptionHandlerInterface $exceptionHandler,
         private LoggerInterface $logger,
     ) {
@@ -32,12 +33,7 @@ final readonly class Kernel implements KernelInterface
                 'uri' => (string) $this->request->getUri(),
             ]);
 
-            $resolved = $this->resolver->resolve($this->request);
-
-            $handler = $resolved->getHandler();
-            $request = $resolved->getRequest();
-
-            $response = $handler->handle($request);
+            $response = $this->handler->handle($this->request);
         } catch (Throwable $e) {
             $this->handleThrowable($e);
             return;

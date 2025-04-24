@@ -2,10 +2,10 @@
 
 namespace Maduser\Argon\Routing\Contracts;
 
-use Maduser\Argon\Routing\ResolvedRequestHandler;
 use Psr\Http\Message\ServerRequestInterface;
+use Psr\Http\Server\RequestHandlerInterface;
 
 interface RequestHandlerResolverInterface
 {
-    public function resolve(ServerRequestInterface $request): ResolvedRequestHandler;
+    public function resolve(?ServerRequestInterface $request = null): RequestHandlerInterface;
 }

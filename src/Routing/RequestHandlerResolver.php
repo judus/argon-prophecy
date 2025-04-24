@@ -16,17 +16,15 @@ use Psr\Log\LoggerInterface;
 final readonly class RequestHandlerResolver implements RequestHandlerResolverInterface
 {
     public function __construct(
-        private RouteMatcherInterface $matcher,
         private RouteContextInterface $context,
         private PipelineStoreInterface $pipelines,
         private LoggerInterface $logger,
     ) {
     }
 
-    public function resolve(ServerRequestInterface $request): ResolvedRequestHandler
+    public function resolve(?ServerRequestInterface $request = null): RequestHandlerInterface
     {
-        $route = $this->matcher->match($request);
-        $request = $this->context->set($request, $route);
+        $route = $this->context->getRoute($request);
 
         $this->logger->info('Matched route', [
             'name' => $route->getName(),
@@ -42,6 +40,6 @@ final readonly class RequestHandlerResolver implements RequestHandlerResolverInt
             'pipeline' => $route->getPipelineId() ?? (new MiddlewareStack($route->getMiddlewares()))->toArray(),
         ]);
 
-        return new ResolvedRequestHandler($pipeline, $request);
+        return $pipeline;
     }
 }

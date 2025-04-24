@@ -32,20 +32,14 @@ final readonly class ContainerStore implements PipelineStoreInterface
         $pipelineId = is_string($keyOrStack)
             ? $keyOrStack
             : $keyOrStack->getId();
-        //dump(['ContainerStore::get()' => $pipelineId]);
+
         if (!$this->container->has($pipelineId)) {
-            //dump('[ContainerStore::get()] Registering new pipeline');
             if ($keyOrStack instanceof MiddlewareStackInterface) {
-                //dump(['Stack: ' => $keyOrStack->toArray()]);
                 $this->register($keyOrStack);
             }
         }
 
-        $pipeline = $this->getRequestHandler($pipelineId);
-
-        //dump(['getRequestHandler($pipelineId)' => $pipeline]);
-
-        return $pipeline;
+        return $this->getRequestHandler($pipelineId);
     }
 
     /**

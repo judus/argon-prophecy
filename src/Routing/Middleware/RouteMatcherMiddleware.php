@@ -16,22 +16,20 @@ use Psr\Log\LoggerInterface;
 final readonly class RouteMatcherMiddleware implements MiddlewareInterface
 {
     public function __construct(
-        private RouteMatcherInterface $routeMatcher,
-        private LoggerInterface $logger,
+        private RouteMatcherInterface $matcher,
+        private LoggerInterface       $logger,
     ) {
     }
 
     public function process(ServerRequestInterface $request, RequestHandlerInterface $handler): ResponseInterface
     {
-        $route = $this->routeMatcher->match($request);
+        $route = $this->matcher->match($request);
 
         $this->logger->info('Route matched', [
             'handler' => $route->getHandler(),
             'middlewares' => $route->getMiddlewares(),
             'arguments' => $route->getArguments(),
         ]);
-
-        $request = $request->withAttribute(MatchedRouteInterface::class, $route);
 
         return $handler->handle($request);
     }

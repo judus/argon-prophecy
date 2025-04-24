@@ -151,7 +151,7 @@ final class ArgonHttpFoundation extends AbstractServiceProvider
         $container->set(PipelineManager::class);
 
         $container->set(RequestHandlerInterface::class, MiddlewarePipeline::class)
-            ->factory(RequestHandlerFactory::class, 'create')
+            ->factory(RequestHandlerFactory::class, 'createFromRouteContext')
             ->tag(['middleware.pipeline', 'psr-15']);
 
         /**

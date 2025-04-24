@@ -3,6 +3,7 @@
 namespace Maduser\Argon\Routing\Contracts;
 
 use Closure;
+use Psr\Http\Server\MiddlewareInterface;
 
 interface RouteInterface
 {
@@ -19,11 +20,14 @@ interface RouteInterface
     public function getPipelineId(): ?string;
 
     /**
-     * @param list<class-string> $middlewares
+     * @param list<class-string<MiddlewareInterface>|MiddlewareInterface> $middlewares
      * @return void
      */
     public function setMiddlewares(array $middlewares): void;
 
+    /**
+     * @return list<class-string<MiddlewareInterface>|MiddlewareInterface>
+     */
     public function getMiddlewares(): array;
 
     /**

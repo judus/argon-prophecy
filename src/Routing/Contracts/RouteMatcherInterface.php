@@ -5,5 +5,5 @@ use Psr\Http\Message\ServerRequestInterface;
 
 interface RouteMatcherInterface
 {
-    public function match(ServerRequestInterface $request): MatchedRouteInterface;
+    public function match(ServerRequestInterface $request): RouteInterface;
 }

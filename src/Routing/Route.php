@@ -8,12 +8,13 @@ use Closure;
 use LogicException;
 use Maduser\Argon\Routing\Contracts\MatchedRouteInterface;
 use Maduser\Argon\Routing\Contracts\RouteInterface;
+use Psr\Http\Server\MiddlewareInterface;
 
 final class Route implements RouteInterface, MatchedRouteInterface
 {
     /**
      * @param class-string|array{0: class-string, 1: string}|Closure $handler
-     * @param list<class-string> $middlewares
+     * @param list<class-string<MiddlewareInterface>|MiddlewareInterface> $middlewares
      * @param array<int|string, string> $arguments
      */
     public function __construct(
@@ -74,6 +75,7 @@ final class Route implements RouteInterface, MatchedRouteInterface
         $this->middlewares = $middlewares;
     }
 
+    /** @inheritdoc  */
     public function getMiddlewares(): array
     {
         return $this->middlewares;

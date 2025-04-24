@@ -6,6 +6,7 @@ namespace Maduser\Argon\Routing\Middleware;
 
 use Closure;
 use Maduser\Argon\Routing\Contracts\MatchedRouteInterface;
+use Maduser\Argon\Routing\Contracts\RouteContextInterface;
 use Psr\Container\ContainerInterface;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
@@ -16,18 +17,15 @@ use RuntimeException;
 final readonly class RouteDispatcherMiddleware implements MiddlewareInterface
 {
     public function __construct(
-        private ContainerInterface $container
+        private ContainerInterface $container,
+        private RouteContextInterface $routeContext,
     ) {
     }
 
     public function process(ServerRequestInterface $request, RequestHandlerInterface $handler): ResponseInterface
     {
-        /** @var MatchedRouteInterface|null $route */
-        $route = $request->getAttribute(MatchedRouteInterface::class);
-
-        if (!$route instanceof MatchedRouteInterface) {
-            throw new RuntimeException('No matched route found in request attributes.');
-        }
+        /** @var MatchedRouteInterface $route */
+        $route = $this->routeContext->getRoute();
 
         $handlerDef = $route->getHandler();
 

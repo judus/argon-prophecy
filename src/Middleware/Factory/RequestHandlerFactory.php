@@ -8,9 +8,14 @@ use InvalidArgumentException;
 use Maduser\Argon\Middleware\Contracts\MiddlewareLoaderInterface;
 use Maduser\Argon\Middleware\Contracts\MiddlewarePipelineCacheInterface;
 use Maduser\Argon\Middleware\Contracts\MiddlewareResolverInterface;
+use Maduser\Argon\Middleware\Contracts\PipelineManagerInterface;
 use Maduser\Argon\Middleware\MiddlewareDefinition;
 use Maduser\Argon\Middleware\MiddlewarePipeline;
 use Maduser\Argon\Middleware\MiddlewarePipelineBuilder;
+use Maduser\Argon\Routing\Contracts\RequestHandlerResolverInterface;
+use Maduser\Argon\Routing\Contracts\RouteContextInterface;
+use Maduser\Argon\Routing\RequestHandlerResolver;
+use Psr\Http\Message\ServerRequestInterface;
 use Psr\Http\Server\MiddlewareInterface;
 use Psr\Http\Server\RequestHandlerInterface;
 use Psr\Log\LoggerInterface;
@@ -19,15 +24,19 @@ final readonly class RequestHandlerFactory
 {
     public function __construct(
         private MiddlewareResolverInterface $resolver,
+        private RequestHandlerResolverInterface $requestHandlerResolver,
+        private RouteContextInterface $context,
         private LoggerInterface $logger,
         private MiddlewareLoaderInterface $loader,
-        private ?MiddlewarePipelineCacheInterface $cache = null
+        private ?PipelineManagerInterface $pipelines = null
     ) {
     }
 
     public function create(string $cacheKey = 'http_pipeline'): RequestHandlerInterface
     {
-        if ($this->cache && ($cached = $this->cache->get($cacheKey))) {
+        $cached =  $this->pipelines?->get($cacheKey);
+
+        if ($cached instanceof RequestHandlerInterface) {
             return $cached;
         }
 
@@ -48,11 +57,7 @@ final readonly class RequestHandlerFactory
             }
         }
 
-        $pipeline = $builder->build();
-
-        $this->cache?->set($cacheKey, $pipeline);
-
-        return $pipeline;
+        return $builder->build();
     }
 
     /**
@@ -74,5 +79,10 @@ final readonly class RequestHandlerFactory
             resolver: $this->resolver,
             logger: $this->logger
         );
+    }
+
+    public function createFromRouteContext(?ServerRequestInterface $request = null): RequestHandlerInterface
+    {
+        return $this->requestHandlerResolver->resolve($request);
     }
 }

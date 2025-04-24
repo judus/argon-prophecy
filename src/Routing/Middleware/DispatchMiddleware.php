@@ -9,6 +9,7 @@ use Maduser\Argon\Container\ArgonContainer;
 use Maduser\Argon\Container\Exceptions\ContainerException;
 use Maduser\Argon\Container\Exceptions\NotFoundException;
 use Maduser\Argon\Routing\Contracts\MatchedRouteInterface;
+use Maduser\Argon\Routing\Contracts\RouteContextInterface;
 use Maduser\Argon\Routing\RoutePipeline;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
@@ -20,7 +21,8 @@ final readonly class DispatchMiddleware implements MiddlewareInterface
 {
     public function __construct(
         private ArgonContainer $container,
-        private RoutePipeline $pipeline
+        private RoutePipeline $pipeline,
+        private RouteContextInterface $routeContext,
     ) {
     }
 
@@ -32,6 +34,8 @@ final readonly class DispatchMiddleware implements MiddlewareInterface
     {
         /** @var MatchedRouteInterface|null $route */
         $route = $request->getAttribute(MatchedRouteInterface::class);
+
+        dd($this->routeContext->getRoute());
 
         if (!$route instanceof MatchedRouteInterface) {
             throw new RuntimeException('No resolved route found in request.');

@@ -10,10 +10,13 @@ use Psr\Http\Message\ServerRequestInterface;
 use Psr\Http\Server\MiddlewareInterface;
 use Psr\Http\Server\RequestHandlerInterface;
 use Psr\Log\LoggerInterface;
+use RuntimeException;
 
-final readonly class MiddlewarePipeline implements RequestHandlerInterface
+final class MiddlewarePipeline implements RequestHandlerInterface
 {
     private MiddlewareDispatcher $dispatcher;
+
+    private ?ServerRequestInterface $request = null;
 
     /**
      * @param list<class-string<MiddlewareInterface>|MiddlewareInterface> $middleware
@@ -34,8 +37,14 @@ final readonly class MiddlewarePipeline implements RequestHandlerInterface
         );
     }
 
+    public function setRequest(ServerRequestInterface $request): RequestHandlerInterface
+    {
+        $this->request = $request;
+        return $this;
+    }
+
     public function handle(ServerRequestInterface $request): ResponseInterface
     {
-        return $this->dispatcher->handle($request);
+        return $this->dispatcher->handle($this->request ?? $request);
     }
 }

@@ -20,12 +20,12 @@ final class Uri implements UriInterface
     public function __construct(string $uri = '')
     {
         if ($uri !== '') {
-            $this->validate($uri);
-
             $parts = parse_url($uri);
             if ($parts === false) {
-                throw new InvalidArgumentException("Malformed URI: $uri");
+                throw new InvalidArgumentException("Unable to parse URI: $uri");
             }
+
+            $this->validateParts($parts, $uri);
 
             $this->scheme = $parts['scheme'] ?? '';
             $this->userInfo = $parts['user'] ?? '';
@@ -40,13 +40,8 @@ final class Uri implements UriInterface
         }
     }
 
-    private function validate(string $uri): void
+    private function validateParts(array $parts, string $uri): void
     {
-        $parts = parse_url($uri);
-        if ($parts === false) {
-            throw new InvalidArgumentException("Unable to parse URI: $uri");
-        }
-
         if (!isset($parts['host']) && !isset($parts['scheme']) && !str_starts_with($uri, '/')) {
             throw new InvalidArgumentException("Malformed relative URI: $uri");
         }
@@ -56,7 +51,10 @@ final class Uri implements UriInterface
         }
 
         if (isset($parts['port']) && ($parts['port'] < 1 || $parts['port'] > 65535)) {
-            throw new InvalidArgumentException("Invalid port in URI: $uri");
+            // parse_url() returns false for invalid ports before we can validate manually
+            // @codeCoverageIgnoreStart
+            throw new InvalidArgumentException("Invalid port: {$parts['port']} in URI: $uri");
+            // @codeCoverageIgnoreEnd
         }
     }
 

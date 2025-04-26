@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace Maduser\Argon\Support;
 
-use Maduser\Argon\Contracts\Http\Server\Middleware\HtmlableInterface;
+use Maduser\Argon\Contracts\Support\HtmlableInterface;
 use Stringable;
 
 final class Html implements HtmlableInterface, Stringable

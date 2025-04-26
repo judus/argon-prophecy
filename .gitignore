@@ -2,5 +2,6 @@
 /.idea
 /build/
 /.phpunit.result.cache
-/tests/applications/app-skeleton/app/prophecy.php
+/tests/application/app/prophecy.php
 /resources/temp/
+/resources/packages/

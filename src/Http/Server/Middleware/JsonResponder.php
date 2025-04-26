@@ -7,24 +7,23 @@ namespace Maduser\Argon\Http\Server\Middleware;
 use JsonException;
 use JsonSerializable;
 use Maduser\Argon\Contracts\Http\Server\Middleware\JsonResponderInterface;
-use Maduser\Argon\Contracts\Support\ResultContextInterface;
-use Maduser\Argon\Support\ResultContext;
+use Maduser\Argon\Contracts\Http\Server\ResultContextInterface;
 use Psr\Http\Message\ResponseFactoryInterface;
 use Psr\Http\Message\ServerRequestInterface;
 use Psr\Http\Message\StreamFactoryInterface;
 use Psr\Http\Message\ResponseInterface;
-use Psr\Http\Server\MiddlewareInterface;
 use Psr\Http\Server\RequestHandlerInterface;
 use Psr\Log\LoggerInterface;
 
-final readonly class JsonResponder implements MiddlewareInterface, JsonResponderInterface
+final readonly class JsonResponder extends AbstractResponder implements JsonResponderInterface
 {
     public function __construct(
-        private ResponseFactoryInterface $responseFactory,
-        private StreamFactoryInterface $streamFactory,
+        ResponseFactoryInterface $responseFactory,
+        StreamFactoryInterface $streamFactory,
         private ResultContextInterface $result,
-        private LoggerInterface $logger,
+        ?LoggerInterface $logger = null,
     ) {
+        parent::__construct($responseFactory, $streamFactory, $logger);
     }
 
     /**
@@ -36,8 +35,6 @@ final readonly class JsonResponder implements MiddlewareInterface, JsonResponder
         $raw = $this->result->get();
 
         if ($this->result->isArray() || $raw instanceof JsonSerializable) {
-            $this->logger->info(JsonResponder::class . ' creates a JSON response');
-
             /** @var array|string|null $data */
             $data = $raw instanceof JsonSerializable
                 ? $raw->jsonSerialize()
@@ -45,10 +42,7 @@ final readonly class JsonResponder implements MiddlewareInterface, JsonResponder
 
             $json = json_encode($data, JSON_THROW_ON_ERROR);
 
-            return $this->responseFactory
-                ->createResponse()
-                ->withHeader('Content-Type', 'application/json')
-                ->withBody($this->streamFactory->createStream($json));
+            return $this->createResponse($json, 'application/json; charset=UTF-8');
         }
 
         return $handler->handle($request);

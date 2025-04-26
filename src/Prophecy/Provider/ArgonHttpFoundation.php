@@ -10,7 +10,10 @@ use Maduser\Argon\Container\Exceptions\ContainerException;
 use Maduser\Argon\Container\Exceptions\NotFoundException;
 use Maduser\Argon\Contracts\KernelInterface;
 use Maduser\Argon\Http\Kernel;
+use Maduser\Argon\Logging\LoggerServiceProvider;
 use Maduser\Argon\Prophecy\Support\Tag;
+use Psr\Log\LoggerInterface;
+use Psr\Log\NullLogger;
 
 final class ArgonHttpFoundation extends AbstractServiceProvider
 {
@@ -20,11 +23,17 @@ final class ArgonHttpFoundation extends AbstractServiceProvider
      */
     public function register(ArgonContainer $container): void
     {
-        /** Kernel */
-        $container->set(KernelInterface::class, Kernel::class)->tag([Tag::KERNEL]);
+        if (!$container->has(LoggerInterface::class)) {
+            $container->set(LoggerInterface::class, NullLogger::class);
+        }
 
         /** Exception Handler */
         $container->register(ArgonExceptionServiceProvider::class);
+
+        /** Kernel */
+        $container->set(KernelInterface::class, Kernel::class, [
+            'logger' => LoggerInterface::class,
+        ])->tag([Tag::KERNEL]);
 
         /** PSR-17/7: HTTP Messages */
         $container->register(ArgonMessageServiceProvider::class);

@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace Maduser\Argon\Http\Message\Factory;
 
 use JsonException;
-use Maduser\Argon\Http\Message\Stream;
 use Maduser\Argon\Http\Message\Response;
 use Psr\Http\Message\ResponseFactoryInterface;
 use Psr\Http\Message\ResponseInterface;
@@ -22,27 +21,22 @@ final readonly class ResponseFactory implements ResponseFactoryInterface
         return new Response(
             body: $this->streamFactory->createStream(),
             status: $code,
-            headers: [],
             reasonPhrase: $reasonPhrase
         );
     }
 
     public function text(string $content, int $status = 200): ResponseInterface
     {
-        return new Response(
-            $this->streamFactory->createStream($content),
-            $status,
-            ['Content-Type' => ['text/plain']]
-        );
+        return $this->createResponse($status)
+            ->withHeader('Content-Type', 'text/plain')
+            ->withBody($this->streamFactory->createStream($content));
     }
 
     public function html(string $content, int $status = 200): ResponseInterface
     {
-        return new Response(
-            $this->streamFactory->createStream($content),
-            $status,
-            ['Content-Type' => ['text/html']]
-        );
+        return $this->createResponse($status)
+            ->withHeader('Content-Type', 'text/html')
+            ->withBody($this->streamFactory->createStream($content));
     }
 
     /**
@@ -50,10 +44,9 @@ final readonly class ResponseFactory implements ResponseFactoryInterface
      */
     public function json(array|object $data, int $status = 200): ResponseInterface
     {
-        return new Response(
-            $this->streamFactory->createStream(json_encode($data, JSON_THROW_ON_ERROR)),
-            $status,
-            ['Content-Type' => ['application/json']]
-        );
+        return $this->createResponse($status)
+            ->withHeader('Content-Type', 'application/json')
+            ->withBody($this->streamFactory->createStream(json_encode($data, JSON_THROW_ON_ERROR)));
     }
 }
+

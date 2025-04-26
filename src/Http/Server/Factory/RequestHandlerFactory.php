@@ -17,7 +17,7 @@ final readonly class RequestHandlerFactory implements RequestHandlerFactoryInter
 {
     public function __construct(
         private ArgonContainer $container,
-        private LoggerInterface $logger
+        private ?LoggerInterface $logger = null
     ) {
     }
 
@@ -46,7 +46,7 @@ final readonly class RequestHandlerFactory implements RequestHandlerFactoryInter
         usort($entries, fn(array $a, array $b): int => $b['priority'] <=> $a['priority']);
 
         foreach ($entries as $entry) {
-            $middleware = $this->container->get($entry['id']);
+            $middleware = $this->container->get($entry['id'], ['logger' => $this->logger]);
 
             if (!$middleware instanceof MiddlewareInterface) {
                 throw new RuntimeException("Service '{$entry['id']}' must implement MiddlewareInterface.");

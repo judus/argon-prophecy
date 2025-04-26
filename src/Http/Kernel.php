@@ -5,30 +5,29 @@ declare(strict_types=1);
 namespace Maduser\Argon\Http;
 
 use Maduser\Argon\Contracts\KernelInterface;
-use Maduser\Argon\Contracts\Http\Exception\ExceptionHandlerInterface;
-use Maduser\Argon\Routing\Contracts\RequestHandlerResolverInterface;
+use Maduser\Argon\Contracts\ErrorHandling\Http\ExceptionHandlerInterface;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
 use Psr\Http\Server\RequestHandlerInterface;
 use Psr\Log\LoggerInterface;
 use Throwable;
 
-final readonly class Kernel implements KernelInterface
+readonly class Kernel implements KernelInterface
 {
     public function __construct(
         private ServerRequestInterface $request,
         private RequestHandlerInterface $handler,
         private ExceptionHandlerInterface $exceptionHandler,
-        private LoggerInterface $logger,
+        private ?LoggerInterface $logger = null,
     ) {
         $this->exceptionHandler->register();
-        $this->logger->info('Exception handler registered', ['class' => get_class($this->exceptionHandler)]);
+        $this->logger?->info('Exception handler registered', ['class' => get_class($this->exceptionHandler)]);
     }
 
     public function handle(): void
     {
         try {
-            $this->logger->info('Handling request', [
+            $this->logger?->info('Handling request', [
                 'method' => $this->request->getMethod(),
                 'uri' => (string) $this->request->getUri(),
             ]);
@@ -44,7 +43,7 @@ final readonly class Kernel implements KernelInterface
 
     private function emit(ResponseInterface $response): void
     {
-        $this->logger->info('Emitting response', [
+        $this->logger?->info('Emitting response', [
             'status' => $response->getStatusCode(),
             'type' => $response->getHeaderLine('Content-Type'),
             'size' => $response->getBody()->getSize(),
@@ -69,15 +68,14 @@ final readonly class Kernel implements KernelInterface
         echo $response->getBody();
     }
 
-
     private function handleThrowable(Throwable $e): void
     {
         try {
             $response = $this->exceptionHandler->handle($e, $this->request);
             $this->emit($response);
-            exit(1);
+            $this->terminate(1);
         } catch (Throwable $handlerFailure) {
-            $this->logger->critical('render() threw during exception handling', [
+            $this->logger?->critical('render() threw during exception handling', [
                 'exception' => $handlerFailure,
             ]);
             $this->emitRaw($e);
@@ -98,6 +96,18 @@ final readonly class Kernel implements KernelInterface
             $e->getLine()
         );
 
-        exit(1);
+        $this->terminate(1);
+    }
+
+    /**
+     * Terminates the application.
+     *
+     * @param int $code Exit code.
+     *
+     * @api This method can be overridden in custom kernels for graceful shutdown or testing.
+     */
+    protected function terminate(int $code): void
+    {
+        exit($code);
     }
 }

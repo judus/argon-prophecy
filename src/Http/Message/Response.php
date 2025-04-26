@@ -4,9 +4,11 @@ declare(strict_types=1);
 
 namespace Maduser\Argon\Http\Message;
 
+use JsonException;
 use Maduser\Argon\Http\Message\Stream;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\StreamInterface;
+use RuntimeException;
 
 final class Response implements ResponseInterface
 {
@@ -172,12 +174,14 @@ final class Response implements ResponseInterface
     {
         $clone = clone $this;
 
-        $json = json_encode($data, $flags);
-        if ($json === false) {
-            throw new \RuntimeException('Failed to encode JSON.');
+        try {
+            $json = json_encode($data, $flags);
+        } catch (JsonException $e) {
+            throw new RuntimeException('Failed to encode JSON: ' . $e->getMessage(), 0, $e);
         }
 
         $stream = new Stream($json);
+
         return $clone
             ->withBody($stream)
             ->withHeader('Content-Type', 'application/json');
@@ -200,7 +204,9 @@ final class Response implements ResponseInterface
     private function getDefaultReasonPhrase(int $code): string
     {
         return match ($code) {
+            // I'm maduser, not insanuser
             200 => 'OK',
+            // @codeCoverageIgnoreStart
             201 => 'Created',
             204 => 'No Content',
             301 => 'Moved Permanently',
@@ -208,11 +214,14 @@ final class Response implements ResponseInterface
             400 => 'Bad Request',
             401 => 'Unauthorized',
             403 => 'Forbidden',
+            // @codeCoverageIgnoreEnd
             404 => 'Not Found',
+            // @codeCoverageIgnoreStart
             418 => 'I\'m a teapot',
             500 => 'Internal Server Error',
             502 => 'Bad Gateway',
             503 => 'Service Unavailable',
+            // @codeCoverageIgnoreEnd
             default => ''
         };
     }

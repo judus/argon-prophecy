@@ -7,12 +7,14 @@ namespace Maduser\Argon\Prophecy\Provider;
 use Maduser\Argon\Container\AbstractServiceProvider;
 use Maduser\Argon\Container\ArgonContainer;
 use Maduser\Argon\Container\Exceptions\ContainerException;
-use Maduser\Argon\Contracts\Http\Exception\ExceptionFormatterInterface;
-use Maduser\Argon\Contracts\Http\Exception\ExceptionHandlerInterface;
-use Maduser\Argon\Exception\ExceptionDispatcher;
-use Maduser\Argon\Http\Exception\ExceptionFormatter;
-use Maduser\Argon\Http\Exception\ExceptionHandler;
+use Maduser\Argon\Contracts\ErrorHandling\Http\ExceptionDispatcherInterface;
+use Maduser\Argon\Contracts\ErrorHandling\Http\ExceptionFormatterInterface;
+use Maduser\Argon\Contracts\ErrorHandling\Http\ExceptionHandlerInterface;
+use Maduser\Argon\ErrorHandling\Http\ExceptionDispatcher;
+use Maduser\Argon\ErrorHandling\Http\ExceptionFormatter;
+use Maduser\Argon\ErrorHandling\Http\ExceptionHandler;
 use Maduser\Argon\Prophecy\Support\Tag;
+use Psr\Log\LoggerInterface;
 
 class ArgonExceptionServiceProvider extends AbstractServiceProvider
 {
@@ -26,10 +28,12 @@ class ArgonExceptionServiceProvider extends AbstractServiceProvider
         $container->set(ExceptionFormatterInterface::class, ExceptionFormatter::class, $debug)
             ->tag([Tag::EXCEPTION_FORMATTER]);
 
-        $container->set(ExceptionHandlerInterface::class, ExceptionHandler::class)
+        $container->set(ExceptionHandlerInterface::class, ExceptionHandler::class, [
+            'logger' => LoggerInterface::class,
+        ])
             ->tag([Tag::EXCEPTION_HANDLER]);
 
-        $container->set(ExceptionDispatcher::class)
+        $container->set(ExceptionDispatcherInterface::class, ExceptionDispatcher::class)
             ->tag([Tag::EXCEPTION_DISPATCHER]);
     }
 }

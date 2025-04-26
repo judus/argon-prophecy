@@ -13,6 +13,7 @@ use Psr\Http\Message\ServerRequestInterface;
 use Psr\Http\Message\StreamInterface;
 use Psr\Http\Message\UriInterface;
 use Psr\Http\Message\UploadedFileInterface;
+use RuntimeException;
 
 final class ServerRequestFactory implements ServerRequestFactoryInterface
 {
@@ -64,16 +65,31 @@ final class ServerRequestFactory implements ServerRequestFactoryInterface
 
     private static function getAllHeaders(): array
     {
+        if (function_exists('getallHeaders')) {
+            $headers = getallHeaders();
+
+            if ($headers !== false) {
+                $normalized = [];
+                foreach ($headers as $key => $value) {
+                    $normalized[strtolower($key)] = [$value];
+                }
+                return $normalized;
+            }
+        }
+        // @codeCoverageIgnoreStart
+        return self::parseServerHeaders($_SERVER);
+        // @codeCoverageIgnoreEnd
+    }
+
+    /**
+     * Parses server array to header array.
+     * Used as fallback when getallheaders() is unavailable.
+     */
+    public static function parseServerHeaders(array $server): array
+    {
         $headers = [];
 
-        if (function_exists('getallheaders')) {
-            foreach (getallheaders() as $key => $value) {
-                $headers[strtolower($key)] = [$value];
-            }
-            return $headers;
-        }
-
-        foreach ($_SERVER as $key => $value) {
+        foreach ($server as $key => $value) {
             if (str_starts_with($key, 'HTTP_')) {
                 $header = strtolower(str_replace('_', '-', substr($key, 5)));
                 $headers[$header] = [$value];
@@ -96,10 +112,20 @@ final class ServerRequestFactory implements ServerRequestFactoryInterface
         foreach ($files as $field => $value) {
             if ($value instanceof UploadedFileInterface) {
                 $normalized[$field] = $value;
-            } elseif (is_array($value) && isset($value['tmp_name'])) {
-                $normalized[$field] = self::createUploadedFile($value);
-            } elseif (is_array($value)) {
-                $normalized[$field] = self::normalizeUploadedFiles($value);
+            } elseif (isset($value['tmp_name'])) {
+                if (is_array($value['tmp_name'])) {
+                    foreach ($value['tmp_name'] as $idx => $tmpName) {
+                        $normalized[$field][$idx] = self::createUploadedFile([
+                            'tmp_name' => $tmpName,
+                            'name' => $value['name'][$idx] ?? null,
+                            'type' => $value['type'][$idx] ?? null,
+                            'size' => $value['size'][$idx] ?? 0,
+                            'error' => $value['error'][$idx] ?? 0,
+                        ]);
+                    }
+                } else {
+                    $normalized[$field] = self::createUploadedFile($value);
+                }
             }
         }
 
@@ -108,11 +134,20 @@ final class ServerRequestFactory implements ServerRequestFactoryInterface
 
     private static function createUploadedFile(array $file): UploadedFileInterface
     {
-        $stream = new Stream(fopen($file['tmp_name'], 'rb'));
+        $resource = @fopen($file['tmp_name'], 'rb');
+        if ($resource === false) {
+            // @codeCoverageIgnoreStart
+            // This can only fail under OS-level conditions (missing file, permissions),
+            // which cannot be reliably simulated in unit tests.
+            throw new RuntimeException('Failed to open uploaded file: ' . $file['tmp_name']);
+            // @codeCoverageIgnoreEnd
+        }
+
+        $stream = new Stream($resource);
         return new UploadedFile(
             $stream,
-            (int)$file['size'],
-            (int)$file['error'],
+            (int) $file['size'],
+            (int) $file['error'],
             $file['name'] ?? null,
             $file['type'] ?? null
         );

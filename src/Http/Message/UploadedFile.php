@@ -9,6 +9,8 @@ use Psr\Http\Message\StreamInterface;
 use Psr\Http\Message\UploadedFileInterface;
 use RuntimeException;
 
+use const UPLOAD_ERR_OK;
+
 final class UploadedFile implements UploadedFileInterface
 {
     private bool $moved = false;
@@ -16,7 +18,7 @@ final class UploadedFile implements UploadedFileInterface
     public function __construct(
         private readonly StreamInterface $stream,
         private readonly int $size,
-        private readonly int $error = \UPLOAD_ERR_OK,
+        private readonly int $error = UPLOAD_ERR_OK,
         private readonly ?string $clientFilename = null,
         private readonly ?string $clientMediaType = null
     ) {
@@ -56,14 +58,20 @@ final class UploadedFile implements UploadedFileInterface
 
         $dest = fopen($targetPath, 'wb');
         if ($dest === false) {
+            // Not going to break my machine to test this
+            // @codeCoverageIgnoreStart
             throw new RuntimeException("Unable to open target path: $targetPath");
+            // @codeCoverageIgnoreEnd
         }
 
         while (!$stream->eof()) {
             $chunk = $stream->read(8192);
             if (fwrite($dest, $chunk) === false) {
+                // Not going to break my machine to test this
+                // @codeCoverageIgnoreStart
                 fclose($dest);
                 throw new RuntimeException("Failed to write to target path: $targetPath");
+                // @codeCoverageIgnoreEnd
             }
         }
 

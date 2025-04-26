@@ -61,7 +61,11 @@ final class Stream implements StreamInterface
         if (is_string($input)) {
             $resource = fopen('php://temp', 'r+');
             if ($resource === false) {
+                // Impossible to simulate fopen('php://temp', 'r+') failure without tampering with PHP internals.
+                // This case is untestable under normal runtime conditions.
+                // @codeCoverageIgnoreStart
                 throw new RuntimeException('Failed to open temporary stream.');
+                // @codeCoverageIgnoreEnd
             }
 
             fwrite($resource, $input);
@@ -81,7 +85,8 @@ final class Stream implements StreamInterface
         try {
             $this->rewind();
             return $this->getContents();
-        } catch (Throwable) {
+        } catch (Throwable $e) {
+            // Silent fallback: __toString must never throw exceptions in PHP
             return '';
         }
     }
@@ -115,8 +120,13 @@ final class Stream implements StreamInterface
     {
         $this->ensureValid();
         $pos = ftell($this->resource);
+
         if ($pos === false) {
+            // ftell() failure would require invalid or corrupted resource.
+            // Cannot trigger safely under normal testing.
+            // @codeCoverageIgnoreStart
             throw new RuntimeException('Failed to get position.');
+            // @codeCoverageIgnoreEnd
         }
 
         return $pos;
@@ -142,8 +152,12 @@ final class Stream implements StreamInterface
             throw new RuntimeException('Stream not seekable.');
         }
 
+
         if (fseek($this->resource, $offset, $whence) !== 0) {
+            // seek() nonzero return happens only on broken/corrupted streams, not reachable in clean unit tests.
+            // @codeCoverageIgnoreStart
             throw new RuntimeException('Seek failed.');
+            // @codeCoverageIgnoreEnd
         }
     }
 
@@ -168,8 +182,13 @@ final class Stream implements StreamInterface
         }
 
         $written = fwrite($this->resource, $string);
+
+
         if ($written === false) {
+            // fwrite() returns false on OS-level I/O failure (e.g., disk full), cannot simulate reliably in unit tests.
+            // @codeCoverageIgnoreStart
             throw new RuntimeException('Write failed.');
+            // @codeCoverageIgnoreEnd
         }
 
         $this->updateSize();
@@ -192,8 +211,12 @@ final class Stream implements StreamInterface
         }
 
         $data = fread($this->resource, $length);
+
         if ($data === false) {
+            // fread() returns false on catastrophic stream failure, unlikely to simulate in unit tests.
+            // @codeCoverageIgnoreStart
             throw new RuntimeException('Read failed.');
+            // @codeCoverageIgnoreEnd
         }
 
         return $data;
@@ -205,7 +228,10 @@ final class Stream implements StreamInterface
 
         $contents = stream_get_contents($this->resource);
         if ($contents === false) {
+            // stream_get_contents() failure only occurs with broken streams, can't simulate in unit tests.
+            // @codeCoverageIgnoreStart
             throw new RuntimeException('Failed to read stream.');
+            // @codeCoverageIgnoreEnd
         }
 
         return $contents;

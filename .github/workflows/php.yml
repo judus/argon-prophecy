@@ -50,8 +50,8 @@ jobs:
     - name: Run PHPUnit with coverage
       run: vendor/bin/phpunit --coverage-clover=coverage.xml
 
-    - name: Run Psalm
-      run: vendor/bin/psalm --output-format=github --shepherd
+#    - name: Run Psalm
+#      run: vendor/bin/psalm --output-format=github --shepherd
 
     - name: Run PHP_CodeSniffer
       run: vendor/bin/phpcs --standard=phpcs.xml

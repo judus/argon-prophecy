@@ -175,5 +175,4 @@ final class StreamTest extends TestCase
 
         $this->assertSame('', (string) $stream);
     }
-
 }

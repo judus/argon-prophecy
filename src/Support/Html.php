@@ -14,7 +14,8 @@ final class Html implements HtmlableInterface, Stringable
     private function __construct(
         private readonly string $template,
         private readonly array $context = [],
-    ) {}
+    ) {
+    }
 
     public static function create(string $template, array $context = []): self
     {

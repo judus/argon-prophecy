@@ -35,8 +35,8 @@ class BootstrapErrorHandlerTest extends TestCase
         return new BootstrapErrorHandler(
             $this->logger,
             $outputCallback ?? function (string $message): void {
-            $this->capturedOutput .= $message;
-        },
+                $this->capturedOutput .= $message;
+            },
             function (int $code): void {
                 throw new RuntimeException('Fake terminate ' . $code);
             },

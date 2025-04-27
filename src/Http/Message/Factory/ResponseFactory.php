@@ -14,7 +14,8 @@ final readonly class ResponseFactory implements ResponseFactoryInterface
 {
     public function __construct(
         private StreamFactoryInterface $streamFactory
-    ) {}
+    ) {
+    }
 
     public function createResponse(int $code = 200, string $reasonPhrase = ''): ResponseInterface
     {
@@ -49,4 +50,3 @@ final readonly class ResponseFactory implements ResponseFactoryInterface
             ->withBody($this->streamFactory->createStream(json_encode($data, JSON_THROW_ON_ERROR)));
     }
 }
-

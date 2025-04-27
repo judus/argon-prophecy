@@ -50,7 +50,7 @@ final class MiddlewarePipelineTest extends AbstractArgonTestCase
         $factory = new RequestHandlerFactory($this->container);
 
         $this->expectException(\RuntimeException::class);
-        $this->expectExceptionMessage("Service '".stdClass::class."' must implement MiddlewareInterface.");
+        $this->expectExceptionMessage("Service '" . stdClass::class . "' must implement MiddlewareInterface.");
 
         $factory->create();
     }

@@ -30,6 +30,4 @@ final readonly class FakeJsonDispatcher implements MiddlewareInterface, Dispatch
             'status' => 'ok',
         ]);
     }
-
-
 }

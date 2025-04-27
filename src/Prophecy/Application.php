@@ -270,6 +270,4 @@ final class Application implements ApplicationInterface
             $this->logger->debug("Container [$stage] debug info:", $info);
         }
     }
-
-
 }

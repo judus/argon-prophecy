@@ -27,7 +27,8 @@ final class KernelTest extends TestCase
         $stream = $this->createMock(StreamInterface::class);
 
         $stream->method('isSeekable')->willReturn(true);
-        $stream->method('rewind')->willReturnCallback(static function (): void {});
+        $stream->method('rewind')->willReturnCallback(static function (): void {
+        });
         $stream->method('eof')->willReturnOnConsecutiveCalls(false, true);
         $stream->method('read')->willReturn($contents);
         $stream->method('getSize')->willReturn(strlen($contents));
@@ -60,7 +61,8 @@ final class KernelTest extends TestCase
         bool $shouldExit = false
     ): KernelInterface {
         $exceptionHandler = $this->createMock(ErrorHandlerInterface::class);
-        $exceptionHandler->expects(self::any())->method('register')->willReturnCallback(static function (): void {});
+        $exceptionHandler->expects(self::any())->method('register')->willReturnCallback(static function (): void {
+        });
         $exceptionHandler->method('handle')->willReturn($this->createResponseMock('Exception caught'));
 
         $request = $this->createMock(ServerRequestInterface::class);
@@ -132,7 +134,8 @@ final class KernelTest extends TestCase
     public function testKernelEmitsFallbackOnEmitterFailure(): void
     {
         $exceptionHandler = $this->createMock(ErrorHandlerInterface::class);
-        $exceptionHandler->expects(self::any())->method('register')->willReturnCallback(static function (): void {});
+        $exceptionHandler->expects(self::any())->method('register')->willReturnCallback(static function (): void {
+        });
         $exceptionHandler->method('handle')->willReturn($this->createResponseMock('Handled Exception'));
 
         $request = $this->createMock(ServerRequestInterface::class);

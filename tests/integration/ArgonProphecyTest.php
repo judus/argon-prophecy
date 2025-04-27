@@ -32,7 +32,6 @@ final class ArgonProphecyTest extends TestCase
 
         $this->assertSame(200, $status, "Expected 200 OK, got {$status}");
         $this->assertSame('OK', $response->getReasonPhrase());
-
     }
 
     private function assertIsDefaultHtmlContent(ResponseInterface $response): void

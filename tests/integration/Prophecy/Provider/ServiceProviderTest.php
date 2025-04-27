@@ -70,30 +70,51 @@ final class ServiceProviderTest extends TestCase
 
         $this->assertInstanceOf(Kernel::class, $this->container->get(KernelInterface::class));
 
-        $this->assertInstanceOf(ServerRequestFactoryInterface::class, $this->container->get(ServerRequestFactoryInterface::class));
-        $this->assertInstanceOf(ServerRequestInterface::class, $this->container->get(ServerRequestInterface::class));
-        $this->assertInstanceOf(ResponseFactoryInterface::class, $this->container->get(ResponseFactoryInterface::class));
+        $this->assertInstanceOf(
+            ServerRequestFactoryInterface::class,
+            $this->container->get(ServerRequestFactoryInterface::class)
+        );
+        $this->assertInstanceOf(
+            ServerRequestInterface::class,
+            $this->container->get(ServerRequestInterface::class)
+        );
+        $this->assertInstanceOf(
+            ResponseFactoryInterface::class,
+            $this->container->get(ResponseFactoryInterface::class)
+        );
         $this->assertInstanceOf(ResponseInterface::class, $this->container->get(ResponseInterface::class));
         $this->assertInstanceOf(StreamFactoryInterface::class, $this->container->get(StreamFactoryInterface::class));
         $this->assertInstanceOf(StreamInterface::class, $this->container->get(StreamInterface::class));
         $this->assertInstanceOf(UriFactoryInterface::class, $this->container->get(UriFactoryInterface::class));
         $this->assertInstanceOf(UriInterface::class, $this->container->get(UriInterface::class));
-        $this->assertInstanceOf(UploadedFileFactoryInterface::class, $this->container->get(UploadedFileFactoryInterface::class));
+        $this->assertInstanceOf(
+            UploadedFileFactoryInterface::class,
+            $this->container->get(UploadedFileFactoryInterface::class)
+        );
 
         $factory = $this->container->get(\Psr\Http\Message\UploadedFileFactoryInterface::class);
         $stream = $this->container->get(\Psr\Http\Message\StreamFactoryInterface::class)->createStream('test');
         $uploadedFile = $factory->createUploadedFile($stream);
         $this->assertInstanceOf(UploadedFileInterface::class, $uploadedFile);
 
-        $this->assertInstanceOf(RequestHandlerFactoryInterface::class, $this->container->get(RequestHandlerFactoryInterface::class));
+        $this->assertInstanceOf(
+            RequestHandlerFactoryInterface::class,
+            $this->container->get(RequestHandlerFactoryInterface::class)
+        );
         $this->assertInstanceOf(RequestHandlerInterface::class, $this->container->get(RequestHandlerInterface::class));
         $this->assertInstanceOf(ResultContextInterface::class, $this->container->get(ResultContextInterface::class));
 
         $this->assertInstanceOf(DispatcherInterface::class, $this->container->get(DispatcherInterface::class));
         $this->assertInstanceOf(JsonResponderInterface::class, $this->container->get(JsonResponderInterface::class));
         $this->assertInstanceOf(HtmlResponderInterface::class, $this->container->get(HtmlResponderInterface::class));
-        $this->assertInstanceOf(PlainTextResponderInterface::class, $this->container->get(PlainTextResponderInterface::class));
-        $this->assertInstanceOf(ResponseResponderInterface::class, $this->container->get(ResponseResponderInterface::class));
+        $this->assertInstanceOf(
+            PlainTextResponderInterface::class,
+            $this->container->get(PlainTextResponderInterface::class)
+        );
+        $this->assertInstanceOf(
+            ResponseResponderInterface::class,
+            $this->container->get(ResponseResponderInterface::class)
+        );
     }
 
     public function testLoggerRegisters(): void

@@ -8,7 +8,10 @@
 
 # Argon Prophecy
 
-A flexible, PSR-compliant HTTP foundation — fully customizable, container-driven, and designed to stay out of your way. Itis  a foundation to help you build your own framework — without vendor bloat or ecosystem traps.
+A flexible, PSR-compliant HTTP foundation — fully customizable, container-driven, and designed to stay out of your way. 
+It is  a foundation to help you build your own framework — without vendor bloat or ecosystem traps.
+
+Built on top of the [Argon](https://github.com/judus/argon) container
 
 *(Documentation work in progress)*
 
@@ -20,17 +23,17 @@ A flexible, PSR-compliant HTTP foundation — fully customizable, container-driv
 - **Strict Standards:** Full PSR compliance (PSR-7, PSR-15, PSR-17, PSR-18).
 - **Minimal Core:** Only essential services are bound by default - to satisfy 1 simple request cycle.
 - **High Resilience:** Always emits a valid PSR-7 response, even if you break the error handler.
-- **No Lock-In:** There are no classes to extend, no convenience functions, nothing that ties you to Argon.
+- **No Lock-In:** There are no classes to extend, no convenience functions, nothing that ties you to Argon.
+- **Features?** As many as you want. Cherry-pick your favorite libs and register them to the container. And the best part: they'll get compiled in the container for ZeFastestAF™.
 
-&#x20;
 
 ## The Default Setup
 
 Argon provides replaceable default implementations:
 
-- PSR-7/17 Messages
+- PSR-7/17 `Messages`
 - A PSR-15 `RequestHandlerInterface`&#x20;
-- A PSR-3 `LoggerInterface` (or `NullLogger`)
+- A PSR-3 `LoggerInterface` (`NullLogger` or `Monolog` if available)
 - A `ResponseEmitterInterface`
 - An `ErrorHandlerInterface`
 - A HTTP-Kernel
@@ -52,7 +55,8 @@ use Maduser\Argon\Logging\LoggerServiceProvider;
 use Maduser\Argon\Prophecy\Provider\ArgonHttpFoundation;
 
 Argon::prophecy(function(ArgonContainer $container) {
-$container->register(ArgonHttpFoundation::class);
+    $container->register(LoggerServiceProvider::class);
+    $container->register(ArgonHttpFoundation::class);
 });
 ```
 
@@ -68,9 +72,9 @@ use Maduser\Argon\Prophecy\Provider\ArgonHttpFoundation;
 use YourApp\AppServiceProvider;
 
 Argon::prophecy(function(ArgonContainer $container) {
-$container->register(LoggerServiceProvider::class); // provided, requires Monolog
-$container->register(ArgonHttpFoundation::class);
-$container->register(AppServiceProvider::class);
+    $container->register(LoggerServiceProvider::class);
+    $container->register(ArgonHttpFoundation::class);
+    $container->register(AppServiceProvider::class);
 });
 ```
 
@@ -84,7 +88,7 @@ In that case you'll have an empty container, not even a Kernel, just a wrapper f
 
 ```php
 Argon::prophecy(function(ArgonContainer $container) {
-$container->register(IKnowWhatImDoingServiceProvider::class);
+    $container->register(IKnowWhatImDoingServiceProvider::class);
 });
 ```
 
@@ -97,17 +101,16 @@ Running the default stack will show a placeholder HTML page suggesting the next 
 To define how your app handles requests, bind your own dispatcher to:
 
 ```php
-$container->set(
-Maduser\Argon\Contracts\Http\Server\Middleware\DispatcherInterface::class,
-\YourApp\YourDispatcher::class,
-);
+$container->set(DispatcherInterface::class, YourDispatcher::class);
 ```
 
-This will replace the useless built in Dispatcher with you own. From there, it's up to you:
+This will replace the useless built in Dispatcher with your own. From there, it's up to you:
 
 - Wire controllers, services, handlers, etc.
 - Integrate or build your Router.
 - Execute whatever logic your app needs.
+
+The principle applies to all components. Just override the binding.
 
 ---
 
@@ -144,21 +147,6 @@ Available via Composer. Registered manually via ServiceProviders.
 - **Queue**: Because I am bored...
 
 ---
-
-# TL;DR
-
-Argon Prophecy gives you:
-
-- **PSR-compliant core**
-- **Strict DI container control**
-- **Minimal, extensible setup**
-- **Zero vendor lock-in**
-
-Use the defaults — or replace everything. Every service has an Interface. Every behavior is explicit.
-
-Argon is the **foundation**. You build the framework.
-
-
 
 ## License
 

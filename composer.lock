@@ -8,16 +8,16 @@
     "packages": [
         {
             "name": "maduser/argon",
-            "version": "v1.0.0-beta.9.0.1",
+            "version": "v1.0.0-beta.9.0.2",
             "source": {
                 "type": "git",
                 "url": "https://github.com/judus/argon.git",
-                "reference": "9805fad83dedd51126071613e5202de324035c80"
+                "reference": "c795e649cd4dea436587178b897095e60a5497d5"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/judus/argon/zipball/9805fad83dedd51126071613e5202de324035c80",
-                "reference": "9805fad83dedd51126071613e5202de324035c80",
+                "url": "https://api.github.com/repos/judus/argon/zipball/c795e649cd4dea436587178b897095e60a5497d5",
+                "reference": "c795e649cd4dea436587178b897095e60a5497d5",
                 "shasum": ""
             },
             "require": {
@@ -51,9 +51,9 @@
             "description": "A high-performance, modular, PSR-11 compliant dependency injection container for PHP.",
             "support": {
                 "issues": "https://github.com/judus/argon/issues",
-                "source": "https://github.com/judus/argon/tree/v1.0.0-beta.11"
+                "source": "https://github.com/judus/argon/tree/v1.0.0-beta.9.0.2"
             },
-            "time": "2025-04-23T20:17:43+00:00"
+            "time": "2025-04-27T23:02:18+00:00"
         },
         {
             "name": "nette/php-generator",

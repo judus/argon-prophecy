@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "0e07682c43e71e99c8a6b2c12fa98d09",
+    "content-hash": "5e36108ecf96e793149dff2a08f83d35",
     "packages": [
         {
             "name": "maduser/argon",

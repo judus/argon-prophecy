@@ -4,11 +4,11 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "0e07682c43e71e99c8a6b2c12fa98d09",
+    "content-hash": "1c23fd18bc126c290c098f69f669ddfc",
     "packages": [
         {
             "name": "maduser/argon",
-            "version": "v1.0.0-beta.9.0.1",
+            "version": "v1.0.0-beta.11",
             "source": {
                 "type": "git",
                 "url": "https://github.com/judus/argon.git",

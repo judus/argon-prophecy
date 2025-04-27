@@ -9,14 +9,14 @@ use Maduser\Argon\Container\ArgonContainer;
 use Maduser\Argon\Container\Exceptions\ContainerException;
 use Maduser\Argon\Contracts\ErrorHandling\Http\ExceptionDispatcherInterface;
 use Maduser\Argon\Contracts\ErrorHandling\Http\ExceptionFormatterInterface;
-use Maduser\Argon\Contracts\ErrorHandling\Http\ExceptionHandlerInterface;
+use Maduser\Argon\Contracts\ErrorHandling\Http\ErrorHandlerInterface;
 use Maduser\Argon\ErrorHandling\Http\ExceptionDispatcher;
 use Maduser\Argon\ErrorHandling\Http\ExceptionFormatter;
-use Maduser\Argon\ErrorHandling\Http\ExceptionHandler;
+use Maduser\Argon\ErrorHandling\Http\ErrorHandler;
 use Maduser\Argon\Prophecy\Support\Tag;
 use Psr\Log\LoggerInterface;
 
-class ArgonExceptionServiceProvider extends AbstractServiceProvider
+class ArgonErrorHandlerServiceProvider extends AbstractServiceProvider
 {
     /**
      * @throws ContainerException
@@ -28,7 +28,7 @@ class ArgonExceptionServiceProvider extends AbstractServiceProvider
         $container->set(ExceptionFormatterInterface::class, ExceptionFormatter::class, $debug)
             ->tag([Tag::EXCEPTION_FORMATTER]);
 
-        $container->set(ExceptionHandlerInterface::class, ExceptionHandler::class, [
+        $container->set(ErrorHandlerInterface::class, ErrorHandler::class, [
             'logger' => LoggerInterface::class,
         ])
             ->tag([Tag::EXCEPTION_HANDLER]);

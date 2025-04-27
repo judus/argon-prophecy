@@ -36,6 +36,8 @@ final readonly class Dispatcher implements DispatcherInterface
     {
         $this->logger?->info('Dispatching placeholder logic');
 
+        //dump('hello?');
+
         $html = $this->getPlaceholderHtml();
 
         $this->result->set(Html::create($html, [

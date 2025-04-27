@@ -12,6 +12,8 @@ use Maduser\Argon\Container\Exceptions\NotFoundException;
 use Maduser\Argon\Prophecy\Contracts\ApplicationInterface;
 use Maduser\Argon\Contracts\KernelInterface;
 use Maduser\Argon\Prophecy\ErrorHandling\BootstrapErrorHandler;
+use Psr\Http\Message\ResponseInterface;
+use Psr\Http\Message\ServerRequestInterface;
 use Psr\Log\LoggerInterface;
 use ReflectionException;
 use RuntimeException;
@@ -26,6 +28,8 @@ final class Application implements ApplicationInterface
     private ?string $compiledFilePath = null;
     private ?string $compiledClass = null;
     private ?string $compiledNamespace = null;
+
+    private ?KernelInterface $kernel = null;
 
     private bool $booted = false;
 
@@ -52,15 +56,28 @@ final class Application implements ApplicationInterface
         return $this;
     }
 
-    /**
-     * @throws ContainerException
-     * @throws NotFoundException
-     * @throws ReflectionException
-     */
-    public function handle(): void
+    public function handle(?ServerRequestInterface $request = null): void
     {
-        if ($this->booted) {
-            throw new RuntimeException('Application already booted.');
+        $kernel = $this->prepareKernel();
+        $kernel->handle($request);
+    }
+
+    public function process(?ServerRequestInterface $request = null): ResponseInterface
+    {
+        $kernel = $this->prepareKernel();
+        return $kernel->process($request);
+    }
+
+    public function emit(ResponseInterface $response): void
+    {
+        $kernel = $this->prepareKernel();
+        $kernel->emit($response);
+    }
+
+    private function prepareKernel(): KernelInterface
+    {
+        if ($this->kernel !== null) {
+            return $this->kernel;
         }
 
         $container = $this->getContainer();
@@ -70,7 +87,6 @@ final class Application implements ApplicationInterface
         }
 
         $this->logContainerLoadedEvent();
-
         $container->boot();
         $this->logContainerBootedEvent();
 
@@ -78,7 +94,8 @@ final class Application implements ApplicationInterface
         $this->booted = true;
 
         $this->logKernelReadyEvent($kernel);
-        $kernel->handle();
+
+        return $kernel;
     }
 
     /**
@@ -253,4 +270,6 @@ final class Application implements ApplicationInterface
             $this->logger->debug("Container [$stage] debug info:", $info);
         }
     }
+
+
 }

@@ -7,7 +7,7 @@ namespace Tests\Integration\Prophecy\Provider;
 use Maduser\Argon\Container\Exceptions\ContainerException;
 use Maduser\Argon\Container\Exceptions\NotFoundException;
 use Maduser\Argon\Contracts\ErrorHandling\Http\ExceptionFormatterInterface;
-use Maduser\Argon\Contracts\ErrorHandling\Http\ExceptionHandlerInterface;
+use Maduser\Argon\Contracts\ErrorHandling\Http\ErrorHandlerInterface;
 use Maduser\Argon\Contracts\Http\Server\Factory\RequestHandlerFactoryInterface;
 use Maduser\Argon\Contracts\Http\Server\Middleware\DispatcherInterface;
 use Maduser\Argon\Contracts\Http\Server\Middleware\HtmlResponderInterface;
@@ -18,7 +18,7 @@ use Maduser\Argon\Contracts\Http\Server\ResultContextInterface;
 use Maduser\Argon\Contracts\KernelInterface;
 use Maduser\Argon\ErrorHandling\Http\ExceptionDispatcher;
 use Maduser\Argon\ErrorHandling\Http\ExceptionFormatter;
-use Maduser\Argon\ErrorHandling\Http\ExceptionHandler;
+use Maduser\Argon\ErrorHandling\Http\ErrorHandler;
 use Maduser\Argon\Http\Kernel;
 use Maduser\Argon\Prophecy\Provider\ArgonHttpFoundation;
 use Maduser\Argon\Logging\LoggerServiceProvider;
@@ -65,7 +65,7 @@ final class ServiceProviderTest extends TestCase
         $this->assertInstanceOf(LoggerInterface::class, $this->container->get(LoggerInterface::class));
 
         $this->assertInstanceOf(ExceptionFormatter::class, $this->container->get(ExceptionFormatterInterface::class));
-        $this->assertInstanceOf(ExceptionHandler::class, $this->container->get(ExceptionHandlerInterface::class));
+        $this->assertInstanceOf(ErrorHandler::class, $this->container->get(ErrorHandlerInterface::class));
         $this->assertInstanceOf(ExceptionDispatcher::class, $this->container->get(ExceptionDispatcher::class));
 
         $this->assertInstanceOf(Kernel::class, $this->container->get(KernelInterface::class));

@@ -15,7 +15,7 @@ use Maduser\Argon\Contracts\ErrorHandling\Http\HttpExceptionInterface;
 use Maduser\Argon\Contracts\Http\Server\Middleware\DispatcherInterface;
 use Maduser\Argon\ErrorHandling\Http\ExceptionDispatcher;
 use Maduser\Argon\ErrorHandling\Http\ExceptionFormatter;
-use Maduser\Argon\ErrorHandling\Http\ExceptionHandler;
+use Maduser\Argon\ErrorHandling\Http\ErrorHandler;
 use Maduser\Argon\Prophecy\Provider\ArgonHttpFoundation;
 use PHPUnit\Framework\MockObject\Exception;
 use Psr\Http\Message\ResponseFactoryInterface;
@@ -349,7 +349,7 @@ class ExceptionHandlingTest extends AbstractArgonTestCase
     {
         $this->registerProviders(Providers::DEFAULT_STACK);
 
-        $handler = $this->container->get(ExceptionHandler::class);
+        $handler = $this->container->get(ErrorHandler::class);
 
         // Just calling it to ensure it doesn't explode
         $handler->register();
@@ -365,7 +365,7 @@ class ExceptionHandlingTest extends AbstractArgonTestCase
     {
         $this->registerProviders(Providers::DEFAULT_STACK);
 
-        $handler = $this->container->get(ExceptionHandler::class);
+        $handler = $this->container->get(ErrorHandler::class);
 
         $request = $this->container->get(ServerRequestInterface::class);
 
@@ -385,7 +385,7 @@ class ExceptionHandlingTest extends AbstractArgonTestCase
     {
         $this->registerProviders(Providers::DEFAULT_STACK);
 
-        $handler = $this->container->get(ExceptionHandler::class);
+        $handler = $this->container->get(ErrorHandler::class);
 
         $reflection = new ReflectionClass($handler);
         $method = $reflection->getMethod('isFatalError');
@@ -406,7 +406,7 @@ class ExceptionHandlingTest extends AbstractArgonTestCase
     {
         $this->registerProviders(Providers::DEFAULT_STACK);
 
-        $handler = $this->container->get(ExceptionHandler::class);
+        $handler = $this->container->get(ErrorHandler::class);
 
         // Simulate a fatal error structure
         $error = [
@@ -437,7 +437,7 @@ class ExceptionHandlingTest extends AbstractArgonTestCase
     {
         $dispatcher = $this->createMock(ExceptionDispatcherInterface::class);
         $formatter = $this->createMock(ExceptionFormatterInterface::class);
-        $handler = new ExceptionHandler($dispatcher, $formatter);
+        $handler = new ErrorHandler($dispatcher, $formatter);
 
         $handler->register();
         $handler->register(); // Should do nothing second time — no crash
@@ -452,7 +452,7 @@ class ExceptionHandlingTest extends AbstractArgonTestCase
         $dispatcher = $this->createMock(ExceptionDispatcherInterface::class);
         $formatter = $this->createMock(ExceptionFormatterInterface::class);
         $logger = $this->createMock(LoggerInterface::class);
-        $handler = new ExceptionHandler($dispatcher, $formatter, $logger);
+        $handler = new ErrorHandler($dispatcher, $formatter, $logger);
 
         $request = $this->createMock(ServerRequestInterface::class);
         $exception = new RuntimeException('Boom');
@@ -474,7 +474,7 @@ class ExceptionHandlingTest extends AbstractArgonTestCase
         $formatter = $this->createMock(ExceptionFormatterInterface::class);
         $logger = $this->createMock(LoggerInterface::class);
 
-        $handler = new ExceptionHandler($dispatcher, $formatter, $logger);
+        $handler = new ErrorHandler($dispatcher, $formatter, $logger);
 
         $request = $this->createMock(ServerRequestInterface::class);
         $original = new RuntimeException('Oops');
@@ -499,7 +499,7 @@ class ExceptionHandlingTest extends AbstractArgonTestCase
     {
         $dispatcher = $this->createMock(ExceptionDispatcherInterface::class);
         $formatter = $this->createMock(ExceptionFormatterInterface::class);
-        $handler = new ExceptionHandler($dispatcher, $formatter);
+        $handler = new ErrorHandler($dispatcher, $formatter);
 
         $fatalErrors = [E_ERROR, E_PARSE, E_CORE_ERROR, E_COMPILE_ERROR];
 
@@ -515,7 +515,7 @@ class ExceptionHandlingTest extends AbstractArgonTestCase
     {
         $dispatcher = $this->createMock(ExceptionDispatcherInterface::class);
         $formatter = $this->createMock(ExceptionFormatterInterface::class);
-        $handler = new ExceptionHandler($dispatcher, $formatter);
+        $handler = new ErrorHandler($dispatcher, $formatter);
 
         $this->assertFalse($this->invokeIsFatalError($handler, ['type' => E_NOTICE]));
         $this->assertFalse($this->invokeIsFatalError($handler, null));
@@ -530,7 +530,7 @@ class ExceptionHandlingTest extends AbstractArgonTestCase
         $formatter = $this->createMock(ExceptionFormatterInterface::class);
         $logger = $this->createMock(LoggerInterface::class);
 
-        $handler = new ExceptionHandler($dispatcher, $formatter, $logger);
+        $handler = new ErrorHandler($dispatcher, $formatter, $logger);
 
         $logger->expects($this->once())
             ->method('critical')
@@ -547,7 +547,7 @@ class ExceptionHandlingTest extends AbstractArgonTestCase
     /**
      * @throws ReflectionException
      */
-    private function invokeIsFatalError(ExceptionHandler $handler, ?array $error): bool
+    private function invokeIsFatalError(ErrorHandler $handler, ?array $error): bool
     {
         $ref = new ReflectionClass($handler);
         $method = $ref->getMethod('isFatalError');
@@ -558,7 +558,7 @@ class ExceptionHandlingTest extends AbstractArgonTestCase
     /**
      * @throws ReflectionException
      */
-    private function simulateFatalShutdown(ExceptionHandler $handler): void
+    private function simulateFatalShutdown(ErrorHandler $handler): void
     {
         $ref = new ReflectionClass($handler);
         $method = $ref->getMethod('shutdownFunction');
@@ -583,7 +583,7 @@ class ExceptionHandlingTest extends AbstractArgonTestCase
         $formatter = $this->createMock(ExceptionFormatterInterface::class);
         $logger = $this->createMock(LoggerInterface::class);
 
-        $handler = new ExceptionHandler($dispatcher, $formatter, $logger);
+        $handler = new ErrorHandler($dispatcher, $formatter, $logger);
 
         $logger->expects($this->once())
             ->method('critical')
@@ -601,7 +601,7 @@ class ExceptionHandlingTest extends AbstractArgonTestCase
     /**
      * @throws ReflectionException
      */
-    private function invokeCreateExceptionHandler(ExceptionHandler $handler): callable
+    private function invokeCreateExceptionHandler(ErrorHandler $handler): callable
     {
         $ref = new ReflectionClass($handler);
         $method = $ref->getMethod('createExceptionHandler');

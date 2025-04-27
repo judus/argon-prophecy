@@ -31,6 +31,7 @@ Argon::prophecy(function (ArgonContainer $container): void {
         foreach ($classes as $testProviderClass) {
             /** @var class-string<ServiceProviderInterface> $testProviderClass */
             $testProviderClass = trim($testProviderClass);
+
             if (class_exists($testProviderClass)) {
                 $container->register($testProviderClass);
             }

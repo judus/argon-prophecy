@@ -29,7 +29,9 @@ final class Response implements ResponseInterface
         $this->body = $body ?? new Stream(fopen('php://temp', 'r+'));
         $this->headers = $this->normalizeHeaders($headers);
         $this->protocol = $protocol;
-        $this->reasonPhrase = $reasonPhrase;
+        $this->reasonPhrase = $reasonPhrase !== ''
+            ? $reasonPhrase
+            : $this->getDefaultReasonPhrase($status);
 
         $size = $this->body->getSize();
         if ($size !== null && !$this->hasHeader('Content-Length')) {

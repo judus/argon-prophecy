@@ -33,6 +33,8 @@ class ApplicationTest extends AbstractHttpTestCase
     {
         $response = $this->get('/', Providers::DEFAULT_STACK);
 
+        var_dump($response->getBody());
+
         $this->assertOk($response);
         $this->assertIsDefaultHtmlContent($response);
     }

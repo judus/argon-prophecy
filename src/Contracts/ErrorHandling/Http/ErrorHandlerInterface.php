@@ -14,7 +14,7 @@ use Throwable;
  * This interface defines how exceptions are logged and transformed into PSR-7 responses.
  * Implementations must be infallible — methods must never throw.
  */
-interface ExceptionHandlerInterface
+interface ErrorHandlerInterface
 {
     public function register(): void;
 

@@ -6,14 +6,14 @@ namespace Maduser\Argon\ErrorHandling\Http;
 
 use ErrorException;
 use Maduser\Argon\Contracts\ErrorHandling\Http\ExceptionDispatcherInterface;
-use Maduser\Argon\Contracts\ErrorHandling\Http\ExceptionHandlerInterface;
+use Maduser\Argon\Contracts\ErrorHandling\Http\ErrorHandlerInterface;
 use Maduser\Argon\Contracts\ErrorHandling\Http\ExceptionFormatterInterface;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
 use Psr\Log\LoggerInterface;
 use Throwable;
 
-final class ExceptionHandler implements ExceptionHandlerInterface
+final class ErrorHandler implements ErrorHandlerInterface
 {
     private bool $registered = false;
 
@@ -27,8 +27,16 @@ final class ExceptionHandler implements ExceptionHandlerInterface
     public function register(): void
     {
         if ($this->registered) {
+            $this->logger?->info('Exception handler already registered, skipping...', [
+                'class' => get_class($this),
+            ]);
+
             return;
         }
+
+        $this->logger?->info('Registering exception handler', [
+            'class' => get_class($this),
+        ]);
 
         $this->registered = true;
 

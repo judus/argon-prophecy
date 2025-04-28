@@ -97,6 +97,12 @@ final class ErrorHandler implements ErrorHandlerInterface
         };
     }
 
+    /**
+     * Handles shutdown errors.
+     *
+     * @param array{type: int, message: string, file: string, line: int}|null $error
+     *        Optional error array, typically provided by `error_get_last()`.
+     */
     private function shutdownFunction(?array $error = null): void
     {
         $error ??= error_get_last();

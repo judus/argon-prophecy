@@ -12,6 +12,7 @@ use PHPUnit\Framework\MockObject\Exception;
 use PHPUnit\Framework\TestCase;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
+use Psr\Http\Message\UriInterface;
 use Psr\Http\Server\RequestHandlerInterface;
 use Psr\Log\LoggerInterface;
 use Psr\Http\Message\StreamInterface;
@@ -68,7 +69,7 @@ final class KernelTest extends TestCase
         $request = $this->createMock(ServerRequestInterface::class);
         $request->method('getMethod')->willReturn('GET');
 
-        $uri = $this->createMock(\Psr\Http\Message\UriInterface::class);
+        $uri = $this->createMock(UriInterface::class);
         $uri->method('__toString')->willReturn('/');
 
         $request->method('getUri')->willReturn($uri);
@@ -141,7 +142,7 @@ final class KernelTest extends TestCase
         $request = $this->createMock(ServerRequestInterface::class);
         $request->method('getMethod')->willReturn('GET');
 
-        $uri = $this->createMock(\Psr\Http\Message\UriInterface::class);
+        $uri = $this->createMock(UriInterface::class);
         $uri->method('__toString')->willReturn('/');
 
         $request->method('getUri')->willReturn($uri);

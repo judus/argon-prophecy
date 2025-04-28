@@ -8,6 +8,7 @@ use GuzzleHttp\Client;
 use GuzzleHttp\Exception\GuzzleException;
 use PHPUnit\Framework\TestCase;
 use Psr\Http\Message\ResponseInterface;
+use RuntimeException;
 
 abstract class AbstractHttpTestCase extends TestCase
 {
@@ -34,7 +35,7 @@ abstract class AbstractHttpTestCase extends TestCase
             $output = shell_exec($cmd);
 
             if ($output === null) {
-                throw new \RuntimeException('Failed to start built-in PHP server.');
+                throw new RuntimeException('Failed to start built-in PHP server.');
             }
 
             self::$pid = (int) $output;

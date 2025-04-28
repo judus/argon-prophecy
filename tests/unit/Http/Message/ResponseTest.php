@@ -8,7 +8,6 @@ use Maduser\Argon\Http\Message\Response;
 use Maduser\Argon\Http\Message\Stream;
 use PHPUnit\Framework\TestCase;
 use RuntimeException;
-use stdClass;
 
 /**
  * @covers \Maduser\Argon\Http\Message\Response

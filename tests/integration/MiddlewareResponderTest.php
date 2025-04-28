@@ -8,7 +8,6 @@ use Maduser\Argon\Container\Exceptions\ContainerException;
 use Maduser\Argon\Container\Exceptions\NotFoundException;
 use Maduser\Argon\Contracts\Http\Server\Middleware\DispatcherInterface;
 use Maduser\Argon\Http\Server\Exception\EmptyMiddlewareChainException;
-use PHPUnit\Framework\TestCase;
 use Tests\Application\Mocks\Providers;
 use Tests\Integration\Mocks\FakeResponderDispatcher;
 

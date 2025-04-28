@@ -221,6 +221,7 @@ final readonly class Kernel implements KernelInterface
             'size' => $response->getBody()->getSize(),
         ]);
 
+        /** @noinspection DuplicatedCode */
         http_response_code($response->getStatusCode());
 
         foreach ($response->getHeaders() as $name => $values) {

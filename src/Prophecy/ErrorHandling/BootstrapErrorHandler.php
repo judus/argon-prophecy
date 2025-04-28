@@ -17,9 +17,15 @@ final class BootstrapErrorHandler implements BootstrapErrorHandlerInterface
     private Closure $terminateCallback;
     private Closure $errorGetLastCallback;
     private string $sapi;
+
+    /**
+     * @var resource|null
+     */
     private $stream;
 
-
+    /**
+     * @param resource|null $stream
+     */
     public function __construct(
         ?LoggerInterface $logger = null,
         ?Closure $outputCallback = null,
@@ -35,7 +41,7 @@ final class BootstrapErrorHandler implements BootstrapErrorHandlerInterface
         $this->terminateCallback = $terminateCallback ?? static function (int $code): void {
             exit($code); // @codeCoverageIgnore
         };
-        $this->errorGetLastCallback = $errorGetLastCallback ?? static fn() => error_get_last();
+        $this->errorGetLastCallback = $errorGetLastCallback ?? static fn(): array|null => error_get_last();
     }
 
     private function defaultOutputCallback(): Closure
@@ -75,6 +81,7 @@ final class BootstrapErrorHandler implements BootstrapErrorHandlerInterface
 
     public function handleShutdown(): void
     {
+        /** @var array{type: int, message: string, file: string, line: int}|null $error */
         $error = ($this->errorGetLastCallback)();
         if ($error !== null) {
             $this->handleException(new ErrorException(

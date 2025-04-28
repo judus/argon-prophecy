@@ -230,7 +230,7 @@ final class ServerRequestFactoryTest extends TestCase
      */
     private static function invokeNormalizeUploadedFiles(array $files): array
     {
-        $reflection = new \ReflectionClass(ServerRequestFactory::class);
+        $reflection = new ReflectionClass(ServerRequestFactory::class);
         $method = $reflection->getMethod('normalizeUploadedFiles');
 
         return $method->invoke(null, $files);

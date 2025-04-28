@@ -8,10 +8,7 @@ use Maduser\Argon\Container\ArgonContainer;
 use Maduser\Argon\Prophecy\Argon;
 use PHPUnit\Framework\TestCase;
 use Tests\Application\Mocks\Providers;
-use Psr\Http\Message\ServerRequestInterface;
 use Psr\Http\Message\ResponseInterface;
-use Maduser\Argon\Contracts\KernelInterface;
-use Maduser\Argon\Http\Message\Uri;
 
 final class ArgonProphecyTest extends TestCase
 {
@@ -47,7 +44,7 @@ final class ArgonProphecyTest extends TestCase
     public function testCaptureFlow(): void
     {
         Argon::boot(function (ArgonContainer $container): void {
-            $container->register(Providers::DEFAULT_STACK);
+            $container->register(Providers::NO_LOGGER_STACK);
         });
 
         $response = Argon::process();
@@ -59,7 +56,7 @@ final class ArgonProphecyTest extends TestCase
     public function testEmitFlow(): void
     {
         Argon::boot(function (ArgonContainer $container): void {
-            $container->register(Providers::DEFAULT_STACK);
+            $container->register(Providers::NO_LOGGER_STACK);
         });
 
         $response = Argon::process();

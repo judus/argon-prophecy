@@ -1,52 +1,68 @@
 [![PHP](https://img.shields.io/badge/php-8.2+-blue)](https://www.php.net/)
 [![Build](https://github.com/judus/argon-prophecy/actions/workflows/php.yml/badge.svg)](https://github.com/judus/argon-prophecy/actions)
-[![codecov](https://codecov.io/gh/judus/argon-prophecy/branch/master/graph/badge.svg)](https://codecov.io/gh/judus/argon-prophecy)
+[![codecov](https://codecov.io/gh/judus/argon-prophecy/branch/master/graph/badge.svg)](https://codecov.io/gh/judus/argon-prophecy)<!--
 [![Psalm Level](https://shepherd.dev/github/judus/argon-prophecy/coverage.svg)](https://shepherd.dev/github/judus/argon-prophecy)
-[![Code Style](https://img.shields.io/badge/code%20style-PSR--12-brightgreen.svg)](https://www.php-fig.org/psr/psr-12/)
+-->[![Code Style](https://img.shields.io/badge/code%20style-PSR--12-brightgreen.svg)](https://www.php-fig.org/psr/psr-12/)
 [![Latest Version](https://img.shields.io/packagist/v/maduser/argon-prophecy.svg)](https://packagist.org/packages/maduser/argon-prophecy)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
 # Argon Prophecy
 
-A flexible, PSR-compliant HTTP foundation — fully customizable, container-driven, and designed to stay out of your way. 
-It is  a foundation to help you build your own framework — without vendor bloat or ecosystem traps.
-
-Built on top of the Argon Service Container [Github link](https://github.com/judus/argon)
-
-*(Documentation work in progress)*
+> A compiled, minimal PHP framework foundation — designed for when speed, transparency, and running costs matter.
 
 ---
 
-## Core Principles
+**Core Features:**
 
-- **100% Dependency Injection:** No hidden macros, no duct tape workarounds, no weirdos
-- **Strict Standards:** Full PSR compliance (PSR-7, PSR-15, PSR-17, PSR-18).
-- **Minimal Core:** Only essential services are bound by default - to satisfy 1 simple request cycle.
-- **High Resilience:** Always emits a valid PSR-7 response, even if you break the error handler.
-- **No Lock-In:** There are no classes to extend, no convenience functions, nothing that ties you to Argon.
-- **Features?** As many as you want. Cherry-pick your favorite libs and register them to the container. And the best part: they'll get compiled in the container for ZeFastestAF™.
+- **Compiled container**: No reflection, no proxies.
+- **Strict PSR compliance**: PSR-3, PSR-7, PSR-11, PSR-15, PSR-17.
+- **High Resilience:** Always emits a valid PSR-7 response.
+- **No framework leakage**: Your domain logic stays clean.
+- **Minimal by default**: Pull in only what you need.
+- **Learn it in minutes**: Less than ten methods to remember.
 
+**Default Stack includes:**
 
-## The Default Setup
+- PSR-7 / PSR-17 HTTP Messages
+- PSR-11 Dependency Injection Container
+- PSR-15 Middleware Pipeline
+- PSR-3 Logger
+- Response Emitter and Error Handler
+- Built-in Responder Middleware (JSON, HTML, Plain Text, PSR-7 — see below)
+- Minimal Kernel to orchestrate request/response lifecycle
+- Application manager and static facade to simplify booting
 
-Argon provides replaceable default implementations:
+_All components are modular and replaceable._
 
-- PSR-7/17 `Messages`
-- A PSR-15 `RequestHandlerInterface`&#x20;
-- A PSR-3 `LoggerInterface` (`NullLogger` or `Monolog` if available)
-- A `ResponseEmitterInterface`
-- An `ErrorHandlerInterface`
-- A HTTP-Kernel
+---
 
-You can override single implementations, or completely replace everything.
+## Installation
+
+```bash
+composer require maduser/argon-prophecy
+```
+
+---
+
+## Minimal Learning Curve
+
+You can be productive with Argon within minutes if you know basic Dependency Injection concepts:
+
+**Argon Container API:**
+
+- `register()`, `boot()`, `set()`, `get()`, `factory()`, `tag()`
+- `getParameters()->set()`, `getParameters()->get()`
+
+**Argon Prophecy API:**
+
+- `prophecy()`, `process()`
+
+Further API documentation is available below.\
+For now, let the Quickstart Example speak for itself.
 
 ---
 
 ## Quickstart Example
-
-### Default Setup
-
-Put this in your `index.php` and you're good to go, fully PSR compliant:
 
 ```php
 <?php
@@ -63,22 +79,42 @@ Argon::prophecy(function(ArgonContainer $container): void {
     $container->register(ArgonHttpFoundation::class);
 });
 ```
+When you run this, you'll see a default HTML output from a placeholder Dispatcher middleware.
+It suggests the next step: override the binding with your own `Dispatcher`.
 
----
-
-### Extending the Default Stack
-
+To do this, create a ServiceProvider:
 ```php
 <?php
 
 declare(strict_types=1);
 
-use Maduser\Argon\Prophecy\Argon;
-use Maduser\Argon\Container\ArgonContainer;
-use Maduser\Argon\Logging\LoggerServiceProvider;
-use Maduser\Argon\Prophecy\Provider\ArgonHttpFoundation;
-use YourApp\AppServiceProvider;
+namespace YourApp\Provider;
 
+use Maduser\Argon\Container\ArgonContainer;
+use Maduser\Argon\Container\Contracts\ServiceProviderInterface;
+use Maduser\Argon\Contracts\Http\Server\DispatcherInterface;
+use YourApp\Dispatcher\MyDispatcher;
+
+final readonly class AppServiceProvider implements ServiceProviderInterface
+{
+    public function register(ArgonContainer $container): void
+    {
+        // Override the default dispatcher binding with your own
+        $container->set(DispatcherInterface::class, MyDispatcher::class)
+            // The middleware pipeline factory loads by tag, so we tag it:
+            ->tag([Tag::MIDDLEWARE_HTTP => ['priority' => 6000, 'group' => ['api', 'web']]]);
+    }
+
+    public function boot(): void
+    {
+        // boot() allows dynamic setup after the container is loaded.
+    }
+}
+```
+
+You can now register your AppServiceProvider along with the other providers:
+
+```php
 Argon::prophecy(function(ArgonContainer $container): void {
     $container->register(LoggerServiceProvider::class);
     $container->register(ArgonHttpFoundation::class);
@@ -86,97 +122,117 @@ Argon::prophecy(function(ArgonContainer $container): void {
 });
 ```
 
-Override or extend bindings inside your `AppServiceProvider`.
+It is perfectly fine — if not recommended — to nest your ServiceProviders.
 
----
-
-### Or Start Completely From Scratch (really?)
-
-In that case you'll have an empty container, not even a Kernel, just a wrapper for the container compilation, good luck!
-
+This way your app launcher becomes minimal, and you don't have to change it anymore:
 ```php
-<?php
-
-declare(strict_types=1);
-
-use Maduser\Argon\Prophecy\Argon;
-use Maduser\Argon\Container\ArgonContainer;
-
 Argon::prophecy(function(ArgonContainer $container): void {
-    $container->register(IKnowWhatImDoingServiceProvider::class);
+    $container->register(AppServiceProvider::class);
 });
 ```
-
----
-
-## Where You Come In
-
-Running the default stack will show a placeholder HTML page suggesting the next step:
-
-To define how your app handles requests, bind your own dispatcher to:
-
+Inside the `register()` method of your `AppServiceProvider`, you group all your lower-level providers:
 ```php
-$container->set(DispatcherInterface::class, YourDispatcher::class);
+public function register(ArgonContainer $container): void
+{
+    $container->register(LoggerServiceProvider::class);
+    $container->register(ArgonHttpFoundation::class);
+    $container->register(RouterServiceProvider::class);
+    $container->register(EventServiceProvider::class);
+}
 ```
 
-This will replace the useless built in Dispatcher with your own. From there, it's up to you:
+---
 
-- Wire controllers, services, handlers, etc.
-- Integrate or build your Router.
-- Execute whatever logic your app needs.
+## ArgonContainer API
 
-The principle applies to all components. Just override the binding.
+| Method       | Parameters                                       | Returns          | Description                                                                          |
+|--------------|--------------------------------------------------|------------------|--------------------------------------------------------------------------------------|
+| `register()` | `class-string<ServiceProviderInterface> $class`  | `ArgonContainer` | Registers a service provider.                                                        |
+| `set()`      | `string $id`, `\Closure\|string\|null $concrete` | `ArgonContainer` | Registers a service as shared by default. Use `->transient()` to make it non-shared. |
+| `get()`      | `string $id`                                     | `object`         | Resolves and returns the service instance.                                           |
+| `has()`      | `string $id`                                     | `bool`           | Checks if a service binding exists.                                                  |
+| `tag()`      | `string $id`, `list<string> $tags`               | `ArgonContainer` | Tags a service with one or more labels.                                              |
 
 ---
 
-## Environment Configuration
+## Argon Prophecy API
 
-These settings are **suggested defaults** used by the provided stack:
-
-| Variable                | Default      | Purpose                                          |
-| ----------------------- | ------------ | ------------------------------------------------ |
-| `APP_DEBUG`             | `false`      | Enables detailed internal error responses        |
-| `APP_ENV`               | `production` | Controls behavior like `shouldExit` during tests |
-| `APP_COMPILE_CONTAINER` | `false`      | Enables container compilation for ZeFastestAF™   |
-
-These values are injected into the container parameters manually:
-
-```php
-$container->getParameters()->set('kernel.debug', $debug);
-$container->getParameters()->set('kernel.shouldExit', $shouldExit);
-```
-
-No dependency on dotenv or specific loaders. Populate parameters however you want.
+| Method       | Parameters                                                           | Returns             | Description                                                             | 
+|--------------|----------------------------------------------------------------------|---------------------|-------------------------------------------------------------------------|
+| `prophecy()` | `Closure(ArgonContainer): void`                                      | `void`              | Boots the application, configures services and handles requests.        |
+| `process()`  | `ServerRequestInterface\|null`                                       | `ResponseInterface` | Processes a request without emitting it (useful for testing).           |
+| `emit()`     | `ResponseInterface $response`                                        | `void`              | Emits a PSR-7 Response manually (advanced control).                     |
+| `boot()`     | `Closure(ArgonContainer): void`, `string\|bool\|null $shouldCompile` | `void`              | Boots the application without handling a request.                       |
+| `reset()`    | none                                                                 | `void`              | Resets the internal application state (for tests or multi-run scripts). |
 
 ---
 
-## Optional Components
+## Tip 1: Organizing Your Service Providers
 
-(Work in progress. Components are not published yet.)
+As your architecture grows, you will want to split up and organize your service definitions into manageable chunks.
 
-Available via Composer. Registered manually via ServiceProviders.
+As mentioned before, it is perfectly valid to nest ServiceProviders inside each other. Additionally, you can create
+custom abstract ServiceProvider bases that group your logic more cleanly.
 
-- **Advanced Middleware Pipeline + Router:** Per-route middleware pipelines, cached.
-- **Views:** Abstraction layer supporting multiple template engines (Plates, Twig, etc.)
-- **Console Kernel:** For CLI applications&#x20;
-- **Queue**: Because I am bored...
-
----
-
-## But Judus, what am I supposed to do without Eloquent?
-Simple: Use plain PDO and a helper function to map to your DTOs. Or else you can do this:
-
+Example:
 ```php
 <?php
 
 declare(strict_types=1);
 
-namespace App\Providers;
+namespace YourApp\Provider;
 
-use Illuminate\Database\Capsule\Manager;
-use Maduser\Argon\Container\AbstractServiceProvider;
 use Maduser\Argon\Container\ArgonContainer;
+use Maduser\Argon\Container\Contracts\ServiceProviderInterface;
+use Maduser\Argon\Container\Contracts\ParameterStoreInterface;
+use YourApp\Contracts\RouterInterface;
+use YourApp\Contracts\EventsInterface;
 
+abstract class MyAbstractServiceProvider implements ServiceProviderInterface
+{
+    public function register(ArgonContainer $container): void
+    {
+        $this->configure($container->getParameters());
+        $this->services($container);
+        $this->routes($container->get(RouterInterface::class));
+        $this->events($container->get(EventsInterface::class));
+    }
+
+    public function boot(): void
+    {
+        // Optional: dynamic setup after container boot
+    }
+
+    protected function configure(ParameterStoreInterface $parameters): void
+    {
+        // Override to configure container parameters
+    }
+
+    protected function services(ArgonContainer $container): void
+    {
+        // Override to bind services
+    }
+
+    protected function routes(RouterInterface $router): void
+    {
+        // Override to define routes
+    }
+
+    protected function events(EventsInterface $events): void
+    {
+        // Override to register event listeners
+    }
+}
+```
+
+
+
+---
+
+## Tip 2: Examples Loading Third-Party Libraries
+
+Eloquent ORM Example:
+```php
 class EloquentServiceProvider extends AbstractServiceProvider
 {
     public function boot(ArgonContainer $container): void
@@ -184,6 +240,7 @@ class EloquentServiceProvider extends AbstractServiceProvider
         $capsule = new Manager();
 
         $capsule->addConnection([
+            // Adapt to your liking
             'driver'   => 'sqlite',
             'database' => __DIR__ . '/../../resources/database/database.sqlite',
             'prefix'   => '',
@@ -195,72 +252,51 @@ class EloquentServiceProvider extends AbstractServiceProvider
 }
 ```
 
-## ... and Template Engines?
-
-You build a wrapper for your favorite template engine and register it. Something like this:
-
+Twig Template Engine Example
 ```php
 <?php
 
 declare(strict_types=1);
 
-namespace Maduser\Argon\View\Provider;
+namespace App\Providers;
 
 use Maduser\Argon\Container\AbstractServiceProvider;
 use Maduser\Argon\Container\ArgonContainer;
 use Maduser\Argon\Container\Exceptions\ContainerException;
 use Maduser\Argon\Container\Exceptions\NotFoundException;
-use Maduser\Argon\Contracts\Http\Server\Middleware\HtmlResponderInterface;
-use Maduser\Argon\View\Contracts\TemplateEngineInterface;
-use Maduser\Argon\View\Engine\TwigEngine;
-use Maduser\Argon\View\View;
-use Maduser\Argon\Http\Server\Middleware\HtmlResponder;
-use Twig\Error\LoaderError;
+use Twig\Environment;
+use Twig\Loader\FilesystemLoader;
 
-class ViewServiceProvider extends AbstractServiceProvider
+class TwigServiceProvider extends AbstractServiceProvider
 {
     /**
      * @throws ContainerException
+     * @throws NotFoundException
      */
     public function register(ArgonContainer $container): void
     {
         $parameters = $container->getParameters();
-        $basePath = (string) $parameters->get('basePath');
+        $basePath = (string) $parameters->get('basePath', __DIR__ . '/../../');
+        $viewsPath = $basePath . '/resources/views';
 
-        // Register template engines with constructor args
-        $container->set(TwigEngine::class, TwigEngine::class, [
-            'viewsPath' => $basePath . '/resources/views',
-        ])->tag(['view']);
+        $container->set(FilesystemLoader::class, FilesystemLoader::class, [
+            'paths' => [$viewsPath],
+        ]);
 
-        // Register the View manager
-        $container->set(View::class);
-    }
-
-    /**
-     * @throws ContainerException
-     * @throws LoaderError
-     * @throws NotFoundException
-     */
-    public function boot(ArgonContainer $container): void
-    {
-        $view = $container->get(View::class);
-
-        // Register twig engine for *.twig files
-        $view->registerEngine('twig', TwigEngine::class);
-
-        // Add custom path alias (optional)
-        $engine = $container->get(TwigEngine::class);
-        $engine->addPath(__DIR__ . '/../resources/views', 'custom');
+        $container->set(Environment::class, Environment::class, [
+            'loader' => FilesystemLoader::class,
+            'options' => [
+                'cache' => $parameters->get('twig.cache', false),
+                'debug' => $parameters->get('twig.debug', false),
+            ],
+        ]);
     }
 }
 ```
+These are just quick examples of the principle. There's room for improvement. Use of factories, dynamic configurations, etc.
 
-Same thing for Events, Jobs, Router... whatever you need.
-
+---
 
 ## License
 
-MIT License
-<!--
-Argon is free and open-source. If you use it commercially or benefit from it in your work, please consider sponsoring or contributing back to support continued development.
--->
+MIT License — free to use, extend, and adapt.

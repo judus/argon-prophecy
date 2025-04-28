@@ -7,10 +7,10 @@ namespace Tests\Integration;
 use Maduser\Argon\Container\Contracts\ServiceProviderInterface;
 use Maduser\Argon\Container\Exceptions\ContainerException;
 use Maduser\Argon\Container\Exceptions\NotFoundException;
+use Maduser\Argon\Contracts\KernelInterface;
 use Maduser\Argon\Prophecy\Argon;
 use Maduser\Argon\Container\ArgonContainer;
 use PHPUnit\Framework\TestCase;
-use Psr\Http\Message\ResponseInterface;
 use Maduser\Argon\Http\Message\Uri;
 use Psr\Http\Message\ServerRequestInterface;
 use RuntimeException;
@@ -50,7 +50,7 @@ abstract class AbstractKernelTestCase extends TestCase
         $request = $this->container->get(ServerRequestInterface::class);
         $request = $request->withMethod($method)->withUri(new Uri($uri));
 
-        $kernel = $this->container->get(\Maduser\Argon\Contracts\KernelInterface::class);
+        $kernel = $this->container->get(KernelInterface::class);
 
         ob_start();
         $kernel->handle();

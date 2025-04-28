@@ -9,8 +9,6 @@ use Maduser\Argon\Container\ArgonContainer;
 use Maduser\Argon\Container\Exceptions\ContainerException;
 use Monolog\Logger;
 use Psr\Log\LoggerInterface;
-use Psr\Log\NullLogger;
-use RuntimeException;
 
 class LoggerServiceProvider extends AbstractServiceProvider
 {

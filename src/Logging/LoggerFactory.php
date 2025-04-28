@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace Maduser\Argon\Logging;
 
+use Monolog\Handler\StreamHandler;
+use Monolog\Logger;
 use Psr\Log\LoggerInterface;
 use Psr\Log\NullLogger;
 
@@ -34,10 +36,10 @@ final readonly class LoggerFactory
             default => 'php://stderr',
         };
 
-        /** @var class-string<\Monolog\Logger> $loggerClass */
+        /** @var class-string<Logger> $loggerClass */
         $loggerClass = $this->loggerClass;
 
-        /** @var class-string<\Monolog\Handler\StreamHandler> $handlerClass */
+        /** @var class-string<StreamHandler> $handlerClass */
         $handlerClass = $this->handlerClass;
 
         $logger = new ($loggerClass)('argon');

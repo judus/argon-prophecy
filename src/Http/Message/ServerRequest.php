@@ -5,8 +5,6 @@ declare(strict_types=1);
 namespace Maduser\Argon\Http\Message;
 
 use InvalidArgumentException;
-use Maduser\Argon\Http\Message\Stream;
-use Maduser\Argon\Http\Message\Uri;
 use Psr\Http\Message\ServerRequestInterface;
 use Psr\Http\Message\StreamInterface;
 use Psr\Http\Message\UriInterface;

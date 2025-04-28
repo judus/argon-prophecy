@@ -92,8 +92,8 @@ final class ServiceProviderTest extends TestCase
             $this->container->get(UploadedFileFactoryInterface::class)
         );
 
-        $factory = $this->container->get(\Psr\Http\Message\UploadedFileFactoryInterface::class);
-        $stream = $this->container->get(\Psr\Http\Message\StreamFactoryInterface::class)->createStream('test');
+        $factory = $this->container->get(UploadedFileFactoryInterface::class);
+        $stream = $this->container->get(StreamFactoryInterface::class)->createStream('test');
         $uploadedFile = $factory->createUploadedFile($stream);
         $this->assertInstanceOf(UploadedFileInterface::class, $uploadedFile);
 

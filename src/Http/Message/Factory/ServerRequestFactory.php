@@ -10,7 +10,6 @@ use Maduser\Argon\Http\Message\UploadedFile;
 use Maduser\Argon\Http\Message\Uri;
 use Psr\Http\Message\ServerRequestFactoryInterface;
 use Psr\Http\Message\ServerRequestInterface;
-use Psr\Http\Message\StreamInterface;
 use Psr\Http\Message\UriInterface;
 use Psr\Http\Message\UploadedFileInterface;
 use RuntimeException;

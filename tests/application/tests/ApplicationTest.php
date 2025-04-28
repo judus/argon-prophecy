@@ -4,15 +4,9 @@ declare(strict_types=1);
 
 namespace Tests\Application;
 
-use GuzzleHttp\Client;
 use GuzzleHttp\Exception\GuzzleException;
-use Maduser\Argon\Logging\LoggerServiceProvider;
-use Maduser\Argon\Prophecy\Provider\ArgonHttpFoundation;
-use PHPUnit\Framework\TestCase;
 use Psr\Http\Message\ResponseInterface;
-use Tests\Application\AbstractHttpTestCase;
 use Tests\Application\Mocks\Providers;
-use Tests\Application\Mocks\Providers\UserExtendsDefaultStack;
 
 class ApplicationTest extends AbstractHttpTestCase
 {
@@ -31,9 +25,7 @@ class ApplicationTest extends AbstractHttpTestCase
      */
     public function testDefaultStackReturns200WithExpectedContents(): void
     {
-        $response = $this->get('/', Providers::DEFAULT_STACK);
-
-        var_dump($response->getBody());
+        $response = $this->get('/', Providers::NO_LOGGER_STACK);
 
         $this->assertOk($response);
         $this->assertIsDefaultHtmlContent($response);

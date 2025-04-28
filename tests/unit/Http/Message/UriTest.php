@@ -50,7 +50,7 @@ class UriTest extends TestCase
 
     public function testParseUrlFailsWithInvalidUri(): void
     {
-        $this->expectException(\InvalidArgumentException::class);
+        $this->expectException(InvalidArgumentException::class);
         $this->expectExceptionMessage('Unable to parse URI');
 
         new Uri('http://localhost:70000');

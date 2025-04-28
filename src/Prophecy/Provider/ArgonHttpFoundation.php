@@ -18,6 +18,9 @@ use Maduser\Argon\Prophecy\Support\Tag;
 use Psr\Log\LoggerInterface;
 use Psr\Log\NullLogger;
 
+/**
+ * @psalm-suppress UnusedClass
+ */
 final class ArgonHttpFoundation extends AbstractServiceProvider
 {
     public function configureParameters(ArgonContainer $container): ParameterStoreInterface

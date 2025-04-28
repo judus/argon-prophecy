@@ -6,7 +6,6 @@ namespace Maduser\Argon\ErrorHandling\Http;
 
 use Maduser\Argon\Contracts\ErrorHandling\Http\ExceptionDispatcherInterface;
 use Maduser\Argon\Contracts\ErrorHandling\Http\ExceptionFormatterInterface;
-use Maduser\Argon\ErrorHandling\Http\ErrorHandler;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
 use Psr\Log\LoggerInterface;

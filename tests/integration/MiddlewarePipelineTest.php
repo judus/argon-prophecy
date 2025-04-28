@@ -6,14 +6,11 @@ namespace Tests\Integration;
 
 use Maduser\Argon\Container\Exceptions\ContainerException;
 use Maduser\Argon\Container\Exceptions\NotFoundException;
-use Maduser\Argon\Contracts\Http\Server\Middleware\DispatcherInterface;
 use Maduser\Argon\Http\Server\Factory\RequestHandlerFactory;
-use Maduser\Argon\Logging\LoggerServiceProvider;
-use Maduser\Argon\Prophecy\Provider\ArgonHttpFoundation;
 use Maduser\Argon\Prophecy\Support\Tag;
+use RuntimeException;
 use stdClass;
 use Tests\Application\Mocks\Providers;
-use Tests\Integration\Mocks\FakeJsonDispatcher;
 
 /**
  * @psalm-suppress PropertyNotSetInConstructor
@@ -49,7 +46,7 @@ final class MiddlewarePipelineTest extends AbstractArgonTestCase
 
         $factory = new RequestHandlerFactory($this->container);
 
-        $this->expectException(\RuntimeException::class);
+        $this->expectException(RuntimeException::class);
         $this->expectExceptionMessage("Service '" . stdClass::class . "' must implement MiddlewareInterface.");
 
         $factory->create();

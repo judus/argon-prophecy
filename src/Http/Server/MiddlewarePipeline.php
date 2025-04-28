@@ -4,17 +4,12 @@ declare(strict_types=1);
 
 namespace Maduser\Argon\Http\Server;
 
-use Closure;
 use Maduser\Argon\Http\Server\Exception\EmptyMiddlewareChainException;
-use Maduser\Argon\Http\Message\Factory\ResponseFactory;
-use Maduser\Argon\Http\Message\Stream;
-use Psr\Http\Message\ResponseFactoryInterface;
 use Psr\Http\Message\ServerRequestInterface;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Server\MiddlewareInterface;
 use Psr\Http\Server\RequestHandlerInterface;
 use Psr\Log\LoggerInterface;
-use RuntimeException;
 
 final class MiddlewarePipeline implements RequestHandlerInterface
 {

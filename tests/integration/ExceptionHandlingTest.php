@@ -16,6 +16,7 @@ use Maduser\Argon\Contracts\Http\Server\Middleware\DispatcherInterface;
 use Maduser\Argon\ErrorHandling\Http\ExceptionDispatcher;
 use Maduser\Argon\ErrorHandling\Http\ExceptionFormatter;
 use Maduser\Argon\ErrorHandling\Http\ErrorHandler;
+use Maduser\Argon\Http\Message\Uri;
 use Maduser\Argon\Prophecy\Provider\ArgonHttpFoundation;
 use PHPUnit\Framework\MockObject\Exception;
 use Psr\Http\Message\ResponseFactoryInterface;
@@ -111,7 +112,7 @@ class ExceptionHandlingTest extends AbstractArgonTestCase
 
         $request = $this->container->get(ServerRequestInterface::class)
             ->withMethod('GET')
-            ->withUri(new \Maduser\Argon\Http\Message\Uri('/throws-runtime'));
+            ->withUri(new Uri('/throws-runtime'));
 
         $response = $dispatcher->dispatch(
             new RuntimeException('Fake runtime exception'),

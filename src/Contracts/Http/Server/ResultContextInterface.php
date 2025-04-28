@@ -4,8 +4,6 @@ declare(strict_types=1);
 
 namespace Maduser\Argon\Contracts\Http\Server;
 
-use Maduser\Argon\Http\Server\ResultContext;
-
 interface ResultContextInterface
 {
     /**

@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace Maduser\Argon\Http\Message;
 
 use JsonException;
-use Maduser\Argon\Http\Message\Stream;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\StreamInterface;
 use RuntimeException;

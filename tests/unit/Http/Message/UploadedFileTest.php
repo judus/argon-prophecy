@@ -9,6 +9,7 @@ use Maduser\Argon\Http\Message\UploadedFile;
 use PHPUnit\Framework\MockObject\Exception;
 use PHPUnit\Framework\TestCase;
 use Psr\Http\Message\StreamInterface;
+use ReflectionClass;
 use RuntimeException;
 
 final class UploadedFileTest extends TestCase
@@ -39,7 +40,7 @@ final class UploadedFileTest extends TestCase
         $file = new UploadedFile($stream, 1234);
 
         // Mark as moved manually for test
-        $reflection = new \ReflectionClass($file);
+        $reflection = new ReflectionClass($file);
         $property = $reflection->getProperty('moved');
         $property->setValue($file, true);
 
@@ -57,7 +58,7 @@ final class UploadedFileTest extends TestCase
 
         $file = new UploadedFile($stream, 1234);
 
-        $reflection = new \ReflectionClass($file);
+        $reflection = new ReflectionClass($file);
         $property = $reflection->getProperty('moved');
         $property->setValue($file, true);
 

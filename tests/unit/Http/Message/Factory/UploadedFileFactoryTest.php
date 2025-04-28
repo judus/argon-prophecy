@@ -7,8 +7,8 @@ namespace Tests\Unit\Http\Message\Factory;
 use Maduser\Argon\Http\Message\Factory\UploadedFileFactory;
 use Maduser\Argon\Http\Message\Stream;
 use PHPUnit\Framework\TestCase;
-use Psr\Http\Message\StreamInterface;
 use RuntimeException;
+use const UPLOAD_ERR_OK;
 
 final class UploadedFileFactoryTest extends TestCase
 {
@@ -27,13 +27,13 @@ final class UploadedFileFactoryTest extends TestCase
         $file = $this->factory->createUploadedFile(
             $stream,
             size: 11,
-            error: \UPLOAD_ERR_OK,
+            error: UPLOAD_ERR_OK,
             clientFilename: 'test.txt',
             clientMediaType: 'text/plain'
         );
 
         $this->assertSame(11, $file->getSize());
-        $this->assertSame(\UPLOAD_ERR_OK, $file->getError());
+        $this->assertSame(UPLOAD_ERR_OK, $file->getError());
         $this->assertSame('test.txt', $file->getClientFilename());
         $this->assertSame('text/plain', $file->getClientMediaType());
     }
@@ -64,6 +64,6 @@ final class UploadedFileFactoryTest extends TestCase
 
         $this->assertNull($file->getClientFilename());
         $this->assertNull($file->getClientMediaType());
-        $this->assertSame(\UPLOAD_ERR_OK, $file->getError());
+        $this->assertSame(UPLOAD_ERR_OK, $file->getError());
     }
 }

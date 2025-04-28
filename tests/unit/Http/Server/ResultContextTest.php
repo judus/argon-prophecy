@@ -5,12 +5,10 @@ declare(strict_types=1);
 namespace Tests\Unit\Http\Server;
 
 use ArrayObject;
-use Closure;
 use Exception;
 use Maduser\Argon\Http\Message\Response;
 use Maduser\Argon\Http\Server\ResultContext;
 use PHPUnit\Framework\TestCase;
-use Psr\Http\Message\ResponseInterface;
 use stdClass;
 
 final class ResultContextTest extends TestCase

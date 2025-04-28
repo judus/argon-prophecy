@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace Tests\Unit\Prophecy\ErrorHandling;
 
 use Closure;
-use ErrorException;
 use Maduser\Argon\Prophecy\ErrorHandling\BootstrapErrorHandler;
 use PHPUnit\Framework\MockObject\Exception;
 use PHPUnit\Framework\TestCase;

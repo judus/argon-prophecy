@@ -11,7 +11,7 @@
 A flexible, PSR-compliant HTTP foundation — fully customizable, container-driven, and designed to stay out of your way. 
 It is  a foundation to help you build your own framework — without vendor bloat or ecosystem traps.
 
-Built on top of the [Argon](https://github.com/judus/argon) container
+Built on top of the [Argon](https://github.com/judus/argon) service container
 
 *(Documentation work in progress)*
 
@@ -49,12 +49,16 @@ You can override single implementations, or completely replace everything.
 Put this in your `index.php` and you're good to go, fully PSR compliant:
 
 ```php
+<?php
+
+declare(strict_types=1);
+
 use Maduser\Argon\Prophecy\Argon;
 use Maduser\Argon\Container\ArgonContainer;
 use Maduser\Argon\Logging\LoggerServiceProvider;
 use Maduser\Argon\Prophecy\Provider\ArgonHttpFoundation;
 
-Argon::prophecy(function(ArgonContainer $container) {
+Argon::prophecy(function(ArgonContainer $container): void {
     $container->register(LoggerServiceProvider::class);
     $container->register(ArgonHttpFoundation::class);
 });
@@ -65,13 +69,17 @@ Argon::prophecy(function(ArgonContainer $container) {
 ### Extending the Default Stack
 
 ```php
+<?php
+
+declare(strict_types=1);
+
 use Maduser\Argon\Prophecy\Argon;
 use Maduser\Argon\Container\ArgonContainer;
 use Maduser\Argon\Logging\LoggerServiceProvider;
 use Maduser\Argon\Prophecy\Provider\ArgonHttpFoundation;
 use YourApp\AppServiceProvider;
 
-Argon::prophecy(function(ArgonContainer $container) {
+Argon::prophecy(function(ArgonContainer $container): void {
     $container->register(LoggerServiceProvider::class);
     $container->register(ArgonHttpFoundation::class);
     $container->register(AppServiceProvider::class);
@@ -87,7 +95,14 @@ Override or extend bindings inside your `AppServiceProvider`.
 In that case you'll have an empty container, not even a Kernel, just a wrapper for the container compilation, good luck!
 
 ```php
-Argon::prophecy(function(ArgonContainer $container) {
+<?php
+
+declare(strict_types=1);
+
+use Maduser\Argon\Prophecy\Argon;
+use Maduser\Argon\Container\ArgonContainer;
+
+Argon::prophecy(function(ArgonContainer $container): void {
     $container->register(IKnowWhatImDoingServiceProvider::class);
 });
 ```

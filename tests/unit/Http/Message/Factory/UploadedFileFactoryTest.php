@@ -8,6 +8,7 @@ use Maduser\Argon\Http\Message\Factory\UploadedFileFactory;
 use Maduser\Argon\Http\Message\Stream;
 use PHPUnit\Framework\TestCase;
 use RuntimeException;
+
 use const UPLOAD_ERR_OK;
 
 final class UploadedFileFactoryTest extends TestCase

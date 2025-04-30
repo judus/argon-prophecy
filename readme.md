@@ -8,6 +8,8 @@
 
 # Argon Prophecy
 
+### **_Early Preview_**
+
 > A compiled, minimal PHP framework foundation — designed for when speed, transparency, and running costs matter.
 
 ---
@@ -63,6 +65,8 @@ For now, let the Quickstart Example speak for itself.
 ---
 
 ## Quickstart Example
+
+(Incomple/Early Preview - missing example using new Application($prebuiltContainer))
 
 ```php
 <?php

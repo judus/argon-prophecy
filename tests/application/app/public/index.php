@@ -39,4 +39,4 @@ Argon::prophecy(function (ArgonContainer $container): void {
         return;
     }
     throw new Exception('No ServiceProvider provided');
-}, $shouldCompile);
+}, true);

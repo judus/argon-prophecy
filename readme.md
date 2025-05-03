@@ -1,8 +1,8 @@
 [![PHP](https://img.shields.io/badge/php-8.2+-blue)](https://www.php.net/)
 [![Build](https://github.com/judus/argon-prophecy/actions/workflows/php.yml/badge.svg)](https://github.com/judus/argon-prophecy/actions)
-[![codecov](https://codecov.io/gh/judus/argon-prophecy/branch/master/graph/badge.svg)](https://codecov.io/gh/judus/argon-prophecy)<!--
+[![codecov](https://codecov.io/gh/judus/argon-prophecy/branch/master/graph/badge.svg)](https://codecov.io/gh/judus/argon-prophecy)
 [![Psalm Level](https://shepherd.dev/github/judus/argon-prophecy/coverage.svg)](https://shepherd.dev/github/judus/argon-prophecy)
--->[![Code Style](https://img.shields.io/badge/code%20style-PSR--12-brightgreen.svg)](https://www.php-fig.org/psr/psr-12/)
+[![Code Style](https://img.shields.io/badge/code%20style-PSR--12-brightgreen.svg)](https://www.php-fig.org/psr/psr-12/)
 [![Latest Version](https://img.shields.io/packagist/v/maduser/argon-prophecy.svg)](https://packagist.org/packages/maduser/argon-prophecy)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 

@@ -65,6 +65,7 @@ final class BootstrapErrorHandler implements BootstrapErrorHandlerInterface
         register_shutdown_function([$this, 'handleShutdown']);
     }
 
+    /** @psalm-suppress PossiblyUnusedReturnValue */
     public function handleError(int $severity, string $message, string $file, int $line): bool
     {
         $exception = new ErrorException($message, 0, $severity, $file, $line);

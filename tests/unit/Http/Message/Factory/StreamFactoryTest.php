@@ -58,6 +58,7 @@ final class StreamFactoryTest extends TestCase
     {
         $this->expectException(RuntimeException::class);
 
+        /** @psalm-suppress InvalidArgument */
         $this->factory->createStreamFromResource('not-a-resource');
     }
 

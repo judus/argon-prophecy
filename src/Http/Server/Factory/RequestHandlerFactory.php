@@ -5,6 +5,8 @@ declare(strict_types=1);
 namespace Maduser\Argon\Http\Server\Factory;
 
 use Maduser\Argon\Container\ArgonContainer;
+use Maduser\Argon\Container\Exceptions\ContainerException;
+use Maduser\Argon\Container\Exceptions\NotFoundException;
 use Maduser\Argon\Contracts\Http\Server\Factory\RequestHandlerFactoryInterface;
 use Maduser\Argon\Http\Server\MiddlewarePipeline;
 use Psr\Http\Server\MiddlewareInterface;
@@ -19,8 +21,11 @@ final readonly class RequestHandlerFactory implements RequestHandlerFactoryInter
     ) {
     }
 
-
-    /** @inheritdoc */
+    /**
+     * @throws NotFoundException
+     * @throws ContainerException
+     * @psalm-suppress PossiblyUnusedReturnValue
+     */
     public function create(): MiddlewarePipeline
     {
         $pipeline = new MiddlewarePipeline($this->logger);

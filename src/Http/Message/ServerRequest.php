@@ -9,6 +9,10 @@ use Psr\Http\Message\ServerRequestInterface;
 use Psr\Http\Message\StreamInterface;
 use Psr\Http\Message\UriInterface;
 
+/**
+ * @psalm-type HeaderInputMap = array<string, string|string[]>
+ * @psalm-type HeaderMap = array<lowercase-string, list<string>>
+ */
 final class ServerRequest implements ServerRequestInterface
 {
     private string $method;
@@ -16,10 +20,16 @@ final class ServerRequest implements ServerRequestInterface
     private UriInterface $uri;
     private string $requestTarget = '';
 
+    /** @var HeaderMap */
+    private array $headers;
+
+    /**
+     * @param HeaderInputMap $headers
+     */
     public function __construct(
         ?string $method = null,
         ?UriInterface $uri = null,
-        private array $headers = [],
+        array $headers = [],
         ?StreamInterface $body = null,
         private string $protocol = '1.1',
         private array $serverParams = [],
@@ -29,19 +39,38 @@ final class ServerRequest implements ServerRequestInterface
         private null|array|object $parsedBody = null,
         private array $attributes = [],
     ) {
+        $this->headers = $this->normalizeHeaders($headers);
         $this->method = strtoupper($method ?? $_SERVER['REQUEST_METHOD'] ?? 'GET');
-        $this->body = $body ?? new Stream(fopen('php://temp', 'r+'));
         $this->uri = $uri ?? new Uri('');
-        $this->headers = array_change_key_case($headers, CASE_LOWER);
+        $this->body = $body ?? new Stream(fopen('php://temp', 'r+'));
     }
 
-    /** @inheritdoc */
+    /**
+     * @param HeaderInputMap $headers
+     * @return HeaderMap
+     */
+    private function normalizeHeaders(array $headers): array
+    {
+        $normalized = [];
+
+        foreach ($headers as $name => $value) {
+            $lower = strtolower($name);
+
+            if (is_array($value)) {
+                $normalized[$lower] = array_values(array_map('strval', $value));
+            } else {
+                $normalized[$lower] = [strval($value)];
+            }
+        }
+
+        return $normalized;
+    }
+
     public function getProtocolVersion(): string
     {
         return $this->protocol;
     }
 
-    /** @inheritdoc */
     public function withProtocolVersion($version): self
     {
         $clone = clone $this;
@@ -49,62 +78,78 @@ final class ServerRequest implements ServerRequestInterface
         return $clone;
     }
 
-    /** @inheritdoc */
+    /**
+     * @return HeaderMap
+     */
     public function getHeaders(): array
     {
         return $this->headers;
     }
 
-    /** @inheritdoc */
-    public function hasHeader($name): bool
+    public function hasHeader(string $name): bool
     {
         return isset($this->headers[strtolower($name)]);
     }
 
-    /** @inheritdoc */
-    public function getHeader($name): array
+    /**
+     * @param string $name
+     * @return list<string>
+     */
+    public function getHeader(string $name): array
     {
         return $this->headers[strtolower($name)] ?? [];
     }
 
-    /** @inheritdoc */
-    public function getHeaderLine($name): string
+    public function getHeaderLine(string $name): string
     {
         return implode(', ', $this->getHeader($name));
     }
 
-    /** @inheritdoc */
-    public function withHeader($name, $value): self
+    /**
+     * @param string $name
+     * @param string|string[] $value
+     * @return ServerRequest
+     */
+    public function withHeader(string $name, $value): self
     {
         $clone = clone $this;
-        $clone->headers[strtolower($name)] = (array)$value;
+        $clone->headers[strtolower($name)] = is_array($value)
+            ? array_values(array_map('strval', $value))
+            : [strval($value)];
         return $clone;
     }
 
-    /** @inheritdoc */
-    public function withAddedHeader($name, $value): self
+    /**
+     * @param string $name
+     * @param string|string[] $value
+     * @return ServerRequest
+     */
+    public function withAddedHeader(string $name, $value): self
     {
         $clone = clone $this;
         $lower = strtolower($name);
-        $clone->headers[$lower] = array_merge($clone->headers[$lower] ?? [], (array)$value);
+
+        $existing = $clone->headers[$lower] ?? [];
+        $newValues = is_array($value)
+            ? array_values(array_map('strval', $value))
+            : [strval($value)];
+
+        $clone->headers[$lower] = array_merge($existing, $newValues);
         return $clone;
     }
 
-    /** @inheritdoc */
-    public function withoutHeader($name): self
+    public function withoutHeader(string $name): self
     {
         $clone = clone $this;
         unset($clone->headers[strtolower($name)]);
         return $clone;
     }
 
-    /** @inheritdoc */
     public function getBody(): StreamInterface
     {
         return $this->body;
     }
 
-    /** @inheritdoc */
     public function withBody(StreamInterface $body): self
     {
         $clone = clone $this;
@@ -112,7 +157,6 @@ final class ServerRequest implements ServerRequestInterface
         return $clone;
     }
 
-    /** @inheritdoc */
     public function getRequestTarget(): string
     {
         return $this->requestTarget !== ''
@@ -120,67 +164,52 @@ final class ServerRequest implements ServerRequestInterface
             : ($this->uri->getPath() . ($this->uri->getQuery() ? '?' . $this->uri->getQuery() : ''));
     }
 
-    /** @inheritdoc */
-    public function withRequestTarget($requestTarget): self
+    public function withRequestTarget(string $requestTarget): self
     {
-        if (!is_string($requestTarget)) {
-            throw new InvalidArgumentException('Request target must be a string');
-        }
-
         $clone = clone $this;
         $clone->requestTarget = $requestTarget;
         return $clone;
     }
 
-    /** @inheritdoc */
     public function getMethod(): string
     {
         return $this->method;
     }
 
-    /** @inheritdoc */
-    public function withMethod($method): self
+    public function withMethod(string $method): self
     {
         $clone = clone $this;
         $clone->method = strtoupper($method);
         return $clone;
     }
 
-    /** @inheritdoc */
     public function getUri(): UriInterface
     {
         return $this->uri;
     }
 
-    /** @inheritdoc */
-    public function withUri(UriInterface $uri, $preserveHost = false): self
+    public function withUri(UriInterface $uri, bool $preserveHost = false): self
     {
         $clone = clone $this;
         $clone->uri = $uri;
 
-        if (!$preserveHost) {
-            $host = $uri->getHost();
-            if ($host !== '') {
-                $clone->headers['host'] = [$host];
-            }
+        if (!$preserveHost && $uri->getHost() !== '') {
+            $clone->headers['host'] = [$uri->getHost()];
         }
 
         return $clone;
     }
 
-    /** @inheritdoc */
     public function getServerParams(): array
     {
         return $this->serverParams;
     }
 
-    /** @inheritdoc */
     public function getCookieParams(): array
     {
         return $this->cookieParams;
     }
 
-    /** @inheritdoc */
     public function withCookieParams(array $cookies): self
     {
         $clone = clone $this;
@@ -188,13 +217,11 @@ final class ServerRequest implements ServerRequestInterface
         return $clone;
     }
 
-    /** @inheritdoc */
     public function getQueryParams(): array
     {
         return $this->queryParams;
     }
 
-    /** @inheritdoc */
     public function withQueryParams(array $query): self
     {
         $clone = clone $this;
@@ -202,13 +229,11 @@ final class ServerRequest implements ServerRequestInterface
         return $clone;
     }
 
-    /** @inheritdoc */
     public function getUploadedFiles(): array
     {
         return $this->uploadedFiles;
     }
 
-    /** @inheritdoc */
     public function withUploadedFiles(array $uploadedFiles): self
     {
         $clone = clone $this;
@@ -216,46 +241,36 @@ final class ServerRequest implements ServerRequestInterface
         return $clone;
     }
 
-    /** @inheritdoc */
     public function getParsedBody(): null|array|object
     {
         return $this->parsedBody;
     }
 
-    /** @inheritdoc */
     public function withParsedBody($data): self
     {
-        if (!is_array($data) && !is_object($data) && $data !== null) {
-            throw new InvalidArgumentException('Parsed body must be array|object|null');
-        }
-
         $clone = clone $this;
         $clone->parsedBody = $data;
         return $clone;
     }
 
-    /** @inheritdoc */
     public function getAttributes(): array
     {
         return $this->attributes;
     }
 
-    /** @inheritdoc */
-    public function getAttribute($name, $default = null): mixed
+    public function getAttribute(string $name, mixed $default = null): mixed
     {
         return $this->attributes[$name] ?? $default;
     }
 
-    /** @inheritdoc */
-    public function withAttribute($name, $value): self
+    public function withAttribute(string $name, mixed $value): self
     {
         $clone = clone $this;
         $clone->attributes[$name] = $value;
         return $clone;
     }
 
-    /** @inheritdoc */
-    public function withoutAttribute($name): self
+    public function withoutAttribute(string $name): self
     {
         $clone = clone $this;
         unset($clone->attributes[$name]);

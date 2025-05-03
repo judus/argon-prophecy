@@ -46,7 +46,7 @@ final class Uri implements UriInterface
             throw new InvalidArgumentException("Malformed relative URI: $uri");
         }
 
-        if (isset($parts['scheme']) && !preg_match('#^[a-z][a-z0-9+\-.]*$#i', $parts['scheme'])) {
+        if (isset($parts['scheme']) && !preg_match('#^[a-z][a-z0-9+\-.]*$#i', (string) $parts['scheme'])) {
             throw new InvalidArgumentException("Invalid scheme in URI: $uri");
         }
 

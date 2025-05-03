@@ -10,7 +10,10 @@ use Maduser\Argon\Container\Exceptions\ContainerException;
 use Monolog\Logger;
 use Psr\Log\LoggerInterface;
 
-class LoggerServiceProvider extends AbstractServiceProvider
+/**
+ * @api
+ */
+final class LoggerServiceProvider extends AbstractServiceProvider
 {
     /**
      * @param string $loggerClass
@@ -18,7 +21,7 @@ class LoggerServiceProvider extends AbstractServiceProvider
      */
     public function __construct(
         private readonly string $loggerClass = "\Monolog\Logger",
-        private string $handlerClass = "\Monolog\Handler\StreamHandler"
+        private readonly string $handlerClass = "\Monolog\Handler\StreamHandler"
     ) {
     }
 

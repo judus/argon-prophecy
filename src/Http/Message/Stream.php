@@ -173,6 +173,9 @@ final class Stream implements StreamInterface
         return strpbrk($mode, 'waxc+') !== false;
     }
 
+    /**
+     * @api
+     */
     public function write($string): int
     {
         $this->ensureValid();

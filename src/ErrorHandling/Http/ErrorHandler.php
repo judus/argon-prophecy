@@ -40,8 +40,8 @@ final class ErrorHandler implements ErrorHandlerInterface
 
         $this->registered = true;
 
-        set_error_handler($this->createErrorHandler());
-        set_exception_handler($this->createExceptionHandler());
+        set_error_handler([$this, 'handleError']);
+        set_exception_handler([$this, 'handleException']);
         register_shutdown_function([$this, 'shutdownFunction']);
     }
 
@@ -72,29 +72,29 @@ final class ErrorHandler implements ErrorHandlerInterface
         return $this->formatter->format($fallback, $request);
     }
 
-    private function createErrorHandler(): callable
-    {
-        return function (
-            int $severity,
-            string $message,
-            string $file,
-            int $line
-        ): bool {
-            try {
-                throw new ErrorException($message, 0, $severity, $file, $line);
-            } catch (Throwable $e) {
-                $this->logger?->critical('Error converted to Exception', ['exception' => $e]);
-            }
+    /**
+     * Handles PHP errors and converts them into exceptions.
+     *
+     * @psalm-suppress UnusedReturnValue
+     */
+    public function handleError(
+        int $severity,
+        string $message,
+        string $file,
+        int $line
+    ): bool {
+        try {
+            throw new ErrorException($message, 0, $severity, $file, $line);
+        } catch (Throwable $e) {
+            $this->logger?->critical('Error converted to Exception', ['exception' => $e]);
+        }
 
-            return true;
-        };
+        return true;
     }
 
-    private function createExceptionHandler(): callable
+    public function handleException(Throwable $e): void
     {
-        return function (Throwable $e): void {
-            $this->logger?->critical('Unhandled throwable', ['exception' => $e]);
-        };
+        $this->logger?->critical('Unhandled throwable', ['exception' => $e]);
     }
 
     /**

@@ -16,10 +16,6 @@ use RuntimeException;
 
 final readonly class FakeExceptionDispatcher implements MiddlewareInterface, DispatcherInterface
 {
-    public function __construct(private ResultContextInterface $result)
-    {
-    }
-
     /**
      * @throws Exception
      */

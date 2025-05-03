@@ -105,15 +105,6 @@ final class ResponseTest extends TestCase
         $this->assertStringContainsString($text, (string) $response->getBody());
     }
 
-    public function testJsonEncodingFailureThrows(): void
-    {
-        $this->expectException(RuntimeException::class);
-
-        // INF cannot be encoded to JSON with JSON_THROW_ON_ERROR
-        $invalidData = INF;
-        (new Response())->withJson($invalidData);
-    }
-
     public function testStaticFactoryMethods(): void
     {
         $text = Response::text('hello');

@@ -327,13 +327,12 @@ class ExceptionHandlingTest extends AbstractArgonTestCase
 
         $formatter = $this->container->get(ExceptionFormatter::class, ['debug' => true]);
 
-        $request = $this->container->get(ServerRequestInterface::class);
-
         $exception = new RuntimeException('Show me the stack trace');
 
         $reflection = new ReflectionClass($formatter);
         $method = $reflection->getMethod('formatText');
 
+        /** @var ResponseInterface $response */
         $response = $method->invoke($formatter, $exception);
 
         $body = (string) $response->getBody();
@@ -409,14 +408,6 @@ class ExceptionHandlingTest extends AbstractArgonTestCase
 
         $handler = $this->container->get(ErrorHandler::class);
 
-        // Simulate a fatal error structure
-        $error = [
-            'type' => E_ERROR,
-            'message' => 'Simulated fatal error',
-            'file' => 'somefile.php',
-            'line' => 123,
-        ];
-
         $reflection = new ReflectionClass($handler);
         $shutdownFunction = $reflection->getMethod('shutdownFunction');
 
@@ -441,7 +432,7 @@ class ExceptionHandlingTest extends AbstractArgonTestCase
         $handler = new ErrorHandler($dispatcher, $formatter);
 
         $handler->register();
-        $handler->register(); // Should do nothing second time — no crash
+        $handler->register(); // Should do nothing the second time — no crash
         $this->assertTrue(true); // Just to make PHPUnit shut up
     }
 
@@ -495,6 +486,7 @@ class ExceptionHandlingTest extends AbstractArgonTestCase
 
     /**
      * @throws Exception
+     * @throws ReflectionException
      */
     public function testIsFatalErrorReturnsTrueForFatalErrorTypes(): void
     {
@@ -511,6 +503,7 @@ class ExceptionHandlingTest extends AbstractArgonTestCase
 
     /**
      * @throws Exception
+     * @throws ReflectionException
      */
     public function testIsFatalErrorReturnsFalseForNonFatal(): void
     {
@@ -524,6 +517,7 @@ class ExceptionHandlingTest extends AbstractArgonTestCase
 
     /**
      * @throws Exception
+     * @throws ReflectionException
      */
     public function testShutdownFunctionHandlesFatalError(): void
     {
@@ -553,7 +547,7 @@ class ExceptionHandlingTest extends AbstractArgonTestCase
         $ref = new ReflectionClass($handler);
         $method = $ref->getMethod('isFatalError');
 
-        return $method->invoke($handler, $error);
+        return (bool) $method->invoke($handler, $error);
     }
 
     /**
@@ -578,7 +572,7 @@ class ExceptionHandlingTest extends AbstractArgonTestCase
      * @throws ReflectionException
      * @throws Exception
      */
-    public function testCreateExceptionHandlerLogsThrowable(): void
+    public function testHandleExceptionLogsThrowable(): void
     {
         $dispatcher = $this->createMock(ExceptionDispatcherInterface::class);
         $formatter = $this->createMock(ExceptionFormatterInterface::class);
@@ -595,18 +589,21 @@ class ExceptionHandlingTest extends AbstractArgonTestCase
                 })
             );
 
-        $closure = $this->invokeCreateExceptionHandler($handler);
-        $closure(new RuntimeException('Oops'));
+        $reflection = new \ReflectionClass($handler);
+        $method = $reflection->getMethod('handleException');
+
+        $method->invoke($handler, new \RuntimeException('Oops'));
     }
 
     /**
+     * @psalm-return array
      * @throws ReflectionException
      */
-    private function invokeCreateExceptionHandler(ErrorHandler $handler): callable
+    private function invokeCreateExceptionHandler(ErrorHandler $handler): array
     {
         $ref = new ReflectionClass($handler);
         $method = $ref->getMethod('createExceptionHandler');
 
-        return $method->invoke($handler);
+        return (array) $method->invoke($handler);
     }
 }

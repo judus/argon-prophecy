@@ -47,9 +47,6 @@ abstract class AbstractKernelTestCase extends TestCase
      */
     protected function makeKernelRequest(string $method, string $uri): void
     {
-        $request = $this->container->get(ServerRequestInterface::class);
-        $request = $request->withMethod($method)->withUri(new Uri($uri));
-
         $kernel = $this->container->get(KernelInterface::class);
 
         ob_start();

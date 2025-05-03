@@ -43,6 +43,8 @@ final readonly class LoggerFactory
         $handlerClass = $this->handlerClass;
 
         $logger = new ($loggerClass)('argon');
+
+        /** @psalm-suppress UnsafeInstantiation */
         $handler = new ($handlerClass)($logFile, $this->logLevel);
 
         $logger->pushHandler($handler);

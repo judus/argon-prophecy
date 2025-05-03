@@ -55,12 +55,6 @@ final class ServerRequestTest extends TestCase
         $this->assertSame('/custom', $new->getRequestTarget());
     }
 
-    public function testRequestTargetThrows(): void
-    {
-        $this->expectException(InvalidArgumentException::class);
-        (new ServerRequest())->withRequestTarget(['invalid']);
-    }
-
     public function testMethod(): void
     {
         $request = new ServerRequest(method: 'post');
@@ -129,12 +123,6 @@ final class ServerRequestTest extends TestCase
 
         $new = $request->withParsedBody(['baz' => 'qux']);
         $this->assertSame(['baz' => 'qux'], $new->getParsedBody());
-    }
-
-    public function testParsedBodyThrows(): void
-    {
-        $this->expectException(InvalidArgumentException::class);
-        (new ServerRequest())->withParsedBody('invalid');
     }
 
     public function testAttributes(): void

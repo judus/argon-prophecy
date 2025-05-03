@@ -52,6 +52,8 @@ final class StreamTest extends TestCase
     {
         $stream = Stream::create('data');
         $meta = $stream->getMetadata();
+
+        $this->assertIsArray($meta);
         $this->assertArrayHasKey('mode', $meta);
         $this->assertTrue($meta['seekable']);
     }

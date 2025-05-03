@@ -106,6 +106,7 @@ final class ServerRequestFactoryTest extends TestCase
 
     /**
      * Helper to invoke private static methods for coverage
+     * @param class-string $class
      * @throws ReflectionException
      */
     private function invokePrivateMethod(string $class, string $method, array $args = []): mixed
@@ -227,12 +228,13 @@ final class ServerRequestFactoryTest extends TestCase
 
     /**
      * Helper to call private method normalizeUploadedFiles
+     * @throws ReflectionException
      */
     private static function invokeNormalizeUploadedFiles(array $files): array
     {
         $reflection = new ReflectionClass(ServerRequestFactory::class);
         $method = $reflection->getMethod('normalizeUploadedFiles');
 
-        return $method->invoke(null, $files);
+        return (array) $method->invoke(null, $files);
     }
 }

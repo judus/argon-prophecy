@@ -7,6 +7,7 @@ namespace Tests\Unit\Prophecy\ErrorHandling;
 use Closure;
 use Maduser\Argon\Prophecy\ErrorHandling\BootstrapErrorHandler;
 use PHPUnit\Framework\MockObject\Exception;
+use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\LoggerInterface;
 use RuntimeException;
@@ -15,6 +16,7 @@ use Throwable;
 class BootstrapErrorHandlerTest extends TestCase
 {
     private string $capturedOutput;
+    /** @var MockObject&LoggerInterface $logger */
     private LoggerInterface $logger;
 
     /**
@@ -23,6 +25,7 @@ class BootstrapErrorHandlerTest extends TestCase
     protected function setUp(): void
     {
         $this->capturedOutput = '';
+        /** @var MockObject&LoggerInterface $logger */
         $this->logger = $this->createMock(LoggerInterface::class);
     }
 

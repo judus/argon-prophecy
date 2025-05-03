@@ -55,16 +55,20 @@ final class ServerRequestFactory implements ServerRequestFactoryInterface
 
     private static function createUriFromGlobals(): UriInterface
     {
-        $scheme = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') ? 'https' : 'http';
+        $scheme = (isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') ? 'https' : 'http';
         $host = $_SERVER['HTTP_HOST'] ?? ($_SERVER['SERVER_NAME'] ?? 'localhost');
         $uri = $_SERVER['REQUEST_URI'] ?? '/';
 
         return new Uri("$scheme://$host$uri");
     }
 
+    /**
+     * @return array<string, string|string[]>
+     */
     private static function getAllHeaders(): array
     {
         if (function_exists('getallHeaders')) {
+            /** @var array<string, string>|false $headers */
             $headers = getallHeaders();
 
             if ($headers !== false) {
@@ -81,20 +85,28 @@ final class ServerRequestFactory implements ServerRequestFactoryInterface
     }
 
     /**
-     * Parses server array to header array.
-     * Used as fallback when getallheaders() is unavailable.
+     * Parses a server array to a header array.
+     * Used as a fallback when getallheaders() is unavailable.
+     *
+     * @param array<array-key, mixed> $server
+     * @return array<string, string|string[]>
      */
     public static function parseServerHeaders(array $server): array
     {
         $headers = [];
 
+        /**
+         * @var scalar $value
+         */
         foreach ($server as $key => $value) {
-            if (str_starts_with($key, 'HTTP_')) {
-                $header = strtolower(str_replace('_', '-', substr($key, 5)));
-                $headers[$header] = [$value];
-            } elseif (in_array($key, ['CONTENT_TYPE', 'CONTENT_LENGTH'], true)) {
-                $header = strtolower(str_replace('_', '-', $key));
-                $headers[$header] = [$value];
+            if (is_string($key) && is_string($value)) {
+                if (str_starts_with($key, 'HTTP_')) {
+                    $header = strtolower(str_replace('_', '-', substr($key, 5)));
+                    $headers[$header] = [$value];
+                } elseif (in_array($key, ['CONTENT_TYPE', 'CONTENT_LENGTH'], true)) {
+                    $header = strtolower(str_replace('_', '-', $key));
+                    $headers[$header] = [$value];
+                }
             }
         }
 
@@ -102,29 +114,47 @@ final class ServerRequestFactory implements ServerRequestFactoryInterface
     }
 
     /**
-     * Normalizes $_FILES to UploadedFileInterface instances
+     * Normalizes $_FILES to UploadedFileInterface instances.
+     *
+     * @param array<array-key, mixed> $files
+     * @return array<array-key, UploadedFileInterface|array<array-key, UploadedFileInterface>>
      */
     private static function normalizeUploadedFiles(array $files): array
     {
+        /** @var array<string, UploadedFileInterface|array<array-key, UploadedFileInterface>> $normalized */
         $normalized = [];
 
         foreach ($files as $field => $value) {
             if ($value instanceof UploadedFileInterface) {
                 $normalized[$field] = $value;
-            } elseif (isset($value['tmp_name'])) {
-                if (is_array($value['tmp_name'])) {
-                    foreach ($value['tmp_name'] as $idx => $tmpName) {
-                        $normalized[$field][$idx] = self::createUploadedFile([
-                            'tmp_name' => $tmpName,
-                            'name' => $value['name'][$idx] ?? null,
-                            'type' => $value['type'][$idx] ?? null,
-                            'size' => $value['size'][$idx] ?? 0,
-                            'error' => $value['error'][$idx] ?? 0,
-                        ]);
+                continue;
+            }
+
+            if (!is_array($value) || !isset($value['tmp_name'])) {
+                continue;
+            }
+
+            if (is_array($value['tmp_name'])) {
+                /** @var array<array-key, string> $tmpNames */
+                $tmpNames = $value['tmp_name'];
+
+                foreach ($tmpNames as $idx => $tmpName) {
+                    if (!isset($normalized[$field]) || !is_array($normalized[$field])) {
+                        /** @var array<array-key, UploadedFileInterface> $normalizedField */
+                        $normalized[$field] = [];
                     }
-                } else {
-                    $normalized[$field] = self::createUploadedFile($value);
+
+                    $normalized[$field][$idx] = self::createUploadedFile([
+                        'tmp_name' => $tmpName,
+                        'name' => isset($value['name'][$idx]) ? (string) $value['name'][$idx] : null,
+                        'type' => isset($value['type'][$idx]) ? (string) $value['type'][$idx] : null,
+                        'size' => (int) ($value['size'][$idx] ?? 0),
+                        'error' => (int) ($value['error'][$idx] ?? 0),
+                    ]);
                 }
+            } else {
+                /** @var array{tmp_name: string, name?: string, type?: string, size?: int, error?: int} $value */
+                $normalized[$field] = self::createUploadedFile($value);
             }
         }
 
@@ -133,28 +163,30 @@ final class ServerRequestFactory implements ServerRequestFactoryInterface
 
     private static function createUploadedFile(array $file): UploadedFileInterface
     {
-        $resource = @fopen($file['tmp_name'], 'rb');
+        $tmpName = isset($file['tmp_name']) ? (string) $file['tmp_name'] : '';
+        $resource = @fopen($tmpName, 'rb');
         if ($resource === false) {
             // @codeCoverageIgnoreStart
             // This can only fail under OS-level conditions (missing file, permissions),
             // which cannot be reliably simulated in unit tests.
-            throw new RuntimeException('Failed to open uploaded file: ' . $file['tmp_name']);
+            throw new RuntimeException('Failed to open uploaded file: ' . $tmpName);
             // @codeCoverageIgnoreEnd
         }
 
         $stream = new Stream($resource);
+
         return new UploadedFile(
             $stream,
             (int) $file['size'],
             (int) $file['error'],
-            $file['name'] ?? null,
-            $file['type'] ?? null
+            isset($file['name']) ? (string) $file['name'] : null,
+            isset($file['type']) ? (string) $file['type'] : null
         );
     }
 
     private static function getProtocolVersion(): string
     {
-        if (!empty($_SERVER['SERVER_PROTOCOL']) && str_starts_with($_SERVER['SERVER_PROTOCOL'], 'HTTP/')) {
+        if (isset($_SERVER['SERVER_PROTOCOL']) && str_starts_with($_SERVER['SERVER_PROTOCOL'], 'HTTP/')) {
             return substr($_SERVER['SERVER_PROTOCOL'], 5);
         }
 

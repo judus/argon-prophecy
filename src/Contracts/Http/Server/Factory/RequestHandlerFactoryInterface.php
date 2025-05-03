@@ -13,6 +13,7 @@ interface RequestHandlerFactoryInterface
     /**
      * @throws NotFoundException
      * @throws ContainerException
+     * @psalm-suppress PossiblyUnusedReturnValue
      */
     public function create(): MiddlewarePipeline;
 }

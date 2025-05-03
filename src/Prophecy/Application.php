@@ -31,8 +31,6 @@ final class Application implements ApplicationInterface
 
     private ?KernelInterface $kernel = null;
 
-    private bool $booted = false;
-
     public function __construct(
         ?ArgonContainer $container = null,
         ?LoggerInterface $logger = null
@@ -56,25 +54,45 @@ final class Application implements ApplicationInterface
         return $this;
     }
 
+    /**
+     * @throws ReflectionException
+     * @throws ContainerException
+     * @throws NotFoundException
+     */
     public function handle(?ServerRequestInterface $request = null): void
     {
-        $kernel = $this->prepareKernel();
+        $kernel = $this->bootstrap();
         $kernel->handle($request);
     }
 
+    /**
+     * @throws ReflectionException
+     * @throws ContainerException
+     * @throws NotFoundException
+     */
     public function process(?ServerRequestInterface $request = null): ResponseInterface
     {
-        $kernel = $this->prepareKernel();
+        $kernel = $this->bootstrap();
         return $kernel->process($request);
     }
 
+    /**
+     * @throws ReflectionException
+     * @throws ContainerException
+     * @throws NotFoundException
+     */
     public function emit(ResponseInterface $response): void
     {
-        $kernel = $this->prepareKernel();
+        $kernel = $this->bootstrap();
         $kernel->emit($response);
     }
 
-    private function prepareKernel(): KernelInterface
+    /**
+     * @throws NotFoundException
+     * @throws ReflectionException
+     * @throws ContainerException
+     */
+    private function bootstrap(): KernelInterface
     {
         if ($this->kernel !== null) {
             return $this->kernel;
@@ -91,7 +109,6 @@ final class Application implements ApplicationInterface
         $this->logContainerBootedEvent();
 
         $kernel = $this->getKernel($container);
-        $this->booted = true;
 
         $this->logKernelReadyEvent($kernel);
 

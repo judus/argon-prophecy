@@ -13,31 +13,18 @@ use Psr\Log\LoggerInterface;
 
 final class MiddlewarePipeline implements RequestHandlerInterface
 {
-    /** @var MiddlewareInterface[] */
+    /** @var list<MiddlewareInterface> */
     private array $middleware = [];
+
+    private RequestHandlerInterface $finalHandler;
 
     public function __construct(
         private readonly ?LoggerInterface $logger = null,
-        private ?RequestHandlerInterface $finalHandler = null,
+        ?RequestHandlerInterface $finalHandler = null,
     ) {
         $this->logger?->info('Creating middleware pipeline');
 
-        if ($this->finalHandler === null) {
-            $this->finalHandler = new class ($this->logger) implements RequestHandlerInterface {
-                public function __construct(
-                    private readonly ?LoggerInterface $logger = null,
-                ) {
-                    $this->logger?->info('Creating final middleware');
-                }
-
-                public function handle(ServerRequestInterface $request): ResponseInterface
-                {
-                    $this->logger?->info('Middleware chain completed but no response was set.');
-
-                    throw new EmptyMiddlewareChainException();
-                }
-            };
-        }
+        $this->finalHandler = $finalHandler ?? $this->createDefaultFinalHandler();
     }
 
     public function pipe(MiddlewareInterface $middleware): self
@@ -60,10 +47,11 @@ final class MiddlewarePipeline implements RequestHandlerInterface
             return $this->finalHandler;
         }
 
-        $this->logger?->info('Executing middleware', ['middleware' => $this->middleware[$index]]);
+        $middleware = $this->middleware[$index];
+        $this->logger?->info('Executing middleware', ['middleware' => $middleware]);
 
         return new class (
-            $this->middleware[$index],
+            $middleware,
             $this->createHandler($index + 1)
         ) implements RequestHandlerInterface {
             public function __construct(
@@ -75,6 +63,23 @@ final class MiddlewarePipeline implements RequestHandlerInterface
             public function handle(ServerRequestInterface $request): ResponseInterface
             {
                 return $this->middleware->process($request, $this->next);
+            }
+        };
+    }
+
+    private function createDefaultFinalHandler(): RequestHandlerInterface
+    {
+        return new class ($this->logger) implements RequestHandlerInterface {
+            public function __construct(
+                private readonly ?LoggerInterface $logger = null,
+            ) {
+                $this->logger?->info('Creating final middleware');
+            }
+
+            public function handle(ServerRequestInterface $request): ResponseInterface
+            {
+                $this->logger?->info('Middleware chain completed but no response was set.');
+                throw new EmptyMiddlewareChainException();
             }
         };
     }

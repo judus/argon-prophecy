@@ -7,10 +7,10 @@ namespace Maduser\Argon\Http\Message;
 use JsonException;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\StreamInterface;
-use RuntimeException;
 
 final class Response implements ResponseInterface
 {
+    /** @var array<lowercase-string, list<string>> */
     private array $headers;
     private string $protocol;
     private int $status;
@@ -26,6 +26,7 @@ final class Response implements ResponseInterface
     ) {
         $this->status = $status;
         $this->body = $body ?? new Stream(fopen('php://temp', 'r+'));
+        /** @var array<string, string|string[]> $headers */
         $this->headers = $this->normalizeHeaders($headers);
         $this->protocol = $protocol;
         $this->reasonPhrase = $reasonPhrase !== ''
@@ -38,38 +39,47 @@ final class Response implements ResponseInterface
         }
     }
 
-    public static function create(): static
+    public static function create(): Response
     {
-        return new static();
+        return new Response();
     }
 
-    public static function text(string $text, int $status = 200): static
+    public static function text(string $text, int $status = 200): Response
     {
-        return static::create()
+        return Response::create()
             ->withText($text)
             ->withStatus($status);
     }
 
-    public static function html(string $html, int $status = 200): static
+    public static function html(string $html, int $status = 200): Response
     {
-        return static::create()
+        return Response::create()
             ->withHtml($html)
             ->withStatus($status);
     }
 
-    public static function json(mixed $data, int $status = 200): static
+    public static function json(mixed $data, int $status = 200): Response
     {
-        return static::create()
+        return Response::create()
             ->withJson($data)
             ->withStatus($status);
     }
 
+    /**
+     * @param array<string, string|string[]> $headers
+     * @return array<lowercase-string, list<string>>
+     */
     private function normalizeHeaders(array $headers): array
     {
         $normalized = [];
+
         foreach ($headers as $name => $value) {
-            $normalized[strtolower($name)] = (array) $value;
+            $lower = strtolower($name);
+            $normalized[$lower] = is_array($value)
+                ? array_values(array_map('strval', $value))
+                : [$value];
         }
+
         return $normalized;
     }
 
@@ -78,13 +88,16 @@ final class Response implements ResponseInterface
         return $this->protocol;
     }
 
-    public function withProtocolVersion($version): static
+    public function withProtocolVersion($version): Response
     {
         $clone = clone $this;
         $clone->protocol = $version;
         return $clone;
     }
 
+    /**
+     * @return array<string, list<string>>
+     */
     public function getHeaders(): array
     {
         return $this->headers;
@@ -95,9 +108,14 @@ final class Response implements ResponseInterface
         return isset($this->headers[strtolower($name)]);
     }
 
-    public function getHeader($name): array
+    /**
+     * @param string $name
+     * @return list<string>
+     */
+    public function getHeader(string $name): array
     {
-        return $this->headers[strtolower($name)] ?? [];
+        $header = strtolower($name);
+        return $this->headers[$header] ?? [];
     }
 
     public function getHeaderLine($name): string
@@ -105,22 +123,44 @@ final class Response implements ResponseInterface
         return implode(', ', $this->getHeader($name));
     }
 
-    public function withHeader($name, $value): static
+    /**
+     * @param string $name
+     * @param string|string[] $value
+     * @return Response
+     */
+    public function withHeader(string $name, $value): Response
     {
         $clone = clone $this;
-        $clone->headers[strtolower($name)] = (array) $value;
+        $clone->headers[strtolower($name)] = is_array($value)
+            ? array_values(array_map('strval', $value))
+            : [$value];
+
         return $clone;
     }
 
-    public function withAddedHeader($name, $value): static
+    /**
+     * @param string $name
+     * @param string|string[] $value
+     * @return Response
+     */
+    public function withAddedHeader(string $name, $value): Response
     {
         $clone = clone $this;
         $lower = strtolower($name);
-        $clone->headers[$lower] = array_merge($clone->headers[$lower] ?? [], (array) $value);
+
+        $existing = $clone->headers[$lower] ?? [];
+        $existing = array_map('strval', $existing);
+
+        $newValues = is_array($value)
+            ? array_values(array_map('strval', $value))
+            : [$value];
+
+        $clone->headers[$lower] = [...$existing, ...$newValues];
+
         return $clone;
     }
 
-    public function withoutHeader($name): static
+    public function withoutHeader($name): Response
     {
         $clone = clone $this;
         unset($clone->headers[strtolower($name)]);
@@ -132,21 +172,21 @@ final class Response implements ResponseInterface
         return $this->body;
     }
 
-    public function withBody(StreamInterface $body): static
+    public function withBody(StreamInterface $body): Response
     {
         $clone = clone $this;
         $clone->body = $body;
         return $clone;
     }
 
-    public function appendBody(string $chunk): static
+    public function appendBody(string $chunk): Response
     {
         $clone = clone $this;
         $clone->body->write($chunk);
         return $clone;
     }
 
-    public function withStatus($code, $reasonPhrase = ''): static
+    public function withStatus($code, $reasonPhrase = ''): Response
     {
         $clone = clone $this;
         $clone->status = $code;
@@ -154,7 +194,7 @@ final class Response implements ResponseInterface
         return $clone;
     }
 
-    public function withStatusMessage(string $message): static
+    public function withStatusMessage(string $message): Response
     {
         $clone = clone $this;
         $clone->reasonPhrase = $message;
@@ -171,15 +211,11 @@ final class Response implements ResponseInterface
         return $this->reasonPhrase;
     }
 
-    public function withJson(mixed $data, int $flags = JSON_THROW_ON_ERROR): static
+    public function withJson(mixed $data, int $flags = JSON_THROW_ON_ERROR): Response
     {
         $clone = clone $this;
 
-        try {
-            $json = json_encode($data, $flags);
-        } catch (JsonException $e) {
-            throw new RuntimeException('Failed to encode JSON: ' . $e->getMessage(), 0, $e);
-        }
+        $json = json_encode($data, $flags);
 
         $stream = new Stream($json);
 
@@ -188,14 +224,14 @@ final class Response implements ResponseInterface
             ->withHeader('Content-Type', 'application/json');
     }
 
-    public function withHtml(string $html): static
+    public function withHtml(string $html): Response
     {
         return $this
             ->withBody(new Stream($html))
             ->withHeader('Content-Type', 'text/html; charset=UTF-8');
     }
 
-    public function withText(string $text): static
+    public function withText(string $text): Response
     {
         return $this
             ->withBody(new Stream($text))

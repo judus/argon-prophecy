@@ -45,7 +45,7 @@ final class UploadedFile implements UploadedFileInterface
 
         $directory = dirname($targetPath);
 
-        if ($directory === false || !is_dir($directory)) {
+        if (!is_dir($directory)) {
             throw new RuntimeException("Invalid target directory: $targetPath");
         }
 

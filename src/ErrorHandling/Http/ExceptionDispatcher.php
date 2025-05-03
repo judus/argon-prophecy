@@ -17,7 +17,7 @@ use Throwable;
 final class ExceptionDispatcher implements ExceptionDispatcherInterface
 {
     /**
-     * @var array<class-string<Throwable>, list<ErrorHandler>>
+     * @var array<class-string<Throwable>, list<callable(Throwable, ServerRequestInterface): ?ResponseInterface>>
      */
     private array $map = [];
 

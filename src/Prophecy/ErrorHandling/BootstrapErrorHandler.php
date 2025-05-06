@@ -10,11 +10,6 @@ use Maduser\Argon\Prophecy\Contracts\ErrorHandling\BootstrapErrorHandlerInterfac
 use Psr\Log\LoggerInterface;
 use Throwable;
 
-use const E_ERROR;
-use const ENT_QUOTES;
-use const ENT_SUBSTITUTE;
-use const PHP_SAPI;
-
 final class BootstrapErrorHandler implements BootstrapErrorHandlerInterface
 {
     private ?LoggerInterface $logger;
@@ -58,7 +53,7 @@ final class BootstrapErrorHandler implements BootstrapErrorHandlerInterface
                 fwrite($stream, $message);
             } else {
                 http_response_code(500);
-                echo '<pre>' . htmlspecialchars($message, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') . '</pre>';
+                echo '<pre>' . htmlspecialchars($message, \ENT_QUOTES | \ENT_SUBSTITUTE, 'UTF-8') . '</pre>';
             }
         };
     }
@@ -93,7 +88,7 @@ final class BootstrapErrorHandler implements BootstrapErrorHandlerInterface
             $this->handleException(new ErrorException(
                 $error['message'] ?? 'Unknown fatal error',
                 0,
-                $error['type'] ?? E_ERROR,
+                $error['type'] ?? \E_ERROR,
                 $error['file'] ?? 'unknown',
                 $error['line'] ?? 0
             ));

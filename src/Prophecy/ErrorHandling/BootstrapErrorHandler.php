@@ -9,6 +9,10 @@ use ErrorException;
 use Maduser\Argon\Prophecy\Contracts\ErrorHandling\BootstrapErrorHandlerInterface;
 use Psr\Log\LoggerInterface;
 use Throwable;
+use const E_ERROR;
+use const ENT_QUOTES;
+use const ENT_SUBSTITUTE;
+use const PHP_SAPI;
 
 final class BootstrapErrorHandler implements BootstrapErrorHandlerInterface
 {
@@ -47,7 +51,7 @@ final class BootstrapErrorHandler implements BootstrapErrorHandlerInterface
     private function defaultOutputCallback(): Closure
     {
         return function (string $message): void {
-            $stream = $this->stream ?? STDERR;
+            $stream = $this->stream ?? \STDERR;
 
             if ($this->sapi === 'cli') {
                 fwrite($stream, $message);

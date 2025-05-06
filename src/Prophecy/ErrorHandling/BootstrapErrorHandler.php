@@ -47,7 +47,7 @@ final class BootstrapErrorHandler implements BootstrapErrorHandlerInterface
     private function defaultOutputCallback(): Closure
     {
         return function (string $message): void {
-            $stream = $this->stream ?? \STDERR;
+            $stream = $this->stream ?? fopen('php://stderr', 'w');
 
             if ($this->sapi === 'cli') {
                 fwrite($stream, $message);

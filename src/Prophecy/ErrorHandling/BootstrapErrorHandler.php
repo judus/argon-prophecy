@@ -9,6 +9,7 @@ use ErrorException;
 use Maduser\Argon\Prophecy\Contracts\ErrorHandling\BootstrapErrorHandlerInterface;
 use Psr\Log\LoggerInterface;
 use Throwable;
+
 use const E_ERROR;
 use const ENT_QUOTES;
 use const ENT_SUBSTITUTE;

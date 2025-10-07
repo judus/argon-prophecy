@@ -14,20 +14,20 @@ abstract class AbstractHttpTestCase extends TestCase
 {
     protected static int $pid = 0;
     protected static Client $client;
-    protected static string $server = '0.0.0.0:8080';
+    protected static string $serverHost = '127.0.0.1:8080';
+    protected static string $serverBaseUri = 'http://127.0.0.1:8080';
     protected static string $docRoot = __DIR__ . '/../app/public';
 
     public static function setUpBeforeClass(): void
     {
-        $context = stream_context_create(['http' => ['timeout' => 1]]);
-        $alreadyRunning = @file_get_contents("http://" . self::$server, false, $context) !== false;
+        $alreadyRunning = self::serverIsReachable();
 
         if ($alreadyRunning) {
-            echo "⚠ Dev server already running at http://" . self::$server . " — skipping launch.\n";
+            echo "⚠ Dev server already running at " . self::$serverBaseUri . " — skipping launch.\n";
             self::$pid = 0;
         } else {
             $docRoot = realpath(self::$docRoot);
-            $cmd = "php -S " . self::$server . " -t {$docRoot} > /dev/null 2>&1 & echo $!";
+            $cmd = "php -S " . self::$serverHost . " -t {$docRoot} > /dev/null 2>&1 & echo $!";
 
             /**
              * @psalm-suppress ForbiddenCode
@@ -39,12 +39,13 @@ abstract class AbstractHttpTestCase extends TestCase
             }
 
             self::$pid = (int) $output;
-            echo "🚀 Dev server started at http://" . self::$server . " (PID: " . self::$pid . ")\n";
-            sleep(1);
+            echo "🚀 Dev server started at " . self::$serverBaseUri . " (PID: " . self::$pid . ")\n";
         }
 
+        self::waitUntilServerReady();
+
         self::$client = new Client([
-            'base_uri' => self::$server,
+            'base_uri' => self::$serverBaseUri,
             'http_errors' => false,
         ]);
     }
@@ -91,5 +92,27 @@ abstract class AbstractHttpTestCase extends TestCase
         }
 
         $this->assertSame(200, $status, "Expected 200 OK, got {$status}");
+    }
+
+    private static function serverIsReachable(): bool
+    {
+        $context = stream_context_create(['http' => ['timeout' => 1]]);
+
+        return @file_get_contents(self::$serverBaseUri, false, $context) !== false;
+    }
+
+    private static function waitUntilServerReady(): void
+    {
+        $timeout = microtime(true) + 5;
+
+        while (microtime(true) < $timeout) {
+            if (self::serverIsReachable()) {
+                return;
+            }
+
+            usleep(200000);
+        }
+
+        throw new RuntimeException('Timed out waiting for dev server at ' . self::$serverBaseUri);
     }
 }

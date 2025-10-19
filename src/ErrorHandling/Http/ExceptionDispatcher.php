@@ -60,7 +60,6 @@ final class ExceptionDispatcher implements ExceptionDispatcherInterface
                 }
             }
         }
-
         return $this->formatter->format($e, $request);
     }
 }

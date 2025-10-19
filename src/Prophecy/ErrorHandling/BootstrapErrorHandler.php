@@ -35,7 +35,7 @@ final class BootstrapErrorHandler implements BootstrapErrorHandlerInterface
         $stream = null
     ) {
         $this->logger = $logger;
-        $this->sapi = $sapi ?? PHP_SAPI;
+        $this->sapi = $sapi ?? php_sapi_name();
         $this->stream = $stream;
         $this->outputCallback = $outputCallback ?? $this->defaultOutputCallback();
         $this->terminateCallback = $terminateCallback ?? static function (int $code): void {
@@ -49,9 +49,23 @@ final class BootstrapErrorHandler implements BootstrapErrorHandlerInterface
         return function (string $message): void {
             $stream = $this->stream ?? fopen('php://stderr', 'w');
 
-            if ($this->sapi === 'cli') {
+            $isCliSapi = $this->isCliSapi();
+            $isCliServer = $this->isCliServer();
+
+            if ($isCliSapi || $isCliServer) {
                 fwrite($stream, $message);
-            } else {
+            }
+
+            if ($this->isCliServingHttp()) {
+                http_response_code(500);
+                if (!headers_sent()) {
+                    header('Content-Type: text/plain; charset=UTF-8');
+                }
+                echo $message;
+                return;
+            }
+
+            if (!$isCliSapi && !$isCliServer) {
                 http_response_code(500);
                 echo '<pre>' . htmlspecialchars($message, \ENT_QUOTES | \ENT_SUBSTITUTE, 'UTF-8') . '</pre>';
             }
@@ -113,5 +127,25 @@ final class BootstrapErrorHandler implements BootstrapErrorHandlerInterface
             $exception->getFile(),
             $exception->getLine()
         );
+    }
+
+    private function isCliServingHttp(): bool
+    {
+        if ($this->isCliServer()) {
+            return true;
+        }
+
+        return $this->isCliSapi()
+            && isset($_SERVER['REQUEST_METHOD']);
+    }
+
+    private function isCliSapi(): bool
+    {
+        return $this->sapi === 'cli' || $this->sapi === 'phpdbg';
+    }
+
+    private function isCliServer(): bool
+    {
+        return $this->sapi === 'cli-server';
     }
 }

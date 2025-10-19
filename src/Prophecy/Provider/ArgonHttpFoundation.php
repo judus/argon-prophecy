@@ -49,14 +49,14 @@ final class ArgonHttpFoundation extends AbstractServiceProvider
     {
         $parameters = $this->configureParameters($container);
 
-        /** Exception Handler */
-        $container->register(ArgonErrorHandlerServiceProvider::class);
 
         /** Logging */
         if (!$container->has(LoggerInterface::class)) {
             $container->set(LoggerInterface::class, NullLogger::class);
         }
 
+        /** PSR-17/7: HTTP Messages */
+        $container->register(ArgonMessageServiceProvider::class);
         /** Kernel */
         $container->set(ResponseEmitterInterface::class, ResponseEmitter::class);
 
@@ -66,15 +66,18 @@ final class ArgonHttpFoundation extends AbstractServiceProvider
             'shouldExit' => $parameters->get('kernel.shouldExit', true),
         ])->tag([Tag::KERNEL]);
 
-        /** PSR-17/7: HTTP Messages */
-        $container->register(ArgonMessageServiceProvider::class);
 
         /** PSR-15: RequestHandler/MiddlewarePipeline */
         $container->register(ArgonRequestHandlerServiceProvider::class);
 
         /** Middlewares */
         $container->register(ArgonMiddlewareServiceProvider::class);
+
+        /** Exception Handler */
+        $container->register(ArgonErrorHandlerServiceProvider::class);
+
     }
+
 
     /**
      * @throws ContainerException

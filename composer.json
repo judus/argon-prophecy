@@ -25,12 +25,17 @@
     {
       "type": "path",
       "url": "~/workspace/argon/packages/maduser-argon-middleware"
+    },
+    {
+      "type": "path",
+      "url": "~/workspace/argon/packages/maduser-argon-view"
     }
   ],
   "require": {
     "maduser/argon": "dev-master",
     "maduser/argon-middleware": "dev-master",
     "maduser/argon-routing": "dev-master",
+    "maduser/argon-view": "dev-master",
     "psr/http-factory": "^1.1",
     "psr/http-message": "^2.0",
     "psr/http-server-handler": "^1.0",

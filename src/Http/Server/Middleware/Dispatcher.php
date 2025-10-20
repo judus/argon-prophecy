@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace Maduser\Argon\Http\Server\Middleware;
 
 use Maduser\Argon\Contracts\Http\Server\Middleware\DispatcherInterface;
-use Maduser\Argon\Contracts\Http\Server\ResultContextInterface;
+use Maduser\Argon\Middleware\Contracts\ResultContextInterface;
 use Maduser\Argon\Support\Html;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;

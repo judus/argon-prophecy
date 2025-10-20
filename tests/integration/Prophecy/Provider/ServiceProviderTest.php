@@ -14,7 +14,7 @@ use Maduser\Argon\Contracts\Http\Server\Middleware\HtmlResponderInterface;
 use Maduser\Argon\Contracts\Http\Server\Middleware\JsonResponderInterface;
 use Maduser\Argon\Contracts\Http\Server\Middleware\PlainTextResponderInterface;
 use Maduser\Argon\Contracts\Http\Server\Middleware\ResponseResponderInterface;
-use Maduser\Argon\Contracts\Http\Server\ResultContextInterface;
+use Maduser\Argon\Middleware\Contracts\ResultContextInterface;
 use Maduser\Argon\Contracts\KernelInterface;
 use Maduser\Argon\ErrorHandling\Http\ExceptionDispatcher;
 use Maduser\Argon\ErrorHandling\Http\ExceptionFormatter;

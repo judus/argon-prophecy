@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace Tests\Integration\Mocks;
 
 use Maduser\Argon\Contracts\Http\Server\Middleware\DispatcherInterface;
-use Maduser\Argon\Contracts\Http\Server\ResultContextInterface;
+use Maduser\Argon\Middleware\Contracts\ResultContextInterface;
 use Maduser\Argon\Http\Message\Response;
 use Maduser\Argon\Http\Message\Stream;
 use Maduser\Argon\Support\Html;

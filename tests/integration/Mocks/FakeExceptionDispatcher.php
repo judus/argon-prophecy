@@ -7,7 +7,7 @@ namespace Tests\Integration\Mocks;
 use Exception;
 use LogicException;
 use Maduser\Argon\Contracts\Http\Server\Middleware\DispatcherInterface;
-use Maduser\Argon\Contracts\Http\Server\ResultContextInterface;
+use Maduser\Argon\Middleware\Contracts\ResultContextInterface;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
 use Psr\Http\Server\MiddlewareInterface;

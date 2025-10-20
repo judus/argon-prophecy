@@ -6,7 +6,7 @@ namespace Maduser\Argon\Http\Server\Middleware;
 
 use Maduser\Argon\Contracts\Http\Server\Middleware\HtmlResponderInterface;
 use Maduser\Argon\Contracts\Support\HtmlableInterface;
-use Maduser\Argon\Contracts\Http\Server\ResultContextInterface;
+use Maduser\Argon\Middleware\Contracts\ResultContextInterface;
 use Psr\Http\Message\ResponseFactoryInterface;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;

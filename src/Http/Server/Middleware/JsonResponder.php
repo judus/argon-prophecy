@@ -7,7 +7,7 @@ namespace Maduser\Argon\Http\Server\Middleware;
 use JsonException;
 use JsonSerializable;
 use Maduser\Argon\Contracts\Http\Server\Middleware\JsonResponderInterface;
-use Maduser\Argon\Contracts\Http\Server\ResultContextInterface;
+use Maduser\Argon\Middleware\Contracts\ResultContextInterface;
 use Psr\Http\Message\ResponseFactoryInterface;
 use Psr\Http\Message\ServerRequestInterface;
 use Psr\Http\Message\StreamFactoryInterface;

@@ -8,11 +8,11 @@ use Maduser\Argon\Container\AbstractServiceProvider;
 use Maduser\Argon\Container\ArgonContainer;
 use Maduser\Argon\Container\Exceptions\ContainerException;
 use Maduser\Argon\Contracts\Http\Server\Factory\RequestHandlerFactoryInterface;
-use Maduser\Argon\Contracts\Http\Server\ResultContextInterface;
 use Maduser\Argon\Http\Server\Factory\RequestHandlerFactory;
 use Maduser\Argon\Http\Server\MiddlewarePipeline;
 use Maduser\Argon\Prophecy\Support\Tag;
-use Maduser\Argon\Http\Server\ResultContext;
+use Maduser\Argon\Middleware\Contracts\ResultContextInterface;
+use Maduser\Argon\Middleware\ResultContext;
 use Psr\Http\Server\RequestHandlerInterface;
 use Psr\Log\LoggerInterface;
 

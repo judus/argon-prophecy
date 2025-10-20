@@ -19,7 +19,7 @@ use Maduser\Argon\Http\Server\Middleware\PlainTextResponder;
 use Maduser\Argon\Http\Server\Middleware\ResponseResponder;
 use Maduser\Argon\Prophecy\Support\Tag;
 
-class ArgonMiddlewareServiceProvider extends AbstractServiceProvider
+class MiddlewaresServiceProvider extends AbstractServiceProvider
 {
     /**
      * @throws ContainerException

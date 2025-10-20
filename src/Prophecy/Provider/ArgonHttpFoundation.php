@@ -71,7 +71,7 @@ final class ArgonHttpFoundation extends AbstractServiceProvider
         $container->register(ArgonRequestHandlerServiceProvider::class);
 
         /** Middlewares */
-        $container->register(ArgonMiddlewareServiceProvider::class);
+        $container->register(MiddlewaresServiceProvider::class);
 
         /** Exception Handler */
         $container->register(ArgonErrorHandlerServiceProvider::class);

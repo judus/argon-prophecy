@@ -9,7 +9,9 @@ use Maduser\Argon\Container\Exceptions\ContainerException;
 use Maduser\Argon\Container\Exceptions\NotFoundException;
 use Maduser\Argon\Contracts\Http\Server\Factory\RequestHandlerFactoryInterface;
 use Maduser\Argon\Http\Server\MiddlewarePipeline;
+use Psr\Http\Message\ServerRequestInterface;
 use Psr\Http\Server\MiddlewareInterface;
+use Psr\Http\Server\RequestHandlerInterface;
 use Psr\Log\LoggerInterface;
 use RuntimeException;
 
@@ -26,7 +28,7 @@ final readonly class RequestHandlerFactory implements RequestHandlerFactoryInter
      * @throws ContainerException
      * @psalm-suppress PossiblyUnusedReturnValue
      */
-    public function create(): MiddlewarePipeline
+    public function create(string $cacheKey = 'http_pipeline'): RequestHandlerInterface
     {
         $pipeline = new MiddlewarePipeline($this->logger);
 
@@ -57,5 +59,14 @@ final readonly class RequestHandlerFactory implements RequestHandlerFactoryInter
         }
 
         return $pipeline;
+    }
+
+    /**
+     * @throws ContainerException
+     * @throws NotFoundException
+     */
+    public function createFromStack(array $middleware): \Maduser\Argon\Middleware\MiddlewarePipeline
+    {
+        return $this->create();
     }
 }

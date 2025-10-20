@@ -20,6 +20,7 @@ class Tag
     public const EXCEPTION_DISPATCHER = 'exception.dispatcher';
     public const EXCEPTION_FORMATTER = 'exception.formatter';
     public const DISPATCHER = 'middleware.http.dispatcher';
+    public const CONSOLE_COMMAND = 'cli.command';
 
     public static function all(): array
     {

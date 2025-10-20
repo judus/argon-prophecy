@@ -24,6 +24,7 @@ class TagTest extends TestCase
             'EXCEPTION_DISPATCHER' => 'exception.dispatcher',
             'EXCEPTION_FORMATTER' => 'exception.formatter',
             'DISPATCHER' => 'middleware.http.dispatcher',
+            'CONSOLE_COMMAND' => 'cli.command',
         ];
 
         $this->assertSame($expected, Tag::all());

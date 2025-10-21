@@ -116,6 +116,16 @@ final readonly class Kernel implements KernelInterface
         $this->terminate($this->getExitCode($response), $this->shouldExit);
     }
 
+    public function run(): int
+    {
+        $response = $this->process();
+        $this->emit($response);
+        $exitCode = $this->getExitCode($response);
+        $this->terminate($exitCode, $this->shouldExit);
+
+        return $exitCode;
+    }
+
     /**
      * Captures the response from the middleware pipeline.
      *
@@ -282,9 +292,9 @@ final readonly class Kernel implements KernelInterface
      * @param int $code
      * @param bool $shouldExit
      */
-    public function terminate(int $code, bool $shouldExit = true): void
+    public function terminate(int $code = 0, bool $shouldExit = true): void
     {
-        if (!$shouldExit) {
+        if (!$shouldExit || !$this->shouldExit) {
             $this->log('info', 'Bypassing terminate with code ' . $code);
             return;
         }

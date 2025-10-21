@@ -10,6 +10,8 @@ use Maduser\Argon\Container\Contracts\ParameterStoreInterface;
 use Maduser\Argon\Container\Exceptions\ContainerException;
 use Maduser\Argon\Container\Exceptions\NotFoundException;
 use Maduser\Argon\Contracts\ErrorHandling\Http\ErrorHandlerInterface;
+use Maduser\Argon\Contracts\Handler\AppHandlerInterface;
+use Maduser\Argon\Contracts\Handler\HttpKernelInterface;
 use Maduser\Argon\Contracts\Http\ResponseEmitterInterface;
 use Maduser\Argon\Contracts\KernelInterface;
 use Maduser\Argon\Http\Kernel;
@@ -60,11 +62,19 @@ final class ArgonHttpFoundation extends AbstractServiceProvider
         /** Kernel */
         $container->set(ResponseEmitterInterface::class, ResponseEmitter::class);
 
-        $container->set(KernelInterface::class, Kernel::class, [
+        $container->set(HttpKernelInterface::class, Kernel::class, [
             'logger' => LoggerInterface::class,
             'debug' => $parameters->get('debug', false),
             'shouldExit' => $parameters->get('kernel.shouldExit', true),
         ])->tag([Tag::KERNEL]);
+
+        $container->set(KernelInterface::class, static function () use ($container) {
+            return $container->get(HttpKernelInterface::class);
+        })->skipCompilation();
+
+        $container->set(AppHandlerInterface::class, static function () use ($container) {
+            return $container->get(HttpKernelInterface::class);
+        })->skipCompilation();
 
 
         /** PSR-15: RequestHandler/MiddlewarePipeline */

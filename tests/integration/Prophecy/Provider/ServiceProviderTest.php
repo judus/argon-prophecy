@@ -8,6 +8,8 @@ use Maduser\Argon\Container\Exceptions\ContainerException;
 use Maduser\Argon\Container\Exceptions\NotFoundException;
 use Maduser\Argon\Contracts\ErrorHandling\Http\ExceptionFormatterInterface;
 use Maduser\Argon\Contracts\ErrorHandling\Http\ErrorHandlerInterface;
+use Maduser\Argon\Contracts\Handler\AppHandlerInterface;
+use Maduser\Argon\Contracts\Handler\HttpKernelInterface;
 use Maduser\Argon\Contracts\Http\Server\Factory\RequestHandlerFactoryInterface;
 use Maduser\Argon\Contracts\Http\Server\Middleware\DispatcherInterface;
 use Maduser\Argon\Contracts\Http\Server\Middleware\HtmlResponderInterface;
@@ -103,6 +105,9 @@ final class ServiceProviderTest extends TestCase
         );
         $this->assertInstanceOf(RequestHandlerInterface::class, $this->container->get(RequestHandlerInterface::class));
         $this->assertInstanceOf(ResultContextInterface::class, $this->container->get(ResultContextInterface::class));
+
+        $this->assertInstanceOf(AppHandlerInterface::class, $this->container->get(AppHandlerInterface::class));
+        $this->assertInstanceOf(HttpKernelInterface::class, $this->container->get(HttpKernelInterface::class));
 
         $this->assertInstanceOf(DispatcherInterface::class, $this->container->get(DispatcherInterface::class));
         $this->assertInstanceOf(JsonResponderInterface::class, $this->container->get(JsonResponderInterface::class));

@@ -10,6 +10,9 @@ use Maduser\Argon\Container\Compiler\ContainerCompiler;
 use Maduser\Argon\Container\Exceptions\ContainerException;
 use Maduser\Argon\Container\Exceptions\NotFoundException;
 use Maduser\Argon\Prophecy\Contracts\ApplicationInterface;
+use Maduser\Argon\Contracts\Handler\AppHandlerInterface;
+use Maduser\Argon\Contracts\Handler\CliKernelInterface;
+use Maduser\Argon\Contracts\Handler\HttpKernelInterface;
 use Maduser\Argon\Contracts\KernelInterface;
 use Maduser\Argon\Prophecy\ErrorHandling\BootstrapErrorHandler;
 use Psr\Http\Message\ResponseInterface;
@@ -29,7 +32,7 @@ final class Application implements ApplicationInterface
     private ?string $compiledClass = null;
     private ?string $compiledNamespace = null;
 
-    private ?KernelInterface $kernel = null;
+    private ?AppHandlerInterface $handler = null;
 
     public function __construct(
         ?ArgonContainer $container = null,
@@ -61,8 +64,15 @@ final class Application implements ApplicationInterface
      */
     public function handle(?ServerRequestInterface $request = null): void
     {
-        $kernel = $this->bootstrap();
-        $kernel->handle($request);
+        $handler = $this->bootstrap();
+
+        if ($handler instanceof HttpKernelInterface) {
+            $handler->handle($request);
+            return;
+        }
+
+        $exitCode = $handler->run();
+        $handler->terminate($exitCode);
     }
 
     /**
@@ -72,8 +82,13 @@ final class Application implements ApplicationInterface
      */
     public function process(?ServerRequestInterface $request = null): ResponseInterface
     {
-        $kernel = $this->bootstrap();
-        return $kernel->process($request);
+        $handler = $this->bootstrap();
+
+        if (!$handler instanceof HttpKernelInterface) {
+            throw new RuntimeException('Active handler does not support HTTP processing.');
+        }
+
+        return $handler->process($request);
     }
 
     /**
@@ -83,8 +98,13 @@ final class Application implements ApplicationInterface
      */
     public function emit(ResponseInterface $response): void
     {
-        $kernel = $this->bootstrap();
-        $kernel->emit($response);
+        $handler = $this->bootstrap();
+
+        if (!$handler instanceof HttpKernelInterface) {
+            throw new RuntimeException('Active handler does not support HTTP emission.');
+        }
+
+        $handler->emit($response);
     }
 
     /**
@@ -92,10 +112,10 @@ final class Application implements ApplicationInterface
      * @throws ReflectionException
      * @throws ContainerException
      */
-    private function bootstrap(): KernelInterface
+    private function bootstrap(): AppHandlerInterface
     {
-        if ($this->kernel !== null) {
-            return $this->kernel;
+        if ($this->handler !== null) {
+            return $this->handler;
         }
 
         $container = $this->getContainer();
@@ -108,11 +128,11 @@ final class Application implements ApplicationInterface
         $container->boot();
         $this->logContainerBootedEvent();
 
-        $kernel = $this->getKernel($container);
+        $handler = $this->resolveHandler($container);
 
-        $this->logKernelReadyEvent($kernel);
+        $this->logHandlerReadyEvent($handler);
 
-        return $kernel;
+        return $handler;
     }
 
     /**
@@ -207,19 +227,27 @@ final class Application implements ApplicationInterface
      * @throws ContainerException
      * @throws NotFoundException
      */
-    private function getKernel(ArgonContainer $container): KernelInterface
+    private function resolveHandler(ArgonContainer $container): AppHandlerInterface
     {
-        if (!$container->has(KernelInterface::class)) {
-            throw new RuntimeException("No kernel registered. Expected binding for KernelInterface.");
+        $candidates = [
+            AppHandlerInterface::class,
+            HttpKernelInterface::class,
+            CliKernelInterface::class,
+            KernelInterface::class,
+        ];
+
+        foreach ($candidates as $id) {
+            if (!$container->has($id)) {
+                continue;
+            }
+
+            $handler = $container->get($id);
+            if ($handler instanceof AppHandlerInterface) {
+                return $this->handler = $handler;
+            }
         }
 
-        $kernel = $container->get(KernelInterface::class);
-
-        if (!$kernel instanceof KernelInterface) {
-            throw new RuntimeException("Service bound to KernelInterface must implement KernelInterface.");
-        }
-
-        return $kernel;
+        throw new RuntimeException('No application handler registered.');
     }
 
     private function getBasePath(): string
@@ -249,14 +277,14 @@ final class Application implements ApplicationInterface
         }
     }
 
-    private function logKernelReadyEvent(KernelInterface $kernel): void
+    private function logHandlerReadyEvent(AppHandlerInterface $handler): void
     {
         if ($this->logger && $this->container) {
-            $this->logger->info('Kernel resolved.', [
-                'class' => get_class($kernel),
+            $this->logger->info('Application handler resolved.', [
+                'class' => get_class($handler),
             ]);
 
-            $this->logContainerDebugInfo('kernel_ready');
+            $this->logContainerDebugInfo('handler_ready');
         }
     }
 

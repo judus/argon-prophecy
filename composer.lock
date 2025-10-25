@@ -12,7 +12,7 @@
             "dist": {
                 "type": "path",
                 "url": "/home/maduser/workspace/argon/packages/maduser-argon",
-                "reference": "8cd73f7701d1629895902689a4da138c9db1140b"
+                "reference": "3bb606f52e5fc950688b93fc4903a1291313cd2d"
             },
             "require": {
                 "nette/php-generator": "^4.2",
@@ -182,12 +182,11 @@
             "dist": {
                 "type": "path",
                 "url": "/home/maduser/workspace/argon/packages/maduser-argon-http",
-                "reference": "1622c3317fbaeaaeff3a379c37e7aa465fd1d262"
+                "reference": "ad966935393e348605af76695eeadf15e4b9dc6d"
             },
             "require": {
                 "maduser/argon": "dev-master",
-                "maduser/argon-error": "dev-master",
-                "maduser/argon-middleware": "dev-master",
+                "maduser/argon-prophecy": "dev-master",
                 "psr/http-factory": "^1.1",
                 "psr/http-message": "^2.0",
                 "psr/http-server-handler": "^1.0",
@@ -204,7 +203,7 @@
             "type": "library",
             "autoload": {
                 "psr-4": {
-                    "Maduser\\Argon\\": "src/"
+                    "Maduser\\Argon\\Http\\": "src/"
                 }
             },
             "autoload-dev": {
@@ -261,97 +260,6 @@
             "license": [
                 "MIT"
             ],
-            "authors": [
-                {
-                    "name": "Julien Duseyau",
-                    "email": "julien.duseyau@gmail.com"
-                }
-            ],
-            "transport-options": {
-                "relative": false
-            }
-        },
-        {
-            "name": "maduser/argon-middleware",
-            "version": "dev-master",
-            "dist": {
-                "type": "path",
-                "url": "/home/maduser/workspace/argon/packages/maduser-argon-middleware",
-                "reference": "426ab3ccf2309abfae2a850f636b085640eae14f"
-            },
-            "require": {
-                "psr/http-factory": "^1.1",
-                "psr/http-message": "^2.0",
-                "psr/http-server-handler": "^1.0",
-                "psr/http-server-middleware": "^1.0",
-                "psr/log": "^3.0"
-            },
-            "require-dev": {
-                "dealerdirect/phpcodesniffer-composer-installer": "^1.1",
-                "maduser/argon": "dev-master",
-                "phpunit/phpunit": "^11.5",
-                "slevomat/coding-standard": "^8.24",
-                "squizlabs/php_codesniffer": "^4.0",
-                "vimeo/psalm": "^6.13",
-                "vlucas/phpdotenv": "^5.6"
-            },
-            "type": "library",
-            "autoload": {
-                "psr-4": {
-                    "Maduser\\Argon\\Middleware\\": "src/"
-                }
-            },
-            "autoload-dev": {
-                "psr-4": {
-                    "Tests\\": "tests/"
-                }
-            },
-            "scripts": {
-                "phpcs": [
-                    "vendor/bin/phpcs --standard=phpcs.xml"
-                ],
-                "phpcs:fix": [
-                    "vendor/bin/phpcbf --standard=phpcs.xml"
-                ],
-                "psalm": [
-                    "vendor/bin/psalm --output-format=github"
-                ],
-                "psalm:clear": [
-                    "vendor/bin/psalm --clear-cache"
-                ],
-                "test": [
-                    "vendor/bin/phpunit"
-                ],
-                "test:coverage": [
-                    "mkdir -p storage/phpunit/coverage/html && vendor/bin/phpunit --coverage-html storage/phpunit/coverage/html --coverage-clover storage/phpunit/coverage/clover.xml && open storage/phpunit/coverage/html/index.html"
-                ],
-                "ti": [
-                    "vendor/bin/phpunit --testsuite=unit"
-                ],
-                "tu": [
-                    "vendor/bin/phpunit --testsuite=unit"
-                ],
-                "watch": [
-                    "find src/ | entr -r composer check"
-                ],
-                "watch:test": [
-                    "find src/ | entr -r composer test"
-                ],
-                "watch:fix": [
-                    "find src/ | entr -r composer phpcs:fix"
-                ],
-                "check": [
-                    "@test:coverage",
-                    "@psalm",
-                    "@phpcs:fix",
-                    "@phpcs"
-                ],
-                "ci": [
-                    "@test",
-                    "@psalm",
-                    "@phpcs"
-                ]
-            },
             "authors": [
                 {
                     "name": "Julien Duseyau",

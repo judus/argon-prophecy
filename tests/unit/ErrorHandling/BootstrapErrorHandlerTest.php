@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Tests\Unit\Prophecy\ErrorHandling;
+namespace Tests\Unit\ErrorHandling;
 
 use Closure;
 use Maduser\Argon\Prophecy\ErrorHandling\BootstrapErrorHandler;

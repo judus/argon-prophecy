@@ -72,7 +72,7 @@ declare(strict_types=1);
 use Maduser\Argon\Prophecy\Argon;
 use Maduser\Argon\Container\ArgonContainer;
 use Maduser\Argon\Logging\LoggerServiceProvider;
-use Maduser\Argon\Prophecy\Provider\ArgonHttpFoundation;
+use Maduser\Argon\Http\Provider\ArgonHttpFoundation;
 
 Argon::prophecy(function(ArgonContainer $container): void {
     $container->register(LoggerServiceProvider::class);

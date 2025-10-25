@@ -29,39 +29,42 @@
     {
       "type": "path",
       "url": "~/workspace/argon/packages/maduser-argon-view"
+    },
+    {
+      "type": "path",
+      "url": "~/workspace/argon/packages/maduser-argon-http"
+    },
+    {
+      "type": "path",
+      "url": "~/workspace/argon/packages/maduser-argon-error"
     }
   ],
   "require": {
     "maduser/argon": "dev-master",
-    "maduser/argon-middleware": "dev-master",
-    "psr/http-factory": "^1.1",
+    "maduser/argon-error": "dev-master",
+    "maduser/argon-http": "dev-master",
     "psr/http-message": "^2.0",
-    "psr/http-server-handler": "^1.0",
-    "psr/http-server-middleware": "^1.0",
     "psr/log": "^3.0"
   },
   "require-dev": {
     "ext-pcntl": "*",
     "ext-posix": "*",
-    "dealerdirect/phpcodesniffer-composer-installer": "^1.0",
     "filp/whoops": "^2.18",
     "guzzlehttp/guzzle": "^7.9",
     "illuminate/database": "12.6.*",
     "monolog/monolog": "^3.9",
-    "phpunit/phpunit": "^10.5.45",
-    "slevomat/coding-standard": "^8.16",
-    "squizlabs/php_codesniffer": "^3.8",
     "symfony/var-dumper": "^7.2",
     "twig/twig": "^3.20",
-    "vimeo/psalm": "^5.26",
-    "vlucas/phpdotenv": "^5.6"
+    "vlucas/phpdotenv": "^5.6",
+    "dealerdirect/phpcodesniffer-composer-installer": "^1.1",
+    "phpunit/phpunit": "^11.5",
+    "slevomat/coding-standard": "^8.24",
+    "squizlabs/php_codesniffer": "^4.0",
+    "vimeo/psalm": "^6.13"
   },
   "autoload-dev": {
     "psr-4": {
-      "App\\": "tests/application/app/src/",
-      "Tests\\Application\\": "tests/application/tests/",
-      "Tests\\Unit\\": "tests/unit/",
-      "Tests\\Integration\\": "tests/integration/"
+      "Tests\\Unit\\": "tests/unit/"
     }
   },
   "config": {
@@ -69,9 +72,6 @@
     "sort-packages": true,
     "allow-plugins": {
       "dealerdirect/phpcodesniffer-composer-installer": true
-    },
-    "platform": {
-      "php": "8.2"
     }
   },
   "scripts": {
@@ -89,7 +89,7 @@
     "check": ["@test:coverage", "@psalm", "@phpcs:fix", "@phpcs"],
     "ci": ["@test", "@psalm", "@phpcs"]
   },
-  "minimum-stability": "stable",
+  "minimum-stability": "dev",
   "prefer-stable": true,
   "license": "MIT"
 }

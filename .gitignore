@@ -1,7 +1,4 @@
-/vendor/
 /.idea
-/build/
-/.phpunit.result.cache
+/.phpunit/
 /tests/application/app/prophecy.php
-/resources/temp/
-/resources/packages/
+/vendor/

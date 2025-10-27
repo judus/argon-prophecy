@@ -1,31 +1,29 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<!--
-    We disable code coverage for untestable code:
-    - the exit() function in the Kernel, reason: phpunit exits as well
-    - some error handling in Stream, reason: can't test hardware errors
--->
 <phpunit bootstrap="vendor/autoload.php"
          colors="true"
-         verbose="true"
          failOnWarning="true"
          failOnRisky="true"
-         cacheResultFile=".phpunit.result.cache">
-
-    <testsuites>
-        <testsuite name="unit">
-            <directory suffix="Test.php">tests/unit/</directory>
-        </testsuite>
-    </testsuites>
-
-    <coverage processUncoveredFiles="true">
+         cacheResult="true"
+         cacheDirectory=".phpunit/cache"
+>
+    <source>
         <include>
             <directory suffix=".php">src/</directory>
         </include>
+    </source>
+    <testsuites>
+        <testsuite name="integration">
+            <directory suffix="Test.php">tests/Integration/</directory>
+        </testsuite>
+        <testsuite name="unit">
+            <directory suffix="Test.php">tests/Unit/</directory>
+        </testsuite>
+    </testsuites>
+    <coverage includeUncoveredFiles="true">
         <report>
-            <clover outputFile="build/logs/clover.xml"/>
-            <html outputDirectory="build/coverage/html"/>
+            <clover outputFile=".phpunit/coverage/clover.xml"/>
+            <html outputDirectory=".phpunit/coverage/html"/>
             <text outputFile="php://stdout"/>
         </report>
     </coverage>
-
 </phpunit>

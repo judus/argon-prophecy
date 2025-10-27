@@ -20,29 +20,12 @@
     },
     {
       "type": "path",
-      "url": "~/workspace/argon/packages/maduser-argon-routing"
-    },
-    {
-      "type": "path",
-      "url": "~/workspace/argon/packages/maduser-argon-middleware"
-    },
-    {
-      "type": "path",
-      "url": "~/workspace/argon/packages/maduser-argon-view"
-    },
-    {
-      "type": "path",
-      "url": "~/workspace/argon/packages/maduser-argon-http"
-    },
-    {
-      "type": "path",
-      "url": "~/workspace/argon/packages/maduser-argon-error"
+      "url": "~/workspace/argon/packages/maduser-argon-support"
     }
   ],
   "require": {
     "maduser/argon": "dev-master",
-    "maduser/argon-error": "dev-master",
-    "maduser/argon-http": "dev-master",
+    "maduser/argon-support": "dev-master",
     "psr/http-message": "^2.0",
     "psr/log": "^3.0"
   },

@@ -79,19 +79,19 @@ final class BootstrapErrorHandler implements BootstrapErrorHandlerInterface
         register_shutdown_function([$this, 'handleShutdown']);
     }
 
+    public function handleException(Throwable $exception): void
+    {
+        $this->log($exception);
+        ($this->outputCallback)($this->formatMessage($exception));
+        ($this->terminateCallback)(1);
+    }
+
     /** @psalm-suppress PossiblyUnusedReturnValue */
     public function handleError(int $severity, string $message, string $file, int $line): bool
     {
         $exception = new ErrorException($message, 0, $severity, $file, $line);
         $this->handleException($exception);
         return true; // @codeCoverageIgnore
-    }
-
-    public function handleException(Throwable $exception): void
-    {
-        $this->log($exception);
-        ($this->outputCallback)($this->formatMessage($exception));
-        ($this->terminateCallback)(1);
     }
 
     public function handleShutdown(): void

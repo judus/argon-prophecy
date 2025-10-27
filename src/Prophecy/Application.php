@@ -27,11 +27,9 @@ final class Application implements ApplicationInterface
     protected ?ArgonContainer $container = null;
     protected ?LoggerInterface $logger = null;
     private ?Closure $configureContainer = null;
-
     private ?string $compiledFilePath = null;
     private ?string $compiledClass = null;
     private ?string $compiledNamespace = null;
-
     private ?AppHandlerInterface $handler = null;
 
     public function __construct(

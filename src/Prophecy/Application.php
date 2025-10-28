@@ -105,6 +105,7 @@ final class Application implements ApplicationInterface
      * @throws ReflectionException
      * @throws ContainerException
      * @throws NotFoundException
+     * @throws Throwable
      */
     public function process(?ServerRequestInterface $request = null): ResponseInterface
     {
@@ -198,5 +199,4 @@ final class Application implements ApplicationInterface
     {
         return dirname($_SERVER['SCRIPT_FILENAME'] ?? __DIR__, 2);
     }
-
 }

@@ -86,11 +86,6 @@ final class ErrorHandlerManager
             return;
         }
 
-        if ($handler instanceof HttpKernelInterface) {
-            $this->bootstrapHandler->setOutputMode(BootstrapErrorHandlerMode::HTTP);
-            return;
-        }
-
         $this->bootstrapHandler->setOutputMode(BootstrapErrorHandlerMode::HTTP);
     }
 
@@ -137,8 +132,10 @@ final class ErrorHandlerManager
         $this->bootstrapHandler->handleException($throwable);
     }
 
-    private function resolveRequest(?ServerRequestInterface $request, ArgonContainer $container): ?ServerRequestInterface
-    {
+    private function resolveRequest(
+        ?ServerRequestInterface $request,
+        ArgonContainer $container
+    ): ?ServerRequestInterface {
         if ($request instanceof ServerRequestInterface) {
             return $request;
         }

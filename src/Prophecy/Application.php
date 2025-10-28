@@ -16,6 +16,7 @@ use Maduser\Argon\Prophecy\Application\ContainerManager;
 use Maduser\Argon\Prophecy\Application\ErrorHandlerManager;
 use Maduser\Argon\Prophecy\Contracts\ErrorHandling\BootstrapErrorHandlerInterface;
 use Maduser\Argon\Prophecy\ErrorHandling\BootstrapErrorHandler;
+use Maduser\Argon\Prophecy\Application\ApplicationLogging;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
 use Psr\Log\LoggerInterface;
@@ -25,6 +26,8 @@ use Throwable;
 
 final class Application implements ApplicationInterface
 {
+    use ApplicationLogging;
+
     protected ?ArgonContainer $container = null;
     protected ?LoggerInterface $logger = null;
     private ?AppHandlerInterface $handler = null;
@@ -186,69 +189,14 @@ final class Application implements ApplicationInterface
         return $this->container = $this->containerManager->getContainer();
     }
 
+    protected function getContainerInstance(): ?ArgonContainer
+    {
+        return $this->container;
+    }
+
     private function getBasePath(): string
     {
         return dirname($_SERVER['SCRIPT_FILENAME'] ?? __DIR__, 2);
     }
 
-    private function logContainerLoadedEvent(): void
-    {
-        if ($this->logger && $this->container) {
-            $this->logger->info('Container loaded.', [
-                'class' => get_class($this->container),
-            ]);
-
-            $this->logContainerDebugInfo('loaded');
-        }
-    }
-
-    private function logContainerBootedEvent(): void
-    {
-        if ($this->logger && $this->container) {
-            $this->logger->info('Container booted.', [
-                'class' => get_class($this->container),
-            ]);
-
-            $this->logContainerDebugInfo('booted');
-        }
-    }
-
-    private function logHandlerReadyEvent(AppHandlerInterface $handler): void
-    {
-        if ($this->logger && $this->container) {
-            $this->logger->info('Application handler resolved.', [
-                'class' => get_class($handler),
-            ]);
-
-            $this->logContainerDebugInfo('handler_ready');
-        }
-    }
-
-    private function logContainerDebugInfo(string $stage): void
-    {
-        if ($this->logger && $this->container) {
-            $info = [
-                'parameters'       => $this->container->getParameters()->all(),
-                'bindings'         => $this->container->getBindings(),
-                'preInterceptors'  => $this->container->getPreInterceptors(),
-                'postInterceptors' => $this->container->getPostInterceptors(),
-            ];
-
-            if (
-                get_class($this->container) !== ArgonContainer::class &&
-                method_exists($this->container, 'getServiceMap')
-            ) {
-                $info['compiled'] = true;
-                try {
-                    $info['serviceMap'] = (array) $this->container->getServiceMap();
-                } catch (Throwable) {
-                    $info['serviceMap'] = ['error' => 'Could not fetch service map'];
-                }
-            } else {
-                $info['compiled'] = false;
-            }
-
-            $this->logger->debug("Container [$stage] debug info:", $info);
-        }
-    }
 }

@@ -102,10 +102,7 @@ final class ContainerManager
     {
         $container = new ArgonContainer();
 
-        $basePath = $this->basePath
-            ?? dirname($_SERVER['SCRIPT_FILENAME'] ?? __DIR__, 4);
-
-        $container->getParameters()->set('basePath', $basePath);
+        $container->getParameters()->set('basePath', $this->resolveBasePath());
 
         if ($this->configurator !== null) {
             ($this->configurator)($container);
@@ -132,5 +129,14 @@ final class ContainerManager
             $this->compiledClass,
             $this->compiledNamespace ?? ''
         );
+    }
+
+    private function resolveBasePath(): string
+    {
+        if ($this->basePath === null) {
+            throw new RuntimeException('Base path must be provided to ContainerManager.');
+        }
+
+        return $this->basePath;
     }
 }

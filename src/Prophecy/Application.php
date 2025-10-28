@@ -8,15 +8,15 @@ use Closure;
 use Maduser\Argon\Container\ArgonContainer;
 use Maduser\Argon\Container\Exceptions\ContainerException;
 use Maduser\Argon\Container\Exceptions\NotFoundException;
-use Maduser\Argon\Prophecy\Contracts\ApplicationInterface;
 use Maduser\Argon\Contracts\Handler\AppHandlerInterface;
 use Maduser\Argon\Contracts\Handler\HttpKernelInterface;
 use Maduser\Argon\Prophecy\Application\AppHandlerResolver;
+use Maduser\Argon\Prophecy\Application\ApplicationLogging;
 use Maduser\Argon\Prophecy\Application\ContainerManager;
 use Maduser\Argon\Prophecy\Application\ErrorHandlerManager;
+use Maduser\Argon\Prophecy\Contracts\ApplicationInterface;
 use Maduser\Argon\Prophecy\Contracts\ErrorHandling\BootstrapErrorHandlerInterface;
 use Maduser\Argon\Prophecy\ErrorHandling\BootstrapErrorHandler;
-use Maduser\Argon\Prophecy\Application\ApplicationLogging;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
 use Psr\Log\LoggerInterface;
@@ -38,13 +38,14 @@ final class Application implements ApplicationInterface
 
     public function __construct(
         ?ArgonContainer $container = null,
-        ?LoggerInterface $logger = null
+        ?LoggerInterface $logger = null,
+        ?string $basePath = null
     ) {
         $this->logger = $logger;
         $this->bootstrapErrorHandler = new BootstrapErrorHandler($this->logger);
         $this->bootstrapErrorHandler->register();
         $this->containerManager = new ContainerManager($container);
-        $this->containerManager->setBasePath($this->getBasePath());
+        $this->containerManager->setBasePath($basePath ?? $this->autodetectBasePath());
         $this->errorManager = new ErrorHandlerManager($this->bootstrapErrorHandler, $this->logger);
         $this->handlerResolver = new AppHandlerResolver();
         $this->container = $container;
@@ -181,22 +182,29 @@ final class Application implements ApplicationInterface
         return $this->handler = $handler;
     }
 
-    /**
-     * @throws ReflectionException
-     * @throws ContainerException
-     */
-    private function getContainer(): ArgonContainer
-    {
-        return $this->container = $this->containerManager->getContainer();
-    }
-
     protected function getContainerInstance(): ?ArgonContainer
     {
         return $this->container;
     }
 
-    private function getBasePath(): string
+    private function autodetectBasePath(): string
     {
-        return dirname($_SERVER['SCRIPT_FILENAME'] ?? __DIR__, 2);
+        $sapi = php_sapi_name();
+
+        if ($sapi === 'cli' || $sapi === 'phpdbg') {
+            $cwd = getcwd();
+
+            if ($cwd === false) {
+                throw new RuntimeException('Unable to determine base path from current working directory.');
+            }
+
+            return $cwd;
+        }
+
+        if (!isset($_SERVER['SCRIPT_FILENAME'])) {
+            throw new RuntimeException('Unable to determine base path; SCRIPT_FILENAME is not defined.');
+        }
+
+        return dirname($_SERVER['SCRIPT_FILENAME']);
     }
 }

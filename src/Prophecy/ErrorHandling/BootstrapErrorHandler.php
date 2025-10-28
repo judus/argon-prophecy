@@ -17,6 +17,7 @@ final class BootstrapErrorHandler implements BootstrapErrorHandlerInterface
     private Closure $terminateCallback;
     private Closure $errorGetLastCallback;
     private string $sapi;
+    private ?BootstrapErrorHandlerMode $mode = null;
 
     /**
      * @var resource|null
@@ -48,26 +49,25 @@ final class BootstrapErrorHandler implements BootstrapErrorHandlerInterface
     {
         return function (string $message): void {
             $stream = $this->stream ?? fopen('php://stderr', 'w');
+            $mode = $this->resolveMode();
 
-            $isCliSapi = $this->isCliSapi();
-            $isCliServer = $this->isCliServer();
+            switch ($mode) {
+                case BootstrapErrorHandlerMode::CLI:
+                    fwrite($stream, $message);
+                    break;
 
-            if ($isCliSapi || $isCliServer) {
-                fwrite($stream, $message);
-            }
+                case BootstrapErrorHandlerMode::CLI_SERVER:
+                    http_response_code(500);
+                    if (!headers_sent()) {
+                        header('Content-Type: text/plain; charset=UTF-8');
+                    }
+                    echo $message;
+                    break;
 
-            if ($this->isCliServingHttp()) {
-                http_response_code(500);
-                if (!headers_sent()) {
-                    header('Content-Type: text/plain; charset=UTF-8');
-                }
-                echo $message;
-                return;
-            }
-
-            if (!$isCliSapi && !$isCliServer) {
-                http_response_code(500);
-                echo '<pre>' . htmlspecialchars($message, \ENT_QUOTES | \ENT_SUBSTITUTE, 'UTF-8') . '</pre>';
+                case BootstrapErrorHandlerMode::HTTP:
+                    http_response_code(500);
+                    echo '<pre>' . htmlspecialchars($message, \ENT_QUOTES | \ENT_SUBSTITUTE, 'UTF-8') . '</pre>';
+                    break;
             }
         };
     }
@@ -130,7 +130,7 @@ final class BootstrapErrorHandler implements BootstrapErrorHandlerInterface
             : $className;
 
         return sprintf(
-            "Fatal error: %s\n\nMessage: %s\n\nLocation: %s:%d\n\nTrace:\n%s\n",
+            "Fatal error: %s\nMessage: %s\nLocation: %s:%d\n\nTrace:\n%s\n",
             $exceptionName,
             $exception->getMessage(),
             $origin->getFile(),
@@ -139,19 +139,36 @@ final class BootstrapErrorHandler implements BootstrapErrorHandlerInterface
         );
     }
 
+    public function setOutputMode(BootstrapErrorHandlerMode $mode): void
+    {
+        $this->mode = $mode;
+    }
+
+    public function getOutputMode(): ?BootstrapErrorHandlerMode
+    {
+        return $this->mode;
+    }
+
     private function resolveOrigin(Throwable $exception): Throwable
     {
         return $exception->getPrevious() ?? $exception;
     }
 
-    private function isCliServingHttp(): bool
+    private function resolveMode(): BootstrapErrorHandlerMode
     {
-        if ($this->isCliServer()) {
-            return true;
+        if ($this->mode !== null) {
+            return $this->mode;
         }
 
-        return $this->isCliSapi()
-            && isset($_SERVER['REQUEST_METHOD']);
+        if ($this->isCliServer()) {
+            return BootstrapErrorHandlerMode::CLI_SERVER;
+        }
+
+        if ($this->isCliSapi()) {
+            return BootstrapErrorHandlerMode::CLI;
+        }
+
+        return BootstrapErrorHandlerMode::HTTP;
     }
 
     private function isCliSapi(): bool

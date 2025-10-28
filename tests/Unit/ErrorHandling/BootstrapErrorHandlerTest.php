@@ -6,6 +6,7 @@ namespace Tests\Unit\ErrorHandling;
 
 use Closure;
 use Maduser\Argon\Prophecy\ErrorHandling\BootstrapErrorHandler;
+use Maduser\Argon\Prophecy\ErrorHandling\BootstrapErrorHandlerMode;
 use PHPUnit\Framework\MockObject\Exception;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
@@ -143,6 +144,32 @@ class BootstrapErrorHandlerTest extends TestCase
         $this->assertStringContainsString('Fatal error: RuntimeException', $output);
         $this->assertStringContainsString('Message: Test CLI Exception', $output);
         $this->assertStringContainsString('Location:', $output);
+    }
+
+    public function testExplicitOutputModeOverridesDetection(): void
+    {
+        $handler = new BootstrapErrorHandler(
+            $this->logger,
+            null,
+            function (int $code): void {
+                throw new RuntimeException('terminate');
+            },
+            static fn() => null,
+            'cli'
+        );
+
+        $handler->setOutputMode(BootstrapErrorHandlerMode::HTTP);
+
+        ob_start();
+        try {
+            $handler->handleException(new RuntimeException('Mode override'));
+        } catch (RuntimeException) {
+            // expected fake terminate
+        }
+
+        $output = ob_get_clean();
+
+        $this->assertStringContainsString('<pre>', (string) $output);
     }
 /**  @todo */
 //    public function testHandleExceptionOutputsHttpResponseWhenCliServesHttp(): void

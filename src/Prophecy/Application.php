@@ -9,12 +9,15 @@ use Maduser\Argon\Container\ArgonContainer;
 use Maduser\Argon\Container\Compiler\ContainerCompiler;
 use Maduser\Argon\Container\Exceptions\ContainerException;
 use Maduser\Argon\Container\Exceptions\NotFoundException;
-use Maduser\Argon\Prophecy\Contracts\ApplicationInterface;
 use Maduser\Argon\Contracts\Handler\AppHandlerInterface;
 use Maduser\Argon\Contracts\Handler\CliKernelInterface;
 use Maduser\Argon\Contracts\Handler\HttpKernelInterface;
 use Maduser\Argon\Contracts\KernelInterface;
+use Maduser\Argon\Prophecy\Contracts\ApplicationInterface;
+use Maduser\Argon\Prophecy\Contracts\ErrorHandling\BootstrapErrorHandlerInterface;
 use Maduser\Argon\Prophecy\ErrorHandling\BootstrapErrorHandler;
+use Maduser\Argon\Prophecy\ErrorHandling\BootstrapErrorHandlerMode;
+use Maduser\Argon\Support\Contracts\ErrorHandlerInterface;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
 use Psr\Log\LoggerInterface;
@@ -31,13 +34,16 @@ final class Application implements ApplicationInterface
     private ?string $compiledClass = null;
     private ?string $compiledNamespace = null;
     private ?AppHandlerInterface $handler = null;
+    private BootstrapErrorHandlerInterface $bootstrapErrorHandler;
+    private ?ErrorHandlerInterface $runtimeErrorHandler = null;
 
     public function __construct(
         ?ArgonContainer $container = null,
         ?LoggerInterface $logger = null
     ) {
         $this->logger = $logger;
-        (new BootstrapErrorHandler($this->logger))->register();
+        $this->bootstrapErrorHandler = new BootstrapErrorHandler($this->logger);
+        $this->bootstrapErrorHandler->register();
         $this->container = $container;
     }
 
@@ -65,11 +71,33 @@ final class Application implements ApplicationInterface
         $handler = $this->bootstrap();
 
         if ($handler instanceof HttpKernelInterface) {
-            $handler->handle($request);
+            $activeRequest = $request;
+
+            try {
+                $handler->handle($activeRequest);
+            } catch (Throwable $throwable) {
+                $response = $this->tryHandleHttpThrowable($handler, $activeRequest, $throwable);
+
+                if ($response === null) {
+                    throw $throwable;
+                }
+
+                $this->emitFallbackResponse($handler, $response);
+            }
+
             return;
         }
 
-        $exitCode = $handler->run();
+        try {
+            $exitCode = $handler->run();
+        } catch (Throwable $throwable) {
+            if ($this->handleCliThrowable($throwable)) {
+                return;
+            }
+
+            throw $throwable;
+        }
+
         $handler->terminate($exitCode);
     }
 
@@ -86,7 +114,17 @@ final class Application implements ApplicationInterface
             throw new RuntimeException('Active handler does not support HTTP processing.');
         }
 
-        return $handler->process($request);
+        try {
+            return $handler->process($request);
+        } catch (Throwable $throwable) {
+            $response = $this->tryHandleHttpThrowable($handler, $request, $throwable);
+
+            if ($response === null) {
+                throw $throwable;
+            }
+
+            return $response;
+        }
     }
 
     /**
@@ -121,6 +159,8 @@ final class Application implements ApplicationInterface
         if ($container->has(LoggerInterface::class)) {
             $this->logger = $container->get(LoggerInterface::class);
         }
+
+        $this->registerRuntimeErrorHandler($container);
 
         $this->logContainerLoadedEvent();
         $container->boot();
@@ -241,11 +281,46 @@ final class Application implements ApplicationInterface
 
             $handler = $container->get($id);
             if ($handler instanceof AppHandlerInterface) {
+                $this->configureBootstrapOutputMode($handler);
                 return $this->handler = $handler;
             }
         }
 
         throw new RuntimeException('No application handler registered.');
+    }
+
+    private function registerRuntimeErrorHandler(ArgonContainer $container): void
+    {
+        if ($this->runtimeErrorHandler !== null) {
+            return;
+        }
+
+        if (!$container->has(ErrorHandlerInterface::class)) {
+            $this->logger?->warning('No runtime error handler registered; BootstrapErrorHandler remains active.');
+            return;
+        }
+
+        try {
+            $handler = $container->get(ErrorHandlerInterface::class);
+        } catch (Throwable $e) {
+            $this->logger?->critical('Failed to resolve runtime error handler', [
+                'exception' => $e,
+            ]);
+
+            return;
+        }
+
+        try {
+            $handler->register();
+            $this->runtimeErrorHandler = $handler;
+            $this->logger?->info('Runtime error handler registered.', [
+                'class' => get_class($handler),
+            ]);
+        } catch (Throwable $e) {
+            $this->logger?->critical('Runtime error handler failed during registration.', [
+                'exception' => $e,
+            ]);
+        }
     }
 
     private function getBasePath(): string
@@ -312,5 +387,97 @@ final class Application implements ApplicationInterface
 
             $this->logger->debug("Container [$stage] debug info:", $info);
         }
+    }
+
+    private function    configureBootstrapOutputMode(AppHandlerInterface $handler): void
+    {
+        if (!method_exists($this->bootstrapErrorHandler, 'setOutputMode')) {
+            return;
+        }
+
+        if ($handler instanceof CliKernelInterface) {
+            $this->bootstrapErrorHandler->setOutputMode(BootstrapErrorHandlerMode::CLI);
+            return;
+        }
+
+        if ($handler instanceof HttpKernelInterface) {
+            $this->bootstrapErrorHandler->setOutputMode(BootstrapErrorHandlerMode::HTTP);
+            return;
+        }
+
+        $this->bootstrapErrorHandler->setOutputMode(BootstrapErrorHandlerMode::HTTP);
+    }
+
+    private function tryHandleHttpThrowable(
+        HttpKernelInterface $handler,
+        ?ServerRequestInterface $request,
+        Throwable $throwable
+    ): ?ResponseInterface {
+        $resolvedRequest = $this->resolveRequest($request);
+
+        if ($resolvedRequest !== null && $this->runtimeErrorHandler !== null) {
+            try {
+                return $this->runtimeErrorHandler->handle($throwable, $resolvedRequest);
+            } catch (Throwable $runtimeFailure) {
+                $this->logger?->critical('Runtime error handler failed.', [
+                    'exception' => $runtimeFailure,
+                ]);
+            }
+        }
+
+        $this->bootstrapErrorHandler->handleException($throwable);
+
+        return null;
+    }
+
+    private function emitFallbackResponse(HttpKernelInterface $handler, ResponseInterface $response): void
+    {
+        try {
+            $handler->emit($response);
+        } catch (Throwable $emitFailure) {
+            $this->logger?->critical('Failed to emit fallback response.', [
+                'exception' => $emitFailure,
+            ]);
+
+            $this->bootstrapErrorHandler->handleException($emitFailure);
+
+            return;
+        }
+
+        $handler->terminate($this->determineExitCode($response));
+    }
+
+    private function handleCliThrowable(Throwable $throwable): bool
+    {
+        $this->bootstrapErrorHandler->handleException($throwable);
+
+        return true;
+    }
+
+    private function resolveRequest(?ServerRequestInterface $request): ?ServerRequestInterface
+    {
+        if ($request instanceof ServerRequestInterface) {
+            return $request;
+        }
+
+        if ($this->container !== null && $this->container->has(ServerRequestInterface::class)) {
+            try {
+                $resolved = $this->container->get(ServerRequestInterface::class);
+                if ($resolved instanceof ServerRequestInterface) {
+                    return $resolved;
+                }
+            } catch (Throwable $exception) {
+                $this->logger?->debug('Unable to resolve ServerRequestInterface from container', [
+                    'exception' => $exception,
+                ]);
+            }
+        }
+
+        return null;
+    }
+
+    private function determineExitCode(ResponseInterface $response): int
+    {
+        return $response->getStatusCode() >= 500 ? 1 : 0;
     }
 }

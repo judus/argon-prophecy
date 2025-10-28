@@ -67,7 +67,10 @@ class BootstrapErrorHandlerTest extends TestCase
             // expected fake terminate
         }
 
-        $this->assertStringContainsString('Fatal error: Test exception', $this->capturedOutput);
+        $this->assertStringContainsString('Fatal error: RuntimeException', $this->capturedOutput);
+        $this->assertStringContainsString('Message: Test exception', $this->capturedOutput);
+        $this->assertStringContainsString('Location:', $this->capturedOutput);
+        $this->assertStringContainsString("Trace:\n", $this->capturedOutput);
     }
 
     public function testHandleExceptionOutputsHtmlForWeb(): void
@@ -137,7 +140,9 @@ class BootstrapErrorHandlerTest extends TestCase
         rewind($stream);
         $output = stream_get_contents($stream);
 
-        $this->assertStringContainsString('Fatal error: Test CLI Exception', $output);
+        $this->assertStringContainsString('Fatal error: RuntimeException', $output);
+        $this->assertStringContainsString('Message: Test CLI Exception', $output);
+        $this->assertStringContainsString('Location:', $output);
     }
 /**  @todo */
 //    public function testHandleExceptionOutputsHttpResponseWhenCliServesHttp(): void
@@ -276,7 +281,9 @@ class BootstrapErrorHandlerTest extends TestCase
             // expected fake terminate
         }
 
-        $this->assertStringContainsString('Fatal error: Warning simulated', $this->capturedOutput);
+        $this->assertStringContainsString('Fatal error: ErrorException', $this->capturedOutput);
+        $this->assertStringContainsString('Message: Warning simulated', $this->capturedOutput);
+        $this->assertStringContainsString('Location:', $this->capturedOutput);
     }
 
     public function testHandleShutdownHandlesFatalError(): void
@@ -296,7 +303,9 @@ class BootstrapErrorHandlerTest extends TestCase
             // expected fake terminate
         }
 
-        $this->assertStringContainsString('Fatal error: Simulated fatal error', $this->capturedOutput);
+        $this->assertStringContainsString('Fatal error: ErrorException', $this->capturedOutput);
+        $this->assertStringContainsString('Message: Simulated fatal error', $this->capturedOutput);
+        $this->assertStringContainsString('Location: fake.php:123', $this->capturedOutput);
     }
 
     public function testHandleShutdownWithoutErrorDoesNothing(): void

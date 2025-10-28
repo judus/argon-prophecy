@@ -111,22 +111,37 @@ final class BootstrapErrorHandler implements BootstrapErrorHandlerInterface
 
     private function log(Throwable $exception): void
     {
+        $origin = $this->resolveOrigin($exception);
+
         $this->logger?->error('Unhandled bootstrap exception', [
             'message' => $exception->getMessage(),
-            'file' => $exception->getFile(),
-            'line' => $exception->getLine(),
+            'file' => $origin->getFile(),
+            'line' => $origin->getLine(),
             'trace' => $exception->getTraceAsString(),
         ]);
     }
 
     private function formatMessage(Throwable $exception): string
     {
+        $origin = $this->resolveOrigin($exception);
+        $className = $exception::class;
+        $exceptionName = str_contains($className, '\\')
+            ? substr(strrchr($className, '\\'), 1)
+            : $className;
+
         return sprintf(
-            "Fatal error: %s in %s:%d\n",
+            "Fatal error: %s\n\nMessage: %s\n\nLocation: %s:%d\n\nTrace:\n%s\n",
+            $exceptionName,
             $exception->getMessage(),
-            $exception->getFile(),
-            $exception->getLine()
+            $origin->getFile(),
+            $origin->getLine(),
+            $exception->getTraceAsString()
         );
+    }
+
+    private function resolveOrigin(Throwable $exception): Throwable
+    {
+        return $exception->getPrevious() ?? $exception;
     }
 
     private function isCliServingHttp(): bool

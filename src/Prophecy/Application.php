@@ -38,14 +38,13 @@ final class Application implements ApplicationInterface
 
     public function __construct(
         ?ArgonContainer $container = null,
-        ?LoggerInterface $logger = null,
-        ?string $basePath = null
+        ?LoggerInterface $logger = null
     ) {
         $this->logger = $logger;
         $this->bootstrapErrorHandler = new BootstrapErrorHandler($this->logger);
         $this->bootstrapErrorHandler->register();
         $this->containerManager = new ContainerManager($container);
-        $this->containerManager->setBasePath($basePath ?? $this->autodetectBasePath());
+        $this->containerManager->setCwd($this->getCwd());
         $this->errorManager = new ErrorHandlerManager($this->bootstrapErrorHandler, $this->logger);
         $this->handlerResolver = new AppHandlerResolver();
         $this->container = $container;
@@ -187,7 +186,7 @@ final class Application implements ApplicationInterface
         return $this->container;
     }
 
-    private function autodetectBasePath(): string
+    private function getCwd(): string
     {
         $sapi = php_sapi_name();
 
@@ -195,14 +194,14 @@ final class Application implements ApplicationInterface
             $cwd = getcwd();
 
             if ($cwd === false) {
-                throw new RuntimeException('Unable to determine base path from current working directory.');
+                throw new RuntimeException('Unable to determine working directory from current environment.');
             }
 
             return $cwd;
         }
 
         if (!isset($_SERVER['SCRIPT_FILENAME'])) {
-            throw new RuntimeException('Unable to determine base path; SCRIPT_FILENAME is not defined.');
+            throw new RuntimeException('Unable to determine working directory; SCRIPT_FILENAME is not defined.');
         }
 
         return dirname($_SERVER['SCRIPT_FILENAME']);

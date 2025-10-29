@@ -23,7 +23,7 @@ final class ContainerManager
     private ?string $compiledFilePath = null;
     private ?string $compiledClass = null;
     private ?string $compiledNamespace = null;
-    private ?string $basePath = null;
+    private ?string $cwd = null;
 
     public function __construct(?ArgonContainer $container = null)
     {
@@ -42,9 +42,9 @@ final class ContainerManager
         $this->compiledNamespace = $namespace !== '' ? $namespace : null;
     }
 
-    public function setBasePath(string $basePath): void
+    public function setCwd(string $cwd): void
     {
-        $this->basePath = $basePath;
+        $this->cwd = $cwd;
     }
 
     /**
@@ -101,11 +101,15 @@ final class ContainerManager
     private function buildContainer(): ArgonContainer
     {
         $container = new ArgonContainer();
-
-        $container->getParameters()->set('basePath', $this->resolveBasePath());
+        $parameters = $container->getParameters();
+        $cwd = $this->resolveCwd();
 
         if ($this->configurator !== null) {
             ($this->configurator)($container);
+        }
+
+        if (!$parameters->has('basePath')) {
+            $parameters->set('basePath', $cwd);
         }
 
         $this->compileIfConfigured($container);
@@ -131,12 +135,12 @@ final class ContainerManager
         );
     }
 
-    private function resolveBasePath(): string
+    private function resolveCwd(): string
     {
-        if ($this->basePath === null) {
-            throw new RuntimeException('Base path must be provided to ContainerManager.');
+        if ($this->cwd === null) {
+            throw new RuntimeException('Current working directory must be provided to ContainerManager.');
         }
 
-        return $this->basePath;
+        return $this->cwd;
     }
 }

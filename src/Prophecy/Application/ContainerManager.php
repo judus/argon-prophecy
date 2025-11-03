@@ -104,8 +104,14 @@ final class ContainerManager
         $parameters = $container->getParameters();
         $cwd = $this->resolveCwd();
 
+        $parameters->set('cwd', $cwd);
+
         if ($this->configurator !== null) {
             ($this->configurator)($container);
+        }
+
+        if ($parameters->get('cwd') !== $cwd) {
+            throw new RuntimeException('Service configuration attempted to mutate cwd parameter.');
         }
 
         if (!$parameters->has('basePath')) {

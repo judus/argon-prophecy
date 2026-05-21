@@ -3,7 +3,7 @@
 ## Unreleased
 
 - Tightened the public README around Prophecy as a bootstrap/runtime shell rather than an application framework.
-- Linked framework-composition and application-integration examples from the README to wiki how-to pages.
+- Linked framework-composition and application-integration examples from the README to how-to pages.
 - Fixed the local quality gate so `composer check` runs tests, Psalm, and PHPCS without requiring a coverage driver or mutating files.
 - Cleaned PHPUnit, Psalm, and PHPCS issues in the Prophecy runtime package.
 - Ignored the local Swoole research checkout and documented future long-running runtime adapters as explicit integrations.

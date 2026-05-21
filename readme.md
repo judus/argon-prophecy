@@ -38,10 +38,10 @@ The wider Argon suite can still be composed into a framework-style stack with
 routing, middleware, console, database, and view packages. You can also skip
 those packages and wire your own stack instead.
 
-Examples and how-tos live in the wiki:
+Examples and how-tos:
 
-- [Composing the Argon suite](https://github.com/judus/argon-prophecy/wiki/Composing-the-Argon-suite)
-- [Registering application integrations](https://github.com/judus/argon-prophecy/wiki/Registering-application-integrations)
+- [Composing the Argon suite](docs/Composing-the-Argon-suite.md)
+- [Registering application integrations](docs/Registering-application-integrations.md)
 
 ## Installation
 

@@ -179,6 +179,48 @@ final class BootstrapErrorHandlerTest extends TestCase
         $this->assertStringContainsString('<pre>', $output);
     }
 
+    public function testHandleShutdownOutputsFatalError(): void
+    {
+        $handler = $this->createHandler([
+            'type' => E_ERROR,
+            'message' => 'Fatal shutdown failure',
+            'file' => __FILE__,
+            'line' => __LINE__,
+        ]);
+
+        $this->logger->expects($this->once())
+            ->method('error')
+            ->with('Unhandled bootstrap exception', $this->callback(function ($context) {
+                return isset($context['message'])
+                    && $context['message'] === 'Fatal shutdown failure';
+            }));
+
+        try {
+            $handler->handleShutdown();
+        } catch (RuntimeException) {
+            // expected fake terminate
+        }
+
+        $this->assertStringContainsString('Fatal shutdown failure', $this->capturedOutput);
+    }
+
+    public function testHandleShutdownIgnoresNonFatalError(): void
+    {
+        $handler = $this->createHandler([
+            'type' => E_WARNING,
+            'message' => 'Non-fatal warning',
+            'file' => __FILE__,
+            'line' => __LINE__,
+        ]);
+
+        $this->logger->expects($this->never())
+            ->method('error');
+
+        $handler->handleShutdown();
+
+        $this->assertSame('', $this->capturedOutput);
+    }
+
     /** @todo */
 //    public function testHandleExceptionOutputsHttpResponseWhenCliServesHttp(): void
 //    {

@@ -12,6 +12,18 @@ use Throwable;
 
 final class BootstrapErrorHandler implements BootstrapErrorHandlerInterface
 {
+    /**
+     * @var list<int>
+     */
+    private const FATAL_ERROR_TYPES = [
+        \E_ERROR,
+        \E_PARSE,
+        \E_CORE_ERROR,
+        \E_COMPILE_ERROR,
+        \E_USER_ERROR,
+        \E_RECOVERABLE_ERROR,
+    ];
+
     private ?LoggerInterface $logger;
     private Closure $outputCallback;
     private Closure $terminateCallback;
@@ -106,15 +118,17 @@ final class BootstrapErrorHandler implements BootstrapErrorHandlerInterface
     {
         /** @var array{type: int, message: string, file: string, line: int}|null $error */
         $error = ($this->errorGetLastCallback)();
-        if ($error !== null) {
-            $this->handleException(new ErrorException(
-                $error['message'] ?? 'Unknown fatal error',
-                0,
-                $error['type'] ?? \E_ERROR,
-                $error['file'] ?? 'unknown',
-                $error['line'] ?? 0
-            ));
+        if ($error === null || !in_array($error['type'], self::FATAL_ERROR_TYPES, true)) {
+            return;
         }
+
+        $this->handleException(new ErrorException(
+            $error['message'],
+            0,
+            $error['type'],
+            $error['file'],
+            $error['line']
+        ));
     }
 
     private function log(Throwable $exception): void

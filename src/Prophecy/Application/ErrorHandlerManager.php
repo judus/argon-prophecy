@@ -36,11 +36,6 @@ final class ErrorHandlerManager
         $this->logger = $logger;
     }
 
-    public function getBootstrapHandler(): BootstrapErrorHandlerInterface
-    {
-        return $this->bootstrapHandler;
-    }
-
     public function registerRuntimeHandlerIfAvailable(ArgonContainer $container): void
     {
         if ($this->runtimeHandler !== null) {

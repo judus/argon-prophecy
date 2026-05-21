@@ -10,4 +10,3 @@ use Maduser\Argon\Contracts\Handler\HttpKernelInterface;
 interface KernelInterface extends HttpKernelInterface
 {
 }
-

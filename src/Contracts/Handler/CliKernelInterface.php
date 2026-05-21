@@ -7,4 +7,3 @@ namespace Maduser\Argon\Contracts\Handler;
 interface CliKernelInterface extends AppHandlerInterface
 {
 }
-

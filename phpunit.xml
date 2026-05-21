@@ -19,11 +19,4 @@
             <directory suffix="Test.php">tests/Unit/</directory>
         </testsuite>
     </testsuites>
-    <coverage includeUncoveredFiles="true">
-        <report>
-            <clover outputFile=".phpunit/coverage/clover.xml"/>
-            <html outputDirectory=".phpunit/coverage/html"/>
-            <text outputFile="php://stdout"/>
-        </report>
-    </coverage>
 </phpunit>

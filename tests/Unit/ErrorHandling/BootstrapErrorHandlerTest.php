@@ -14,7 +14,7 @@ use Psr\Log\LoggerInterface;
 use RuntimeException;
 use Throwable;
 
-class BootstrapErrorHandlerTest extends TestCase
+final class BootstrapErrorHandlerTest extends TestCase
 {
     private string $capturedOutput;
     /** @var MockObject&LoggerInterface $logger */
@@ -23,6 +23,7 @@ class BootstrapErrorHandlerTest extends TestCase
     /**
      * @throws Exception
      */
+    #[\Override]
     protected function setUp(): void
     {
         $this->capturedOutput = '';
@@ -104,6 +105,7 @@ class BootstrapErrorHandlerTest extends TestCase
             // ignore fake terminate
         }
         $output = ob_get_clean();
+        self::assertIsString($output);
 
         $this->assertStringContainsString('<pre>', $output);
         $this->assertStringContainsString('Test Web Exception', $output);
@@ -112,6 +114,9 @@ class BootstrapErrorHandlerTest extends TestCase
     public function testHandleExceptionOutputsToStderrForCli(): void
     {
         $stream = fopen('php://memory', 'w+');
+        if ($stream === false) {
+            throw new RuntimeException('Could not open in-memory test stream.');
+        }
 
         $handler = new BootstrapErrorHandler(
             $this->logger,
@@ -121,7 +126,7 @@ class BootstrapErrorHandlerTest extends TestCase
             },
             static fn() => null,
             'cli',
-            $stream // 👈 inject stream
+            $stream
         );
 
         $exception = new RuntimeException('Test CLI Exception');
@@ -140,6 +145,7 @@ class BootstrapErrorHandlerTest extends TestCase
 
         rewind($stream);
         $output = stream_get_contents($stream);
+        self::assertIsString($output);
 
         $this->assertStringContainsString('Fatal error: RuntimeException', $output);
         $this->assertStringContainsString('Message: Test CLI Exception', $output);
@@ -168,10 +174,12 @@ class BootstrapErrorHandlerTest extends TestCase
         }
 
         $output = ob_get_clean();
+        self::assertIsString($output);
 
-        $this->assertStringContainsString('<pre>', (string) $output);
+        $this->assertStringContainsString('<pre>', $output);
     }
-/**  @todo */
+
+    /** @todo */
 //    public function testHandleExceptionOutputsHttpResponseWhenCliServesHttp(): void
 //    {
 //        $stream = fopen('php://memory', 'w+');
@@ -232,7 +240,7 @@ class BootstrapErrorHandlerTest extends TestCase
 //        }
 //    }
 
-    /**  @todo */
+    /** @todo */
 //    public function testHandleExceptionOutputsHttpResponseWhenCliServerSapi(): void
 //    {
 //        $stream = fopen('php://memory', 'w+');

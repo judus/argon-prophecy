@@ -10,6 +10,9 @@ use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
 use RuntimeException;
 
+/**
+ * @psalm-api
+ */
 final class Argon
 {
     private static ?Application $app = null;

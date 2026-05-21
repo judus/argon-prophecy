@@ -8,20 +8,20 @@ use GuzzleHttp\Psr7\Response;
 use GuzzleHttp\Psr7\ServerRequest;
 use Maduser\Argon\Contracts\Handler\AppHandlerInterface;
 use Maduser\Argon\Contracts\Handler\HttpKernelInterface;
+use Maduser\Argon\Container\ArgonContainer;
 use Maduser\Argon\Prophecy\Application;
 use Maduser\Argon\Support\Contracts\ErrorHandlerInterface;
-use Maduser\Argon\Container\ArgonContainer;
+use PHPUnit\Framework\Attributes\RunInSeparateProcess;
 use PHPUnit\Framework\TestCase;
-use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
-use RuntimeException;
+use Tests\Unit\Application\Mocks\NoOpHttpKernel;
+use Tests\Unit\Application\Mocks\RecordingErrorHandler;
+use Tests\Unit\Application\Mocks\ThrowingHttpKernel;
 use Throwable;
 
 final class ApplicationErrorHandlingTest extends TestCase
 {
-    /**
-     * @runInSeparateProcess
-     */
+    #[RunInSeparateProcess]
     public function testRegistersRuntimeErrorHandlerWhenBound(): void
     {
         $errorHandler = new RecordingErrorHandler(new Response());
@@ -40,9 +40,7 @@ final class ApplicationErrorHandlingTest extends TestCase
         self::assertNull($errorHandler->lastException);
     }
 
-    /**
-     * @runInSeparateProcess
-     */
+    #[RunInSeparateProcess]
     public function testHttpExceptionDelegatesToRuntimeErrorHandler(): void
     {
         $response = new Response(500);
@@ -63,90 +61,5 @@ final class ApplicationErrorHandlingTest extends TestCase
         self::assertTrue($kernel->terminateCalled);
         self::assertInstanceOf(Throwable::class, $errorHandler->lastException);
         self::assertSame($request, $errorHandler->lastRequest);
-    }
-}
-
-final class RecordingErrorHandler implements ErrorHandlerInterface
-{
-    public int $registerCount = 0;
-    public ?Throwable $lastException = null;
-    public ?ServerRequestInterface $lastRequest = null;
-
-    public function __construct(private readonly ResponseInterface $response)
-    {
-    }
-
-    public function register(): void
-    {
-        $this->registerCount++;
-    }
-
-    public function handle(Throwable $e, ServerRequestInterface $request): ResponseInterface
-    {
-        $this->lastException = $e;
-        $this->lastRequest = $request;
-
-        return $this->response;
-    }
-}
-
-final class NoOpHttpKernel implements HttpKernelInterface
-{
-    public bool $handleCalled = false;
-
-    public function handle(?ServerRequestInterface $request = null): void
-    {
-        $this->handleCalled = true;
-    }
-
-    public function process(?ServerRequestInterface $request = null): ResponseInterface
-    {
-        throw new RuntimeException('process() should not be called during this test.');
-    }
-
-    public function emit(ResponseInterface $response): void
-    {
-        // no-op
-    }
-
-    public function run(): int
-    {
-        return 0;
-    }
-
-    public function terminate(int $code = 0, bool $shouldExit = true): void
-    {
-        // no-op
-    }
-}
-
-final class ThrowingHttpKernel implements HttpKernelInterface
-{
-    public ?ResponseInterface $emittedResponse = null;
-    public bool $terminateCalled = false;
-
-    public function handle(?ServerRequestInterface $request = null): void
-    {
-        throw new RuntimeException('kernel failure');
-    }
-
-    public function process(?ServerRequestInterface $request = null): ResponseInterface
-    {
-        throw new RuntimeException('kernel failure');
-    }
-
-    public function emit(ResponseInterface $response): void
-    {
-        $this->emittedResponse = $response;
-    }
-
-    public function run(): int
-    {
-        throw new RuntimeException('not used');
-    }
-
-    public function terminate(int $code = 0, bool $shouldExit = true): void
-    {
-        $this->terminateCalled = true;
     }
 }

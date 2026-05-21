@@ -28,6 +28,7 @@ final class LoggerServiceProvider extends AbstractServiceProvider
     /**
      * @throws ContainerException
      */
+    #[\Override]
     public function register(ArgonContainer $container): void
     {
         $parameters = $container->getParameters();

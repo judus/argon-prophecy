@@ -31,7 +31,6 @@ final class Application implements ApplicationInterface
     protected ?ArgonContainer $container = null;
     protected ?LoggerInterface $logger = null;
     private ?AppHandlerInterface $handler = null;
-    private BootstrapErrorHandlerInterface $bootstrapErrorHandler;
     private ContainerManager $containerManager;
     private ErrorHandlerManager $errorManager;
     private AppHandlerResolver $handlerResolver;
@@ -41,15 +40,16 @@ final class Application implements ApplicationInterface
         ?LoggerInterface $logger = null
     ) {
         $this->logger = $logger;
-        $this->bootstrapErrorHandler = new BootstrapErrorHandler($this->logger);
-        $this->bootstrapErrorHandler->register();
+        $bootstrapErrorHandler = new BootstrapErrorHandler($this->logger);
+        $bootstrapErrorHandler->register();
         $this->containerManager = new ContainerManager($container);
         $this->containerManager->setCwd($this->getCwd());
-        $this->errorManager = new ErrorHandlerManager($this->bootstrapErrorHandler, $this->logger);
+        $this->errorManager = new ErrorHandlerManager($bootstrapErrorHandler, $this->logger);
         $this->handlerResolver = new AppHandlerResolver();
         $this->container = $container;
     }
 
+    #[\Override]
     public function register(Closure $closure): self
     {
         $this->containerManager->setConfigurator($closure);
@@ -67,6 +67,7 @@ final class Application implements ApplicationInterface
      * @throws ContainerException
      * @throws NotFoundException
      */
+    #[\Override]
     public function handle(?ServerRequestInterface $request = null): void
     {
         $handler = $this->bootstrap();
@@ -107,6 +108,7 @@ final class Application implements ApplicationInterface
      * @throws NotFoundException
      * @throws Throwable
      */
+    #[\Override]
     public function process(?ServerRequestInterface $request = null): ResponseInterface
     {
         $handler = $this->bootstrap();
@@ -137,6 +139,7 @@ final class Application implements ApplicationInterface
      * @throws ContainerException
      * @throws NotFoundException
      */
+    #[\Override]
     public function emit(ResponseInterface $response): void
     {
         $handler = $this->bootstrap();
@@ -181,6 +184,7 @@ final class Application implements ApplicationInterface
         return $this->handler = $handler;
     }
 
+    #[\Override]
     protected function getContainerInstance(): ?ArgonContainer
     {
         return $this->container;

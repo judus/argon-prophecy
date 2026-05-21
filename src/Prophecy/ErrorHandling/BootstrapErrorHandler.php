@@ -49,6 +49,10 @@ final class BootstrapErrorHandler implements BootstrapErrorHandlerInterface
     {
         return function (string $message): void {
             $stream = $this->stream ?? fopen('php://stderr', 'w');
+            if ($stream === false) {
+                return;
+            }
+
             $mode = $this->resolveMode();
 
             switch ($mode) {
@@ -72,6 +76,7 @@ final class BootstrapErrorHandler implements BootstrapErrorHandlerInterface
         };
     }
 
+    #[\Override]
     public function register(): void
     {
         set_exception_handler([$this, 'handleException']);
@@ -79,6 +84,7 @@ final class BootstrapErrorHandler implements BootstrapErrorHandlerInterface
         register_shutdown_function([$this, 'handleShutdown']);
     }
 
+    #[\Override]
     public function handleException(Throwable $exception): void
     {
         $this->log($exception);
@@ -87,6 +93,7 @@ final class BootstrapErrorHandler implements BootstrapErrorHandlerInterface
     }
 
     /** @psalm-suppress PossiblyUnusedReturnValue */
+    #[\Override]
     public function handleError(int $severity, string $message, string $file, int $line): bool
     {
         $exception = new ErrorException($message, 0, $severity, $file, $line);
@@ -94,6 +101,7 @@ final class BootstrapErrorHandler implements BootstrapErrorHandlerInterface
         return true; // @codeCoverageIgnore
     }
 
+    #[\Override]
     public function handleShutdown(): void
     {
         /** @var array{type: int, message: string, file: string, line: int}|null $error */
@@ -125,8 +133,9 @@ final class BootstrapErrorHandler implements BootstrapErrorHandlerInterface
     {
         $origin = $this->resolveOrigin($exception);
         $className = $exception::class;
-        $exceptionName = str_contains($className, '\\')
-            ? substr(strrchr($className, '\\'), 1)
+        $separator = strrchr($className, '\\');
+        $exceptionName = $separator !== false
+            ? substr($separator, 1)
             : $className;
 
         return sprintf(
@@ -142,11 +151,6 @@ final class BootstrapErrorHandler implements BootstrapErrorHandlerInterface
     public function setOutputMode(BootstrapErrorHandlerMode $mode): void
     {
         $this->mode = $mode;
-    }
-
-    public function getOutputMode(): ?BootstrapErrorHandlerMode
-    {
-        return $this->mode;
     }
 
     private function resolveOrigin(Throwable $exception): Throwable

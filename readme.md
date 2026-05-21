@@ -40,8 +40,8 @@ those packages and wire your own stack instead.
 
 Examples and how-tos:
 
-- [Composing the Argon suite](docs/Composing-the-Argon-suite.md)
-- [Registering application integrations](docs/Registering-application-integrations.md)
+- [Composing the Argon suite](https://github.com/judus/argon-prophecy/wiki/Composing-the-Argon-suite)
+- [Registering application integrations](https://github.com/judus/argon-prophecy/wiki/Registering-application-integrations)
 
 ## Installation
 

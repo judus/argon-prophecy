@@ -34,6 +34,9 @@
 
 _All components are modular and replaceable._
 
+The default logger provider keeps logging optional: it uses Monolog when available and falls back
+to PSR's `NullLogger` when Monolog is not installed.
+
 ---
 
 ## Runtime Adapters

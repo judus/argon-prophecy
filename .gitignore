@@ -1,4 +1,5 @@
 /.idea
 /.phpunit/
 /tests/application/app/prophecy.php
+/tmp/swoole-src/
 /vendor/

@@ -36,6 +36,14 @@ _All components are modular and replaceable._
 
 ---
 
+## Runtime Adapters
+
+Prophecy keeps the classic request-per-process entry point simple through `Argon::prophecy(...)`.
+Long-running runtimes such as Swoole should be integrated as explicit adapters that translate
+runtime requests into PSR-7 messages and pass them through the same application lifecycle.
+
+---
+
 ## Installation
 
 ```bash

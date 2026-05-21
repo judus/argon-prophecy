@@ -29,11 +29,19 @@ hexagonal boundaries, procedural services: Prophecy does not care.
 - Can load a compiled container when you opt in.
 - Exposes a tiny static facade for scripts and front controllers.
 
-## What Prophecy Does Not Do
+## Prophecy And The Argon Suite
 
-Prophecy is not an ORM, router, template engine, command framework, validation
-layer, or business architecture. Those choices belong to your application or to
-explicit packages you compose into it.
+Prophecy is the runtime package. It keeps the application entry point small and
+delegates the real work to the handler you bind.
+
+The wider Argon suite can still be composed into a framework-style stack with
+routing, middleware, console, database, and view packages. You can also skip
+those packages and wire your own stack instead.
+
+Examples and how-tos live in the wiki:
+
+- [Composing the Argon suite](https://github.com/judus/argon-prophecy/wiki/Composing-the-Argon-suite)
+- [Registering application integrations](https://github.com/judus/argon-prophecy/wiki/Registering-application-integrations)
 
 ## Installation
 

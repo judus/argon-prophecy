@@ -195,10 +195,14 @@ final class BootstrapErrorHandlerTest extends TestCase
                     && $context['message'] === 'Fatal shutdown failure';
             }));
 
+        $handler->register();
+
         try {
             $handler->handleShutdown();
         } catch (RuntimeException) {
             // expected fake terminate
+        } finally {
+            $handler->unregister();
         }
 
         $this->assertStringContainsString('Fatal shutdown failure', $this->capturedOutput);
@@ -212,6 +216,32 @@ final class BootstrapErrorHandlerTest extends TestCase
             'file' => __FILE__,
             'line' => __LINE__,
         ]);
+
+        $this->logger->expects($this->never())
+            ->method('error');
+
+        $handler->register();
+
+        try {
+            $handler->handleShutdown();
+        } finally {
+            $handler->unregister();
+        }
+
+        $this->assertSame('', $this->capturedOutput);
+    }
+
+    public function testUnregisterMakesShutdownHandlerInert(): void
+    {
+        $handler = $this->createHandler([
+            'type' => E_ERROR,
+            'message' => 'Fatal shutdown failure',
+            'file' => __FILE__,
+            'line' => __LINE__,
+        ]);
+
+        $handler->register();
+        $handler->unregister();
 
         $this->logger->expects($this->never())
             ->method('error');
@@ -374,10 +404,14 @@ final class BootstrapErrorHandlerTest extends TestCase
 
         $handler = $this->createHandler($fakeError, 'cli');
 
+        $handler->register();
+
         try {
             $handler->handleShutdown();
         } catch (Throwable) {
             // expected fake terminate
+        } finally {
+            $handler->unregister();
         }
 
         $this->assertStringContainsString('Fatal error: ErrorException', $this->capturedOutput);
@@ -389,10 +423,14 @@ final class BootstrapErrorHandlerTest extends TestCase
     {
         $handler = $this->createHandler(null, 'cli');
 
+        $handler->register();
+
         try {
             $handler->handleShutdown();
         } catch (Throwable) {
             // terminate not expected here
+        } finally {
+            $handler->unregister();
         }
 
         $this->assertSame('', $this->capturedOutput);

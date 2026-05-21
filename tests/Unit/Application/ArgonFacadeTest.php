@@ -75,6 +75,23 @@ final class ArgonFacadeTest extends TestCase
         });
     }
 
+    #[RunInSeparateProcess]
+    public function testResetAllowsFacadeToBootAgain(): void
+    {
+        Argon::boot(static function (): void {
+            // no-op
+        });
+        $firstApplication = Argon::check();
+
+        Argon::reset();
+
+        Argon::boot(static function (): void {
+            // no-op
+        });
+
+        $this->assertNotSame($firstApplication, Argon::check());
+    }
+
     private function clearCompileEnv(): void
     {
         unset(

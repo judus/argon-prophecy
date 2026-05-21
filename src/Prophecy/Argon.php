@@ -73,6 +73,7 @@ final class Argon
 
     public static function reset(): void
     {
+        self::$app?->reset();
         self::$app = null;
     }
 

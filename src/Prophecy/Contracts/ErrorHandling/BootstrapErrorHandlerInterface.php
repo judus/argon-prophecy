@@ -9,6 +9,7 @@ use Throwable;
 interface BootstrapErrorHandlerInterface
 {
     public function register(): void;
+    public function unregister(): void;
     public function handleException(Throwable $exception): void;
     /** @psalm-suppress PossiblyUnusedReturnValue */
     public function handleError(int $severity, string $message, string $file, int $line): bool;

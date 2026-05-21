@@ -30,6 +30,7 @@ final class BootstrapErrorHandler implements BootstrapErrorHandlerInterface
     private Closure $errorGetLastCallback;
     private string $sapi;
     private ?BootstrapErrorHandlerMode $mode = null;
+    private bool $registered = false;
 
     /**
      * @var resource|null
@@ -91,9 +92,28 @@ final class BootstrapErrorHandler implements BootstrapErrorHandlerInterface
     #[\Override]
     public function register(): void
     {
+        if ($this->registered) {
+            return;
+        }
+
         set_exception_handler([$this, 'handleException']);
         set_error_handler([$this, 'handleError']);
         register_shutdown_function([$this, 'handleShutdown']);
+
+        $this->registered = true;
+    }
+
+    #[\Override]
+    public function unregister(): void
+    {
+        if (!$this->registered) {
+            return;
+        }
+
+        restore_exception_handler();
+        restore_error_handler();
+
+        $this->registered = false;
     }
 
     #[\Override]
@@ -116,6 +136,10 @@ final class BootstrapErrorHandler implements BootstrapErrorHandlerInterface
     #[\Override]
     public function handleShutdown(): void
     {
+        if (!$this->registered) {
+            return;
+        }
+
         /** @var array{type: int, message: string, file: string, line: int}|null $error */
         $error = ($this->errorGetLastCallback)();
         if ($error === null || !in_array($error['type'], self::FATAL_ERROR_TYPES, true)) {

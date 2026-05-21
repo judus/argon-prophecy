@@ -31,6 +31,7 @@ final class Application implements ApplicationInterface
     protected ?ArgonContainer $container = null;
     protected ?LoggerInterface $logger = null;
     private ?AppHandlerInterface $handler = null;
+    private BootstrapErrorHandlerInterface $bootstrapErrorHandler;
     private ContainerManager $containerManager;
     private ErrorHandlerManager $errorManager;
     private AppHandlerResolver $handlerResolver;
@@ -40,11 +41,11 @@ final class Application implements ApplicationInterface
         ?LoggerInterface $logger = null
     ) {
         $this->logger = $logger;
-        $bootstrapErrorHandler = new BootstrapErrorHandler($this->logger);
-        $bootstrapErrorHandler->register();
+        $this->bootstrapErrorHandler = new BootstrapErrorHandler($this->logger);
+        $this->bootstrapErrorHandler->register();
         $this->containerManager = new ContainerManager($container);
         $this->containerManager->setCwd($this->getCwd());
-        $this->errorManager = new ErrorHandlerManager($bootstrapErrorHandler, $this->logger);
+        $this->errorManager = new ErrorHandlerManager($this->bootstrapErrorHandler, $this->logger);
         $this->handlerResolver = new AppHandlerResolver();
         $this->container = $container;
     }
@@ -149,6 +150,11 @@ final class Application implements ApplicationInterface
         }
 
         $handler->emit($response);
+    }
+
+    public function reset(): void
+    {
+        $this->bootstrapErrorHandler->unregister();
     }
 
     /**

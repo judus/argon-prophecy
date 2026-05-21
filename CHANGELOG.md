@@ -10,3 +10,4 @@
 - Added upfront validation for facade container compilation configuration.
 - Made `Argon::reset()` tear down bootstrap error and exception handler side effects.
 - Switched suite package repositories from local path references to public GitHub VCS repositories for CI.
+- Tracked the empty integration test suite directory so fresh CI checkouts match local PHPUnit configuration.

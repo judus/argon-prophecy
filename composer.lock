@@ -4,15 +4,21 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "7807e3a8b4dfadd117e5c20322d67820",
+    "content-hash": "1928149185081752ab06a53a8e51420d",
     "packages": [
         {
             "name": "maduser/argon",
             "version": "dev-master",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/judus/argon.git",
+                "reference": "76bf216bbd190e3eb0f6c30bb98b2bbc38191ac5"
+            },
             "dist": {
-                "type": "path",
-                "url": "/home/maduser/workspace/argon/packages/maduser-argon",
-                "reference": "3bb606f52e5fc950688b93fc4903a1291313cd2d"
+                "type": "zip",
+                "url": "https://api.github.com/repos/judus/argon/zipball/76bf216bbd190e3eb0f6c30bb98b2bbc38191ac5",
+                "reference": "76bf216bbd190e3eb0f6c30bb98b2bbc38191ac5",
+                "shasum": ""
             },
             "require": {
                 "nette/php-generator": "^4.2",
@@ -26,6 +32,7 @@
                 "squizlabs/php_codesniffer": "^4.0",
                 "vimeo/psalm": "^6.13"
             },
+            "default-branch": true,
             "type": "library",
             "autoload": {
                 "psr-4": {
@@ -47,13 +54,13 @@
                     "vendor/bin/phpunit"
                 ],
                 "test:coverage": [
-                    "vendor/bin/phpunit  --coverage-clover=coverage.xml --coverage-html coverage-report && open coverage-report/index.html"
+                    "vendor/bin/phpunit --coverage-clover=coverage.xml --coverage-html coverage-report"
                 ],
                 "phpcs": [
                     "vendor/bin/phpcs --standard=phpcs.xml"
                 ],
                 "psalm": [
-                    "vendor/bin/psalm --output-format=github"
+                    "vendor/bin/psalm --no-cache --output-format=github"
                 ],
                 "phpcs:fix": [
                     "vendor/bin/phpcbf --standard=phpcs.xml"
@@ -61,7 +68,6 @@
                 "check": [
                     "@test",
                     "@psalm",
-                    "@phpcs:fix",
                     "@phpcs"
                 ],
                 "ci": [
@@ -81,17 +87,21 @@
                 }
             ],
             "description": "A high-performance, modular, PSR-11 compliant dependency injection container for PHP.",
-            "transport-options": {
-                "relative": false
-            }
+            "time": "2026-05-21T07:47:46+00:00"
         },
         {
             "name": "maduser/argon-support",
             "version": "dev-master",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/judus/argon-support.git",
+                "reference": "3eaa0bbcd37736543e862448d2b89dd293dbb9f3"
+            },
             "dist": {
-                "type": "path",
-                "url": "/home/maduser/workspace/argon/packages/maduser-argon-support",
-                "reference": "bfa43db9f20654c16caef382275dcb31f7f61cab"
+                "type": "zip",
+                "url": "https://api.github.com/repos/judus/argon-support/zipball/3eaa0bbcd37736543e862448d2b89dd293dbb9f3",
+                "reference": "3eaa0bbcd37736543e862448d2b89dd293dbb9f3",
+                "shasum": ""
             },
             "require": {
                 "psr/http-message": "^2.0",
@@ -104,11 +114,15 @@
                 "squizlabs/php_codesniffer": "^4.0",
                 "vimeo/psalm": "^6.13"
             },
+            "default-branch": true,
             "type": "library",
             "autoload": {
                 "psr-4": {
                     "Maduser\\Argon\\Support\\": "src/"
-                }
+                },
+                "files": [
+                    "src/polyfills/Override.php"
+                ]
             },
             "autoload-dev": {
                 "psr-4": {
@@ -170,9 +184,7 @@
                     "email": "julien.duseyau@gmail.com"
                 }
             ],
-            "transport-options": {
-                "relative": false
-            }
+            "time": "2025-10-29T12:13:51+00:00"
         },
         {
             "name": "nette/php-generator",
@@ -8042,5 +8054,5 @@
         "ext-pcntl": "*",
         "ext-posix": "*"
     },
-    "plugin-api-version": "2.6.0"
+    "plugin-api-version": "2.9.0"
 }

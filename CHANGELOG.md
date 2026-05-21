@@ -9,3 +9,4 @@
 - Limited bootstrap shutdown handling to fatal PHP errors.
 - Added upfront validation for facade container compilation configuration.
 - Made `Argon::reset()` tear down bootstrap error and exception handler side effects.
+- Switched suite package repositories from local path references to public GitHub VCS repositories for CI.

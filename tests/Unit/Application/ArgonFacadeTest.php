@@ -1,0 +1,87 @@
+<?php
+
+declare(strict_types=1);
+
+namespace Tests\Unit\Application;
+
+use Maduser\Argon\Prophecy\Argon;
+use PHPUnit\Framework\Attributes\RunInSeparateProcess;
+use PHPUnit\Framework\TestCase;
+use RuntimeException;
+
+final class ArgonFacadeTest extends TestCase
+{
+    #[\Override]
+    protected function tearDown(): void
+    {
+        $this->clearCompileEnv();
+        Argon::reset();
+
+        parent::tearDown();
+    }
+
+    public function testBootWithCompileEnabledRequiresCompileFileAndClass(): void
+    {
+        $this->expectException(RuntimeException::class);
+        $this->expectExceptionMessage(
+            'Container compilation is enabled but compile configuration is incomplete.'
+        );
+
+        Argon::boot(static function (): void {
+            // no-op
+        }, true);
+    }
+
+    #[RunInSeparateProcess]
+    public function testFailedCompileConfigurationDoesNotMarkApplicationBooted(): void
+    {
+        try {
+            Argon::boot(static function (): void {
+                // no-op
+            }, true);
+        } catch (RuntimeException) {
+            // expected
+        }
+
+        $this->expectException(RuntimeException::class);
+        $this->expectExceptionMessage('Application not booted yet.');
+
+        Argon::check();
+    }
+
+    #[RunInSeparateProcess]
+    public function testBootWithValidCompileConfigurationMarksApplicationBooted(): void
+    {
+        $_ENV['APP_COMPILE_FILE_NAME'] = __DIR__ . '/../../.phpunit/CompiledContainer.php';
+        $_ENV['APP_COMPILE_CLASS_NAME'] = 'CompiledContainer';
+
+        Argon::boot(static function (): void {
+            // no-op
+        }, true);
+
+        $this->assertSame(Argon::check(), Argon::check());
+    }
+
+    #[RunInSeparateProcess]
+    public function testBootUsesEnvironmentCompileFlag(): void
+    {
+        $_ENV['APP_COMPILE_CONTAINER'] = 'true';
+
+        $this->expectException(RuntimeException::class);
+        $this->expectExceptionMessage('APP_COMPILE_FILE_NAME');
+
+        Argon::boot(static function (): void {
+            // no-op
+        });
+    }
+
+    private function clearCompileEnv(): void
+    {
+        unset(
+            $_ENV['APP_COMPILE_CONTAINER'],
+            $_ENV['APP_COMPILE_FILE_NAME'],
+            $_ENV['APP_COMPILE_CLASS_NAME'],
+            $_ENV['APP_COMPILE_CLASS_NAMESPACE']
+        );
+    }
+}

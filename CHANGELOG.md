@@ -7,3 +7,4 @@
 - Ignored the local Swoole research checkout and documented future long-running runtime adapters as explicit integrations.
 - Made `LoggerServiceProvider` always bind `LoggerInterface`, falling back to `NullLogger` when Monolog is unavailable.
 - Limited bootstrap shutdown handling to fatal PHP errors.
+- Added upfront validation for facade container compilation configuration.

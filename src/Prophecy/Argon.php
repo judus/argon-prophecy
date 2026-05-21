@@ -32,19 +32,21 @@ final class Argon
             throw new RuntimeException('Application already booted.');
         }
 
-        self::$app = (new Application())->register($callback);
-
         $shouldCompile = filter_var(
             $shouldCompile ?? $_ENV['APP_COMPILE_CONTAINER'] ?? false,
             FILTER_VALIDATE_BOOL
         );
 
-        if ($shouldCompile) {
-            $filePath = $_ENV['APP_COMPILE_FILE_NAME'];
-            $className = $_ENV['APP_COMPILE_CLASS_NAME'];
-            $namespace = $_ENV['APP_COMPILE_CLASS_NAMESPACE'];
+        $compileConfig = $shouldCompile ? self::resolveCompileConfig() : null;
 
-            self::$app->compile($filePath, $className, $namespace);
+        self::$app = (new Application())->register($callback);
+
+        if ($compileConfig !== null) {
+            self::$app->compile(
+                $compileConfig['filePath'],
+                $compileConfig['className'],
+                $compileConfig['namespace']
+            );
         }
     }
 
@@ -72,5 +74,48 @@ final class Argon
     public static function reset(): void
     {
         self::$app = null;
+    }
+
+    /**
+     * @return array{filePath: string, className: string, namespace: string}
+     */
+    private static function resolveCompileConfig(): array
+    {
+        $filePath = self::envString('APP_COMPILE_FILE_NAME');
+        $className = self::envString('APP_COMPILE_CLASS_NAME');
+        $namespace = self::envString('APP_COMPILE_CLASS_NAMESPACE') ?? '';
+
+        if ($filePath === null || $className === null) {
+            $missing = [];
+            if ($filePath === null) {
+                $missing[] = 'APP_COMPILE_FILE_NAME';
+            }
+
+            if ($className === null) {
+                $missing[] = 'APP_COMPILE_CLASS_NAME';
+            }
+
+            throw new RuntimeException(sprintf(
+                'Container compilation is enabled but compile configuration is incomplete. Missing: %s.',
+                implode(', ', $missing)
+            ));
+        }
+
+        return [
+            'filePath' => $filePath,
+            'className' => $className,
+            'namespace' => $namespace,
+        ];
+    }
+
+    private static function envString(string $name): ?string
+    {
+        $value = $_ENV[$name] ?? null;
+
+        if (!is_string($value) || trim($value) === '') {
+            return null;
+        }
+
+        return $value;
     }
 }

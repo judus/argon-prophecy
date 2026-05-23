@@ -179,6 +179,54 @@ final class BootstrapErrorHandlerTest extends TestCase
         $this->assertStringContainsString('<pre>', $output);
     }
 
+    public function testCliServerSapiOutputsPlainHttpResponse(): void
+    {
+        $handler = new BootstrapErrorHandler(
+            $this->logger,
+            null,
+            function (int $code): void {
+                throw new RuntimeException('Fake terminate ' . $code);
+            },
+            static fn() => null,
+            'cli-server'
+        );
+
+        $this->logger->expects($this->once())
+            ->method('error')
+            ->with('Unhandled bootstrap exception', $this->callback(function ($context) {
+                return isset($context['message'])
+                    && $context['message'] === 'Test CLI Server Exception';
+            }));
+
+        $previousStatusCode = http_response_code();
+        $initialOutputBufferLevel = ob_get_level();
+
+        ob_start();
+        try {
+            try {
+                $handler->handleException(new RuntimeException('Test CLI Server Exception'));
+            } catch (RuntimeException) {
+                // expected fake terminate
+            }
+
+            $output = ob_get_clean();
+            self::assertIsString($output);
+
+            $this->assertStringContainsString('Fatal error: RuntimeException', $output);
+            $this->assertStringContainsString('Message: Test CLI Server Exception', $output);
+            $this->assertStringNotContainsString('<pre>', $output);
+            $this->assertSame(500, http_response_code());
+        } finally {
+            while (ob_get_level() > $initialOutputBufferLevel) {
+                ob_end_clean();
+            }
+
+            if (is_int($previousStatusCode)) {
+                http_response_code($previousStatusCode);
+            }
+        }
+    }
+
     public function testHandleShutdownOutputsFatalError(): void
     {
         $handler = $this->createHandler([
@@ -250,127 +298,6 @@ final class BootstrapErrorHandlerTest extends TestCase
 
         $this->assertSame('', $this->capturedOutput);
     }
-
-    /** @todo */
-//    public function testHandleExceptionOutputsHttpResponseWhenCliServesHttp(): void
-//    {
-//        $stream = fopen('php://memory', 'w+');
-//        $handler = new BootstrapErrorHandler(
-//            $this->logger,
-//            null, // use default output callback
-//            function (int $code): void {
-//                throw new RuntimeException('Fake terminate ' . $code);
-//            },
-//            static fn() => null,
-//            'cli',
-//            $stream
-//        );
-//
-//        $exception = new RuntimeException('Test CLI HTTP Exception');
-//
-//        $this->logger->expects($this->once())
-//            ->method('error')
-//            ->with('Unhandled bootstrap exception', $this->callback(function ($context) {
-//                return isset($context['message']);
-//            }));
-//
-//        $previousRequestMethod = $_SERVER['REQUEST_METHOD'] ?? null;
-//        $previousStatusCode = http_response_code();
-//        header_remove();
-//        $_SERVER['REQUEST_METHOD'] = 'GET';
-//
-//        $initialOutputBufferLevel = ob_get_level();
-//        ob_start();
-//        try {
-//            try {
-//                $handler->handleException($exception);
-//            } catch (Throwable) {
-//                // ignore fake terminate
-//            }
-//
-//            $output = ob_get_clean();
-//            rewind($stream);
-//            $stderrOutput = stream_get_contents($stream);
-//            $headers = headers_list();
-//
-//            $this->assertStringContainsString('Fatal error: Test CLI HTTP Exception', $stderrOutput);
-//            $this->assertStringContainsString('Fatal error: Test CLI HTTP Exception', $output);
-//            $this->assertSame(500, http_response_code());
-//            $this->assertIsArray($headers);
-//        } finally {
-//            while (ob_get_level() > $initialOutputBufferLevel) {
-//                ob_end_clean();
-//            }
-//            header_remove();
-//            http_response_code($previousStatusCode);
-//            if ($previousRequestMethod === null) {
-//                unset($_SERVER['REQUEST_METHOD']);
-//            } else {
-//                $_SERVER['REQUEST_METHOD'] = $previousRequestMethod;
-//            }
-//            fclose($stream);
-//        }
-//    }
-
-    /** @todo */
-//    public function testHandleExceptionOutputsHttpResponseWhenCliServerSapi(): void
-//    {
-//        $stream = fopen('php://memory', 'w+');
-//        $handler = new BootstrapErrorHandler(
-//            $this->logger,
-//            null,
-//            function (int $code): void {
-//                throw new RuntimeException('Fake terminate ' . $code);
-//            },
-//            static fn() => null,
-//            'cli-server',
-//            $stream
-//        );
-//
-//        $exception = new RuntimeException('Test CLI Server Exception');
-//
-//        $this->logger->expects($this->once())
-//            ->method('error')
-//            ->with('Unhandled bootstrap exception', $this->callback(function ($context) {
-//                return isset($context['message']);
-//            }));
-//
-//        $previousRequestMethod = $_SERVER['REQUEST_METHOD'] ?? null;
-//        $previousStatusCode = http_response_code();
-//        header_remove();
-//        $_SERVER['REQUEST_METHOD'] = 'GET';
-//
-//        $initialOutputBufferLevel = ob_get_level();
-//        ob_start();
-//        try {
-//            try {
-//                $handler->handleException($exception);
-//            } catch (Throwable) {
-//                // ignore fake terminate
-//            }
-//
-//            $output = ob_get_clean();
-//            rewind($stream);
-//            $stderrOutput = stream_get_contents($stream);
-//
-//            $this->assertStringContainsString('Fatal error: Test CLI Server Exception', $stderrOutput);
-//            $this->assertStringContainsString('Fatal error: Test CLI Server Exception', $output);
-//            $this->assertSame(500, http_response_code());
-//        } finally {
-//            while (ob_get_level() > $initialOutputBufferLevel) {
-//                ob_end_clean();
-//            }
-//            header_remove();
-//            http_response_code($previousStatusCode);
-//            if ($previousRequestMethod === null) {
-//                unset($_SERVER['REQUEST_METHOD']);
-//            } else {
-//                $_SERVER['REQUEST_METHOD'] = $previousRequestMethod;
-//            }
-//            fclose($stream);
-//        }
-//    }
-
 
     public function testHandleErrorConvertsAndLogs(): void
     {

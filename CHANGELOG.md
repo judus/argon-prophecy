@@ -2,6 +2,7 @@
 
 ## Unreleased
 
+- Added coverage for compiled-container debug logging metadata and unavailable service-map handling.
 - Added coverage for Application CLI fallback handling, process fallback responses, logger replacement, and Argon facade pass-throughs.
 - Replaced stale `BootstrapErrorHandlerTest` TODO blocks with focused `cli-server` output coverage.
 - Added coverage for `ContainerManager` compiled-container loading, compile writes, and container caching.

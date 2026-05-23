@@ -10,6 +10,8 @@ use Maduser\Argon\Prophecy\Application;
 use PHPUnit\Framework\Attributes\RunInSeparateProcess;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\LoggerInterface;
+use Tests\Unit\Application\Mocks\CompiledContainerWithFailingServiceMap;
+use Tests\Unit\Application\Mocks\CompiledContainerWithServiceMap;
 use Tests\Unit\Application\Mocks\RecordingAppHandler;
 use Tests\Unit\Application\Mocks\RecordingLogger;
 
@@ -58,5 +60,56 @@ final class ApplicationLoggingTest extends TestCase
 
         self::assertSame([], $constructorLogger->records);
         self::assertNotSame([], $containerLogger->records);
+    }
+
+    #[RunInSeparateProcess]
+    public function testCompiledContainerDebugLogsIncludeServiceMapCount(): void
+    {
+        $logger = new RecordingLogger();
+        $container = new CompiledContainerWithServiceMap();
+        $container->set(AppHandlerInterface::class, static fn() => new RecordingAppHandler())->shared();
+
+        $application = new Application($container, $logger);
+        $application->handle();
+        $application->reset();
+
+        foreach ($this->debugRecords($logger) as $record) {
+            self::assertTrue($record['context']['compiled']);
+            self::assertSame(2, $record['context']['serviceMapCount']);
+            self::assertArrayNotHasKey('serviceMap', $record['context']);
+        }
+    }
+
+    #[RunInSeparateProcess]
+    public function testCompiledContainerDebugLogsWhenServiceMapIsUnavailable(): void
+    {
+        $logger = new RecordingLogger();
+        $container = new CompiledContainerWithFailingServiceMap();
+        $container->set(AppHandlerInterface::class, static fn() => new RecordingAppHandler())->shared();
+
+        $application = new Application($container, $logger);
+        $application->handle();
+        $application->reset();
+
+        foreach ($this->debugRecords($logger) as $record) {
+            self::assertTrue($record['context']['compiled']);
+            self::assertFalse($record['context']['serviceMapAvailable']);
+            self::assertArrayNotHasKey('serviceMapCount', $record['context']);
+        }
+    }
+
+    /**
+     * @return list<array{level: mixed, message: string, context: array<array-key, mixed>}>
+     */
+    private function debugRecords(RecordingLogger $logger): array
+    {
+        $debugRecords = array_values(array_filter(
+            $logger->records,
+            static fn(array $record): bool => $record['level'] === 'debug'
+        ));
+
+        self::assertNotSame([], $debugRecords);
+
+        return $debugRecords;
     }
 }

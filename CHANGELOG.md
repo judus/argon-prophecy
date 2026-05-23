@@ -2,6 +2,7 @@
 
 ## Unreleased
 
+- Restored PHP 8.2 compatibility by avoiding typed class constant syntax.
 - Tightened application handler resolution so invalid or ambiguous handler bindings fail during bootstrap.
 - Expanded Prophecy runtime tests around handler resolution, container setup, lifecycle dispatch, error-manager fallbacks, and tag helpers.
 - Tightened the public README around Prophecy as a bootstrap/runtime shell rather than an application framework.

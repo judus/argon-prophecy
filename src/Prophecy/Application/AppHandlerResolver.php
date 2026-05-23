@@ -20,7 +20,7 @@ use RuntimeException;
  */
 final class AppHandlerResolver
 {
-    private const string EXPLICIT_HANDLER = AppHandlerInterface::class;
+    private const EXPLICIT_HANDLER = AppHandlerInterface::class;
 
     /**
      * @var list<class-string>

@@ -17,11 +17,11 @@ use Maduser\Argon\Prophecy\Application\ErrorHandlerManager;
 use Maduser\Argon\Prophecy\Contracts\ApplicationInterface;
 use Maduser\Argon\Prophecy\Contracts\ErrorHandling\BootstrapErrorHandlerInterface;
 use Maduser\Argon\Prophecy\ErrorHandling\BootstrapErrorHandler;
+use Maduser\Argon\Prophecy\Exceptions\ProphecyException;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
 use Psr\Log\LoggerInterface;
 use ReflectionException;
-use RuntimeException;
 use Throwable;
 
 final class Application implements ApplicationInterface
@@ -35,13 +35,15 @@ final class Application implements ApplicationInterface
     private ContainerManager $containerManager;
     private ErrorHandlerManager $errorManager;
     private AppHandlerResolver $handlerResolver;
+    private bool $reset = false;
 
     public function __construct(
         ?ArgonContainer $container = null,
-        ?LoggerInterface $logger = null
+        ?LoggerInterface $logger = null,
+        ?BootstrapErrorHandlerInterface $bootstrapErrorHandler = null
     ) {
         $this->logger = $logger;
-        $this->bootstrapErrorHandler = new BootstrapErrorHandler($this->logger);
+        $this->bootstrapErrorHandler = $bootstrapErrorHandler ?? new BootstrapErrorHandler($this->logger);
         $this->bootstrapErrorHandler->register();
         $this->containerManager = new ContainerManager($container);
         $this->containerManager->setCwd($this->getCwd());
@@ -53,12 +55,14 @@ final class Application implements ApplicationInterface
     #[\Override]
     public function register(Closure $closure): self
     {
+        $this->assertNotReset();
         $this->containerManager->setConfigurator($closure);
         return $this;
     }
 
     public function compile(string $filePath, string $className, string $namespace = ''): self
     {
+        $this->assertNotReset();
         $this->containerManager->configureCompilation($filePath, $className, $namespace);
         return $this;
     }
@@ -71,6 +75,7 @@ final class Application implements ApplicationInterface
     #[\Override]
     public function handle(?ServerRequestInterface $request = null): void
     {
+        $this->assertNotReset();
         $handler = $this->bootstrap();
 
         if ($handler instanceof HttpKernelInterface) {
@@ -112,10 +117,11 @@ final class Application implements ApplicationInterface
     #[\Override]
     public function process(?ServerRequestInterface $request = null): ResponseInterface
     {
+        $this->assertNotReset();
         $handler = $this->bootstrap();
 
         if (!$handler instanceof HttpKernelInterface) {
-            throw new RuntimeException('Active handler does not support HTTP processing.');
+            throw ProphecyException::unsupportedHttpProcessing();
         }
 
         try {
@@ -143,10 +149,11 @@ final class Application implements ApplicationInterface
     #[\Override]
     public function emit(ResponseInterface $response): void
     {
+        $this->assertNotReset();
         $handler = $this->bootstrap();
 
         if (!$handler instanceof HttpKernelInterface) {
-            throw new RuntimeException('Active handler does not support HTTP emission.');
+            throw ProphecyException::unsupportedHttpEmission();
         }
 
         $handler->emit($response);
@@ -154,7 +161,15 @@ final class Application implements ApplicationInterface
 
     public function reset(): void
     {
+        if ($this->reset) {
+            return;
+        }
+
         $this->bootstrapErrorHandler->unregister();
+        $this->container = null;
+        $this->handler = null;
+        $this->logger = null;
+        $this->reset = true;
     }
 
     /**
@@ -196,6 +211,13 @@ final class Application implements ApplicationInterface
         return $this->container;
     }
 
+    private function assertNotReset(): void
+    {
+        if ($this->reset) {
+            throw ProphecyException::applicationHasBeenReset();
+        }
+    }
+
     private function getCwd(): string
     {
         $sapi = php_sapi_name();
@@ -204,14 +226,14 @@ final class Application implements ApplicationInterface
             $cwd = getcwd();
 
             if ($cwd === false) {
-                throw new RuntimeException('Unable to determine working directory from current environment.');
+                throw ProphecyException::unableToDetermineWorkingDirectory();
             }
 
             return $cwd;
         }
 
         if (!isset($_SERVER['SCRIPT_FILENAME'])) {
-            throw new RuntimeException('Unable to determine working directory; SCRIPT_FILENAME is not defined.');
+            throw ProphecyException::scriptFilenameMissing();
         }
 
         return dirname($_SERVER['SCRIPT_FILENAME']);

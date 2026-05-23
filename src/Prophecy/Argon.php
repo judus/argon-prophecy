@@ -6,21 +6,31 @@ namespace Maduser\Argon\Prophecy;
 
 use Closure;
 use Maduser\Argon\Prophecy\Contracts\ApplicationInterface;
+use Maduser\Argon\Prophecy\Exceptions\ProphecyException;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
-use RuntimeException;
 
 /**
  * @psalm-api
  */
 final class Argon
 {
+    /**
+     * @var list<string>
+     */
+    private const TRUE_COMPILE_FLAG_VALUES = ['1', 'true', 'on', 'yes'];
+
+    /**
+     * @var list<string>
+     */
+    private const FALSE_COMPILE_FLAG_VALUES = ['0', 'false', 'off', 'no'];
+
     private static ?Application $app = null;
 
     public static function check(): ApplicationInterface
     {
         if (self::$app === null) {
-            throw new RuntimeException('Application not booted yet.');
+            throw ProphecyException::applicationNotBooted();
         }
 
         return self::$app;
@@ -29,13 +39,10 @@ final class Argon
     public static function boot(Closure $callback, string|bool|null $shouldCompile = null): void
     {
         if (self::$app !== null) {
-            throw new RuntimeException('Application already booted.');
+            throw ProphecyException::applicationAlreadyBooted();
         }
 
-        $shouldCompile = filter_var(
-            $shouldCompile ?? $_ENV['APP_COMPILE_CONTAINER'] ?? false,
-            FILTER_VALIDATE_BOOL
-        );
+        $shouldCompile = self::resolveCompileFlag($shouldCompile ?? $_ENV['APP_COMPILE_CONTAINER'] ?? null);
 
         $compileConfig = $shouldCompile ? self::resolveCompileConfig() : null;
 
@@ -77,6 +84,29 @@ final class Argon
         self::$app = null;
     }
 
+    private static function resolveCompileFlag(string|bool|null $value): bool
+    {
+        if (is_bool($value)) {
+            return $value;
+        }
+
+        if ($value === null || trim($value) === '') {
+            return false;
+        }
+
+        $normalized = strtolower(trim($value));
+
+        if (in_array($normalized, self::TRUE_COMPILE_FLAG_VALUES, true)) {
+            return true;
+        }
+
+        if (in_array($normalized, self::FALSE_COMPILE_FLAG_VALUES, true)) {
+            return false;
+        }
+
+        throw ProphecyException::invalidCompileFlag($value);
+    }
+
     /**
      * @return array{filePath: string, className: string, namespace: string}
      */
@@ -96,10 +126,7 @@ final class Argon
                 $missing[] = 'APP_COMPILE_CLASS_NAME';
             }
 
-            throw new RuntimeException(sprintf(
-                'Container compilation is enabled but compile configuration is incomplete. Missing: %s.',
-                implode(', ', $missing)
-            ));
+            throw ProphecyException::incompleteCompileConfiguration($missing);
         }
 
         return [

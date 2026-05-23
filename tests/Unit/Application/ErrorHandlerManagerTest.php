@@ -8,10 +8,15 @@ use GuzzleHttp\Psr7\Response;
 use GuzzleHttp\Psr7\ServerRequest;
 use Maduser\Argon\Container\ArgonContainer;
 use Maduser\Argon\Prophecy\ErrorHandling\BootstrapErrorHandlerMode;
+use Maduser\Argon\Prophecy\Exceptions\ProphecyException;
 use Maduser\Argon\Support\Contracts\ErrorHandlerInterface;
 use PHPUnit\Framework\TestCase;
 use Psr\Http\Message\ServerRequestInterface;
 use RuntimeException;
+use stdClass;
+use Throwable;
+use Tests\Unit\Application\Mocks\EmitFailingHttpKernel;
+use Tests\Unit\Application\Mocks\MinimalBootstrapErrorHandler;
 use Tests\Unit\Application\Mocks\RecordingAppHandler;
 use Tests\Unit\Application\Mocks\RecordingBootstrapErrorHandler;
 use Tests\Unit\Application\Mocks\RecordingCliKernel;
@@ -40,15 +45,25 @@ final class ErrorHandlerManagerTest extends TestCase
         self::assertSame(BootstrapErrorHandlerMode::HTTP, $bootstrapHandler->outputMode);
     }
 
+    public function testBootstrapModeConfigurationAllowsHandlersWithoutOutputModeSupport(): void
+    {
+        $bootstrapHandler = new MinimalBootstrapErrorHandler();
+
+        (new ErrorHandlerManager($bootstrapHandler))->configureBootstrapModeFor(new RecordingCliKernel());
+
+        self::assertNull($bootstrapHandler->lastException);
+    }
+
     public function testHttpThrowableFallsBackToBootstrapHandlerWhenRuntimeHandlerIsMissing(): void
     {
         $throwable = new RuntimeException('boom');
         $bootstrapHandler = new RecordingBootstrapErrorHandler();
         $manager = new ErrorHandlerManager($bootstrapHandler);
+        $container = new ArgonContainer();
 
-        self::assertNull(
-            $manager->handleHttpThrowable($throwable, new ServerRequest('GET', '/'), new ArgonContainer())
-        );
+        $manager->registerRuntimeHandlerIfAvailable($container);
+
+        self::assertNull($manager->handleHttpThrowable($throwable, new ServerRequest('GET', '/'), $container));
         self::assertSame($throwable, $bootstrapHandler->lastException);
     }
 
@@ -70,6 +85,107 @@ final class ErrorHandlerManagerTest extends TestCase
         self::assertSame($throwable, $runtimeHandler->lastException);
         self::assertSame($request, $runtimeHandler->lastRequest);
         self::assertNull($bootstrapHandler->lastException);
+    }
+
+    public function testHttpThrowableFallsBackWhenRuntimeHandlerHasNoRequest(): void
+    {
+        $throwable = new RuntimeException('boom');
+        $runtimeHandler = new RecordingErrorHandler(new Response(418));
+        $bootstrapHandler = new RecordingBootstrapErrorHandler();
+        $container = new ArgonContainer();
+        $container->set(ErrorHandlerInterface::class, static fn() => $runtimeHandler)->shared();
+
+        $manager = new ErrorHandlerManager($bootstrapHandler);
+        $manager->registerRuntimeHandlerIfAvailable($container);
+
+        self::assertNull($manager->handleHttpThrowable($throwable, null, $container));
+        self::assertNull($runtimeHandler->lastException);
+        self::assertSame($throwable, $bootstrapHandler->lastException);
+    }
+
+    public function testHttpThrowableFallsBackWhenRequestResolutionFails(): void
+    {
+        $throwable = new RuntimeException('boom');
+        $runtimeHandler = new RecordingErrorHandler(new Response(418));
+        $bootstrapHandler = new RecordingBootstrapErrorHandler();
+        $container = new ArgonContainer();
+        $container->set(ErrorHandlerInterface::class, static fn() => $runtimeHandler)->shared();
+        $container->set(
+            ServerRequestInterface::class,
+            static function (): ServerRequestInterface {
+                throw new RuntimeException('request failure');
+            }
+        )->shared();
+
+        $manager = new ErrorHandlerManager($bootstrapHandler);
+        $manager->registerRuntimeHandlerIfAvailable($container);
+
+        self::assertNull($manager->handleHttpThrowable($throwable, null, $container));
+        self::assertNull($runtimeHandler->lastException);
+        self::assertSame($throwable, $bootstrapHandler->lastException);
+    }
+
+    public function testExplicitRuntimeHandlerBindingMustResolveToRuntimeHandler(): void
+    {
+        $container = new ArgonContainer();
+        $container->set(ErrorHandlerInterface::class, static fn() => new stdClass())->shared();
+
+        $this->expectException(ProphecyException::class);
+        $this->expectExceptionMessage('Runtime error handler binding');
+        $this->expectExceptionMessage(ErrorHandlerInterface::class);
+
+        (new ErrorHandlerManager(new RecordingBootstrapErrorHandler()))->registerRuntimeHandlerIfAvailable($container);
+    }
+
+    public function testExplicitRuntimeHandlerResolutionFailureIsMisconfiguration(): void
+    {
+        $container = new ArgonContainer();
+        $container->set(ErrorHandlerInterface::class, static function (): object {
+            throw new RuntimeException('container failure');
+        })->shared();
+
+        $this->expectException(ProphecyException::class);
+        $this->expectExceptionMessage('Runtime error handler is registered but could not be resolved.');
+
+        try {
+            (new ErrorHandlerManager(new RecordingBootstrapErrorHandler()))
+                ->registerRuntimeHandlerIfAvailable($container);
+        } catch (ProphecyException $exception) {
+            self::assertInstanceOf(RuntimeException::class, $exception->getPrevious());
+            throw $exception;
+        }
+    }
+
+    public function testExplicitRuntimeHandlerRegistrationFailureIsMisconfiguration(): void
+    {
+        $container = new ArgonContainer();
+        $container->set(
+            ErrorHandlerInterface::class,
+            static fn() => new class implements ErrorHandlerInterface {
+                #[\Override]
+                public function register(): void
+                {
+                    throw new RuntimeException('registration failure');
+                }
+
+                #[\Override]
+                public function handle(Throwable $e, ServerRequestInterface $request): Response
+                {
+                    return new Response();
+                }
+            }
+        )->shared();
+
+        $this->expectException(ProphecyException::class);
+        $this->expectExceptionMessage('Runtime error handler is registered but failed during registration.');
+
+        try {
+            (new ErrorHandlerManager(new RecordingBootstrapErrorHandler()))
+                ->registerRuntimeHandlerIfAvailable($container);
+        } catch (ProphecyException $exception) {
+            self::assertInstanceOf(RuntimeException::class, $exception->getPrevious());
+            throw $exception;
+        }
     }
 
     public function testHttpThrowableFallsBackWhenRuntimeHandlerFails(): void
@@ -123,6 +239,18 @@ final class ErrorHandlerManagerTest extends TestCase
 
         self::assertSame($response, $kernel->emittedResponse);
         self::assertSame(1, $kernel->terminateCode);
+    }
+
+    public function testEmitResponseDelegatesEmitFailuresToBootstrapHandler(): void
+    {
+        $kernel = new EmitFailingHttpKernel();
+        $bootstrapHandler = new RecordingBootstrapErrorHandler();
+
+        (new ErrorHandlerManager($bootstrapHandler))->emitResponse($kernel, new Response(500));
+
+        self::assertInstanceOf(RuntimeException::class, $bootstrapHandler->lastException);
+        self::assertSame('emit failure', $bootstrapHandler->lastException->getMessage());
+        self::assertFalse($kernel->terminateCalled);
     }
 
     public function testCliThrowableDelegatesToBootstrapHandler(): void

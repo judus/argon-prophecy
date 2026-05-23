@@ -10,6 +10,7 @@ use Maduser\Argon\Contracts\Handler\CliKernelInterface;
 use Maduser\Argon\Contracts\Handler\HttpKernelInterface;
 use Maduser\Argon\Prophecy\ErrorHandling\BootstrapErrorHandlerMode;
 use Maduser\Argon\Prophecy\Contracts\ErrorHandling\BootstrapErrorHandlerInterface;
+use Maduser\Argon\Prophecy\Exceptions\ProphecyException;
 use Maduser\Argon\Support\Contracts\ErrorHandlerInterface;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
@@ -54,7 +55,11 @@ final class ErrorHandlerManager
                 'exception' => $exception,
             ]);
 
-            return;
+            throw ProphecyException::runtimeErrorHandlerResolutionFailed($exception);
+        }
+
+        if (!$handler instanceof ErrorHandlerInterface) {
+            throw ProphecyException::invalidRuntimeErrorHandlerBinding($handler);
         }
 
         try {
@@ -67,6 +72,8 @@ final class ErrorHandlerManager
             $this->logger?->critical('Runtime error handler failed during registration.', [
                 'exception' => $exception,
             ]);
+
+            throw ProphecyException::runtimeErrorHandlerRegistrationFailed($exception);
         }
     }
 

@@ -11,7 +11,7 @@ use Maduser\Argon\Contracts\Handler\AppHandlerInterface;
 use Maduser\Argon\Contracts\Handler\CliKernelInterface;
 use Maduser\Argon\Contracts\Handler\HttpKernelInterface;
 use Maduser\Argon\Contracts\KernelInterface;
-use RuntimeException;
+use Maduser\Argon\Prophecy\Exceptions\ProphecyException;
 
 /**
  * Resolves the application handler from the container.
@@ -44,15 +44,11 @@ final class AppHandlerResolver
         $registeredHandlerIds = $this->findRegisteredLifecycleHandlers($container);
 
         if ($registeredHandlerIds === []) {
-            throw new RuntimeException('No application handler registered.');
+            throw ProphecyException::noApplicationHandlerRegistered();
         }
 
         if (count($registeredHandlerIds) > 1) {
-            throw new RuntimeException(sprintf(
-                'Multiple application handlers registered (%s). Bind %s to choose the active handler.',
-                implode(', ', $registeredHandlerIds),
-                AppHandlerInterface::class
-            ));
+            throw ProphecyException::multipleApplicationHandlersRegistered($registeredHandlerIds);
         }
 
         return $this->resolveRegisteredHandler($container, $registeredHandlerIds[0]);
@@ -84,12 +80,7 @@ final class AppHandlerResolver
         $handler = $container->get($id);
 
         if (!$handler instanceof AppHandlerInterface) {
-            throw new RuntimeException(sprintf(
-                'Application handler binding %s must resolve to %s; got %s.',
-                $id,
-                AppHandlerInterface::class,
-                $handler::class
-            ));
+            throw ProphecyException::invalidApplicationHandlerBinding($id, $handler);
         }
 
         return $handler;

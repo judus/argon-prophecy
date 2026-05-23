@@ -221,6 +221,15 @@ $container->register(LoggerServiceProvider::class);
 
 Logging is optional. You can also bind your own PSR-3 logger directly.
 
+Prophecy logs lifecycle events and safe container metadata only. It does not log
+raw container parameters or binding definitions by default.
+
+## Exceptions
+
+Product-level runtime and configuration failures throw
+`Maduser\Argon\Prophecy\Exceptions\ProphecyException`. Lower-level container and
+reflection failures keep their original exception types.
+
 ## Error Handling
 
 Prophecy registers a bootstrap error handler while the application is starting.
@@ -229,12 +238,18 @@ Once the container is available, it will use a bound
 exceptions when one is registered.
 
 If no runtime error handler is bound, Prophecy falls back to the bootstrap error
-handler.
+handler. If a runtime error handler is bound but cannot be resolved or
+registered, Prophecy treats that as an application configuration error and fails
+during bootstrap.
 
 ## Container Compilation
 
 Compilation is opt-in. Pass `true` or set `APP_COMPILE_CONTAINER=true`, then
 provide the generated container location and class:
+
+`APP_COMPILE_CONTAINER` accepts `true`, `false`, `1`, `0`, `yes`, `no`, `on`,
+and `off`. Empty or unset values disable compilation. Any other non-empty value
+fails during boot.
 
 ```dotenv
 APP_COMPILE_CONTAINER=true
@@ -266,6 +281,10 @@ or load the compiled version.
 | `prophecy()` | Calls `boot()` and then `handle()`.                                    |
 | `check()`    | Returns the booted application instance.                               |
 | `reset()`    | Clears facade state and unregisters bootstrap handlers.                |
+
+Direct `Application` instances may run multiple lifecycle calls before reset.
+Calling `reset()` is terminal teardown for that instance; create a new
+`Application` for later work.
 
 ## License
 

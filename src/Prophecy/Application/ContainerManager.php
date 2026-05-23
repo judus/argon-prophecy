@@ -8,8 +8,8 @@ use Closure;
 use Maduser\Argon\Container\ArgonContainer;
 use Maduser\Argon\Container\Compiler\ContainerCompiler;
 use Maduser\Argon\Container\Exceptions\ContainerException;
+use Maduser\Argon\Prophecy\Exceptions\ProphecyException;
 use ReflectionException;
-use RuntimeException;
 
 /**
  * Internal helper that encapsulates container loading, compilation, and caching.
@@ -82,13 +82,13 @@ final class ContainerManager
             : $this->compiledClass;
 
         if (!class_exists($fqcn)) {
-            throw new RuntimeException("Compiled container class '{$this->compiledClass}' not found.");
+            throw ProphecyException::compiledContainerClassNotFound($this->compiledClass);
         }
 
         /** @psalm-suppress MixedMethodCall */
         $container = new $fqcn();
         if (!$container instanceof ArgonContainer) {
-            throw new RuntimeException('Compiled container must extend ArgonContainer.');
+            throw ProphecyException::compiledContainerMustExtendArgonContainer();
         }
 
         return $container;
@@ -111,7 +111,7 @@ final class ContainerManager
         }
 
         if ($parameters->get('cwd') !== $cwd) {
-            throw new RuntimeException('Service configuration attempted to mutate cwd parameter.');
+            throw ProphecyException::cwdMutationAttempted();
         }
 
         if (!$parameters->has('basePath')) {
@@ -144,7 +144,7 @@ final class ContainerManager
     private function resolveCwd(): string
     {
         if ($this->cwd === null) {
-            throw new RuntimeException('Current working directory must be provided to ContainerManager.');
+            throw ProphecyException::cwdMissing();
         }
 
         return $this->cwd;

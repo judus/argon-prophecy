@@ -8,8 +8,8 @@ use Maduser\Argon\Container\ArgonContainer;
 use Maduser\Argon\Contracts\Handler\AppHandlerInterface;
 use Maduser\Argon\Contracts\Handler\CliKernelInterface;
 use Maduser\Argon\Contracts\Handler\HttpKernelInterface;
+use Maduser\Argon\Prophecy\Exceptions\ProphecyException;
 use PHPUnit\Framework\TestCase;
-use RuntimeException;
 use stdClass;
 use Tests\Unit\Application\Mocks\RecordingAppHandler;
 use Tests\Unit\Application\Mocks\RecordingCliKernel;
@@ -66,7 +66,7 @@ final class AppHandlerResolverTest extends TestCase
         $container->set(AppHandlerInterface::class, static fn() => new stdClass())->shared();
         $container->set(HttpKernelInterface::class, static fn() => $httpKernel)->shared();
 
-        $this->expectException(RuntimeException::class);
+        $this->expectException(ProphecyException::class);
         $this->expectExceptionMessage('Application handler binding');
         $this->expectExceptionMessage(AppHandlerInterface::class);
 
@@ -78,7 +78,7 @@ final class AppHandlerResolverTest extends TestCase
         $container = new ArgonContainer();
         $container->set(HttpKernelInterface::class, static fn() => new stdClass())->shared();
 
-        $this->expectException(RuntimeException::class);
+        $this->expectException(ProphecyException::class);
         $this->expectExceptionMessage('Application handler binding');
         $this->expectExceptionMessage(HttpKernelInterface::class);
 
@@ -91,7 +91,7 @@ final class AppHandlerResolverTest extends TestCase
         $container->set(HttpKernelInterface::class, static fn() => new RecordingHttpKernel())->shared();
         $container->set(CliKernelInterface::class, static fn() => new RecordingCliKernel())->shared();
 
-        $this->expectException(RuntimeException::class);
+        $this->expectException(ProphecyException::class);
         $this->expectExceptionMessage('Multiple application handlers registered');
         $this->expectExceptionMessage(AppHandlerInterface::class);
 
@@ -100,7 +100,7 @@ final class AppHandlerResolverTest extends TestCase
 
     public function testThrowsWhenNoHandlerIsRegistered(): void
     {
-        $this->expectException(RuntimeException::class);
+        $this->expectException(ProphecyException::class);
         $this->expectExceptionMessage('No application handler registered.');
 
         (new AppHandlerResolver())->resolve(new ArgonContainer());

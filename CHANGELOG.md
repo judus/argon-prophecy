@@ -2,6 +2,18 @@
 
 ## Unreleased
 
+- Added coverage for `BootstrapErrorHandler` defensive registration, stream, and exception-formatting branches.
+- Added coverage for compiled-container debug logging metadata and unavailable service-map handling.
+- Added coverage for Application CLI fallback handling, process fallback responses, logger replacement, and Argon facade pass-throughs.
+- Replaced stale `BootstrapErrorHandlerTest` TODO blocks with focused `cli-server` output coverage.
+- Added coverage for `ContainerManager` compiled-container loading, compile writes, and container caching.
+- Added coverage for `ErrorHandlerManager` fallback edge cases around request resolution and response emission.
+- Added coverage for HTTP fallback paths when runtime error handling cannot produce a response.
+- Defined direct `Application::reset()` as idempotent terminal teardown and guarded post-reset calls.
+- Made bootstrap debug logging secret-safe by replacing raw container dumps with metadata counts.
+- Added `ProphecyException` as the stable exception type for Prophecy runtime and configuration failures.
+- Made container compilation flag parsing strict so invalid non-empty values fail during boot.
+- Made explicit runtime error-handler resolution and registration failures fail during bootstrap instead of falling back silently.
 - Aligned the CI PHP version matrix with maduser-argon across PHP 8.2, 8.3, 8.4, and experimental 8.5.
 - Restored PHP 8.2 compatibility by avoiding typed class constant syntax.
 - Tightened application handler resolution so invalid or ambiguous handler bindings fail during bootstrap.

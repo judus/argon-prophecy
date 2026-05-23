@@ -45,6 +45,21 @@ final class ContainerManagerTest extends TestCase
         self::assertSame($basePath, $manager->getContainer()->getParameters()->get('basePath'));
     }
 
+    public function testBuiltContainerIsCached(): void
+    {
+        $configurationCount = 0;
+        $manager = new ContainerManager();
+        $manager->setCwd(__DIR__);
+        $manager->setConfigurator(static function () use (&$configurationCount): void {
+            $configurationCount++;
+        });
+
+        $container = $manager->getContainer();
+
+        self::assertSame($container, $manager->getContainer());
+        self::assertSame(1, $configurationCount);
+    }
+
     public function testConfiguratorCannotMutateCwd(): void
     {
         $manager = new ContainerManager();
@@ -79,6 +94,43 @@ final class ContainerManagerTest extends TestCase
         self::assertInstanceOf(ArgonContainer::class, $manager->getContainer());
     }
 
+    public function testLoadsNamespacedCompiledContainerFromConfiguredFile(): void
+    {
+        $namespace = 'Tests\\Unit\\Application\\Fixtures';
+        $className = 'NamespacedCompiledContainerForProphecyTest';
+        $filePath = $this->writeCompiledContainerFile($className, $namespace);
+
+        $manager = new ContainerManager();
+        $manager->setCwd(__DIR__);
+        $manager->configureCompilation($filePath, $className, $namespace);
+
+        $container = $manager->getContainer();
+
+        self::assertInstanceOf(ArgonContainer::class, $container);
+        self::assertSame($namespace . '\\' . $className, $container::class);
+    }
+
+    public function testConfiguredCompilationWritesContainerWhenCompiledFileIsMissing(): void
+    {
+        $className = 'CompiledWritePathForProphecyTest';
+        $filePath = $this->fixturePath($className . '.php');
+
+        if (file_exists($filePath)) {
+            unlink($filePath);
+        }
+
+        $manager = new ContainerManager();
+        $manager->setCwd(__DIR__);
+        $manager->configureCompilation($filePath, $className);
+
+        self::assertFileDoesNotExist($filePath);
+
+        $container = $manager->getContainer();
+
+        self::assertInstanceOf(ArgonContainer::class, $container);
+        self::assertFileExists($filePath);
+    }
+
     public function testCompiledFileMustDeclareConfiguredClass(): void
     {
         $filePath = $this->fixturePath('MissingCompiledContainer.php');
@@ -110,13 +162,18 @@ final class ContainerManagerTest extends TestCase
         $manager->getContainer();
     }
 
-    private function writeCompiledContainerFile(string $className): string
+    private function writeCompiledContainerFile(string $className, string $namespace = ''): string
     {
         $filePath = $this->fixturePath($className . '.php');
+        $namespaceDeclaration = $namespace !== ''
+            ? "namespace {$namespace};\n\n"
+            : '';
+
         file_put_contents(
             $filePath,
             "<?php\n\n" .
             "declare(strict_types=1);\n\n" .
+            $namespaceDeclaration .
             "use Maduser\\Argon\\Container\\ArgonContainer;\n\n" .
             "final class {$className} extends ArgonContainer\n{\n}\n"
         );

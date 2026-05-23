@@ -15,6 +15,7 @@ use PHPUnit\Framework\Attributes\RunInSeparateProcess;
 use PHPUnit\Framework\TestCase;
 use Psr\Http\Message\ServerRequestInterface;
 use Tests\Unit\Application\Mocks\NoOpHttpKernel;
+use Tests\Unit\Application\Mocks\RecordingBootstrapErrorHandler;
 use Tests\Unit\Application\Mocks\RecordingErrorHandler;
 use Tests\Unit\Application\Mocks\ThrowingHttpKernel;
 use Throwable;
@@ -61,5 +62,48 @@ final class ApplicationErrorHandlingTest extends TestCase
         self::assertTrue($kernel->terminateCalled);
         self::assertInstanceOf(Throwable::class, $errorHandler->lastException);
         self::assertSame($request, $errorHandler->lastRequest);
+    }
+
+    #[RunInSeparateProcess]
+    public function testHandleDelegatesHttpExceptionToBootstrapHandlerWhenRuntimeHandlerIsMissing(): void
+    {
+        $bootstrapHandler = new RecordingBootstrapErrorHandler();
+        $kernel = new ThrowingHttpKernel();
+
+        $container = new ArgonContainer();
+        $container->set(HttpKernelInterface::class, static fn() => $kernel)->shared();
+        $container->set(AppHandlerInterface::class, static fn() => $kernel)->shared();
+
+        $application = new Application($container, bootstrapErrorHandler: $bootstrapHandler);
+        $application->handle(new ServerRequest('GET', '/fallback'));
+
+        self::assertInstanceOf(Throwable::class, $bootstrapHandler->lastException);
+        self::assertNull($kernel->emittedResponse);
+        self::assertFalse($kernel->terminateCalled);
+
+        $application->reset();
+    }
+
+    #[RunInSeparateProcess]
+    public function testProcessRethrowsOriginalHttpExceptionWhenFallbackCannotCreateResponse(): void
+    {
+        $bootstrapHandler = new RecordingBootstrapErrorHandler();
+        $kernel = new ThrowingHttpKernel();
+
+        $container = new ArgonContainer();
+        $container->set(HttpKernelInterface::class, static fn() => $kernel)->shared();
+        $container->set(AppHandlerInterface::class, static fn() => $kernel)->shared();
+
+        $application = new Application($container, bootstrapErrorHandler: $bootstrapHandler);
+
+        try {
+            $application->process(new ServerRequest('GET', '/fallback'));
+            self::fail('Expected process() to rethrow the original kernel failure.');
+        } catch (Throwable $throwable) {
+            self::assertSame('kernel failure', $throwable->getMessage());
+            self::assertSame($throwable, $bootstrapHandler->lastException);
+        } finally {
+            $application->reset();
+        }
     }
 }

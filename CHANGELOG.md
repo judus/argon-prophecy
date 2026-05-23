@@ -2,6 +2,7 @@
 
 ## Unreleased
 
+- Added coverage for HTTP fallback paths when runtime error handling cannot produce a response.
 - Defined direct `Application::reset()` as idempotent terminal teardown and guarded post-reset calls.
 - Made bootstrap debug logging secret-safe by replacing raw container dumps with metadata counts.
 - Added `ProphecyException` as the stable exception type for Prophecy runtime and configuration failures.

@@ -39,10 +39,11 @@ final class Application implements ApplicationInterface
 
     public function __construct(
         ?ArgonContainer $container = null,
-        ?LoggerInterface $logger = null
+        ?LoggerInterface $logger = null,
+        ?BootstrapErrorHandlerInterface $bootstrapErrorHandler = null
     ) {
         $this->logger = $logger;
-        $this->bootstrapErrorHandler = new BootstrapErrorHandler($this->logger);
+        $this->bootstrapErrorHandler = $bootstrapErrorHandler ?? new BootstrapErrorHandler($this->logger);
         $this->bootstrapErrorHandler->register();
         $this->containerManager = new ContainerManager($container);
         $this->containerManager->setCwd($this->getCwd());

@@ -238,6 +238,10 @@ during bootstrap.
 Compilation is opt-in. Pass `true` or set `APP_COMPILE_CONTAINER=true`, then
 provide the generated container location and class:
 
+`APP_COMPILE_CONTAINER` accepts `true`, `false`, `1`, `0`, `yes`, `no`, `on`,
+and `off`. Empty or unset values disable compilation. Any other non-empty value
+fails during boot.
+
 ```dotenv
 APP_COMPILE_CONTAINER=true
 APP_COMPILE_FILE_NAME=var/cache/CompiledContainer.php

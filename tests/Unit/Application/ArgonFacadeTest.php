@@ -63,7 +63,7 @@ final class ArgonFacadeTest extends TestCase
     }
 
     #[RunInSeparateProcess]
-    public function testBootUsesEnvironmentCompileFlag(): void
+    public function testBootUsesTrueEnvironmentCompileFlag(): void
     {
         $_ENV['APP_COMPILE_CONTAINER'] = 'true';
 
@@ -73,6 +73,54 @@ final class ArgonFacadeTest extends TestCase
         Argon::boot(static function (): void {
             // no-op
         });
+    }
+
+    #[RunInSeparateProcess]
+    public function testBootTreatsFalseEnvironmentCompileFlagAsDisabled(): void
+    {
+        $_ENV['APP_COMPILE_CONTAINER'] = 'false';
+
+        Argon::boot(static function (): void {
+            // no-op
+        });
+
+        $this->assertSame(Argon::check(), Argon::check());
+    }
+
+    #[RunInSeparateProcess]
+    public function testBootTreatsEmptyEnvironmentCompileFlagAsDisabled(): void
+    {
+        $_ENV['APP_COMPILE_CONTAINER'] = '  ';
+
+        Argon::boot(static function (): void {
+            // no-op
+        });
+
+        $this->assertSame(Argon::check(), Argon::check());
+    }
+
+    #[RunInSeparateProcess]
+    public function testBootRejectsInvalidEnvironmentCompileFlag(): void
+    {
+        $_ENV['APP_COMPILE_CONTAINER'] = 'definitely';
+
+        $this->expectException(RuntimeException::class);
+        $this->expectExceptionMessage('Invalid container compilation flag value "definitely".');
+
+        Argon::boot(static function (): void {
+            // no-op
+        });
+    }
+
+    #[RunInSeparateProcess]
+    public function testBootRejectsInvalidCompileArgument(): void
+    {
+        $this->expectException(RuntimeException::class);
+        $this->expectExceptionMessage('Invalid container compilation flag value "sometimes".');
+
+        Argon::boot(static function (): void {
+            // no-op
+        }, 'sometimes');
     }
 
     #[RunInSeparateProcess]

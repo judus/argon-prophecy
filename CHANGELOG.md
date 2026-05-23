@@ -2,6 +2,7 @@
 
 ## Unreleased
 
+- Made container compilation flag parsing strict so invalid non-empty values fail during boot.
 - Made explicit runtime error-handler resolution and registration failures fail during bootstrap instead of falling back silently.
 - Aligned the CI PHP version matrix with maduser-argon across PHP 8.2, 8.3, 8.4, and experimental 8.5.
 - Restored PHP 8.2 compatibility by avoiding typed class constant syntax.

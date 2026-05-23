@@ -2,6 +2,7 @@
 
 ## Unreleased
 
+- Aligned the CI PHP version matrix with maduser-argon across PHP 8.2, 8.3, 8.4, and experimental 8.5.
 - Restored PHP 8.2 compatibility by avoiding typed class constant syntax.
 - Tightened application handler resolution so invalid or ambiguous handler bindings fail during bootstrap.
 - Expanded Prophecy runtime tests around handler resolution, container setup, lifecycle dispatch, error-manager fallbacks, and tag helpers.

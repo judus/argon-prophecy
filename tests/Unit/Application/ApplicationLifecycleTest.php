@@ -36,6 +36,58 @@ final class ApplicationLifecycleTest extends TestCase
     }
 
     #[RunInSeparateProcess]
+    public function testResolvedHandlerIsCachedUntilReset(): void
+    {
+        $createdHandlers = [];
+        $container = new ArgonContainer();
+        $container->set(
+            AppHandlerInterface::class,
+            static function () use (&$createdHandlers): RecordingAppHandler {
+                $handler = new RecordingAppHandler();
+                $createdHandlers[] = $handler;
+
+                return $handler;
+            }
+        )->transient();
+
+        $application = new Application($container);
+        $application->handle();
+        $application->handle();
+
+        self::assertCount(1, $createdHandlers);
+
+        $application->reset();
+    }
+
+    #[RunInSeparateProcess]
+    public function testResetIsIdempotentTerminalTeardown(): void
+    {
+        $application = new Application(new ArgonContainer());
+
+        $application->reset();
+        $application->reset();
+
+        $this->expectException(ProphecyException::class);
+        $this->expectExceptionMessage('Application has been reset and cannot be used again.');
+
+        $application->handle();
+    }
+
+    #[RunInSeparateProcess]
+    public function testRegisterAfterResetFails(): void
+    {
+        $application = new Application(new ArgonContainer());
+        $application->reset();
+
+        $this->expectException(ProphecyException::class);
+        $this->expectExceptionMessage('Application has been reset and cannot be used again.');
+
+        $application->register(static function (): void {
+            // no-op
+        });
+    }
+
+    #[RunInSeparateProcess]
     public function testProcessReturnsHttpKernelResponse(): void
     {
         $response = new Response(202);

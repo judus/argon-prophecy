@@ -19,6 +19,11 @@ final class ProphecyException extends RuntimeException
         return new self('Application already booted.');
     }
 
+    public static function applicationHasBeenReset(): self
+    {
+        return new self('Application has been reset and cannot be used again.');
+    }
+
     public static function invalidCompileFlag(string $value): self
     {
         return new self(sprintf(

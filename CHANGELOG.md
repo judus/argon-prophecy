@@ -2,6 +2,7 @@
 
 ## Unreleased
 
+- Defined direct `Application::reset()` as idempotent terminal teardown and guarded post-reset calls.
 - Made bootstrap debug logging secret-safe by replacing raw container dumps with metadata counts.
 - Added `ProphecyException` as the stable exception type for Prophecy runtime and configuration failures.
 - Made container compilation flag parsing strict so invalid non-empty values fail during boot.

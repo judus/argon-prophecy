@@ -35,6 +35,7 @@ final class Application implements ApplicationInterface
     private ContainerManager $containerManager;
     private ErrorHandlerManager $errorManager;
     private AppHandlerResolver $handlerResolver;
+    private bool $reset = false;
 
     public function __construct(
         ?ArgonContainer $container = null,
@@ -53,12 +54,14 @@ final class Application implements ApplicationInterface
     #[\Override]
     public function register(Closure $closure): self
     {
+        $this->assertNotReset();
         $this->containerManager->setConfigurator($closure);
         return $this;
     }
 
     public function compile(string $filePath, string $className, string $namespace = ''): self
     {
+        $this->assertNotReset();
         $this->containerManager->configureCompilation($filePath, $className, $namespace);
         return $this;
     }
@@ -71,6 +74,7 @@ final class Application implements ApplicationInterface
     #[\Override]
     public function handle(?ServerRequestInterface $request = null): void
     {
+        $this->assertNotReset();
         $handler = $this->bootstrap();
 
         if ($handler instanceof HttpKernelInterface) {
@@ -112,6 +116,7 @@ final class Application implements ApplicationInterface
     #[\Override]
     public function process(?ServerRequestInterface $request = null): ResponseInterface
     {
+        $this->assertNotReset();
         $handler = $this->bootstrap();
 
         if (!$handler instanceof HttpKernelInterface) {
@@ -143,6 +148,7 @@ final class Application implements ApplicationInterface
     #[\Override]
     public function emit(ResponseInterface $response): void
     {
+        $this->assertNotReset();
         $handler = $this->bootstrap();
 
         if (!$handler instanceof HttpKernelInterface) {
@@ -154,7 +160,15 @@ final class Application implements ApplicationInterface
 
     public function reset(): void
     {
+        if ($this->reset) {
+            return;
+        }
+
         $this->bootstrapErrorHandler->unregister();
+        $this->container = null;
+        $this->handler = null;
+        $this->logger = null;
+        $this->reset = true;
     }
 
     /**
@@ -194,6 +208,13 @@ final class Application implements ApplicationInterface
     protected function getContainerInstance(): ?ArgonContainer
     {
         return $this->container;
+    }
+
+    private function assertNotReset(): void
+    {
+        if ($this->reset) {
+            throw ProphecyException::applicationHasBeenReset();
+        }
     }
 
     private function getCwd(): string

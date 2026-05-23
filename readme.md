@@ -282,6 +282,10 @@ or load the compiled version.
 | `check()`    | Returns the booted application instance.                               |
 | `reset()`    | Clears facade state and unregisters bootstrap handlers.                |
 
+Direct `Application` instances may run multiple lifecycle calls before reset.
+Calling `reset()` is terminal teardown for that instance; create a new
+`Application` for later work.
+
 ## License
 
 MIT License. Free to use, extend, and adapt.

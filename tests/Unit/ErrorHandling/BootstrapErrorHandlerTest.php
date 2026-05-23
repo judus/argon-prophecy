@@ -12,6 +12,7 @@ use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\LoggerInterface;
 use RuntimeException;
+use Tests\Unit\ErrorHandling\Fixtures\NamespacedBootstrapTestException;
 use Throwable;
 
 final class BootstrapErrorHandlerTest extends TestCase
@@ -150,6 +151,52 @@ final class BootstrapErrorHandlerTest extends TestCase
         $this->assertStringContainsString('Fatal error: RuntimeException', $output);
         $this->assertStringContainsString('Message: Test CLI Exception', $output);
         $this->assertStringContainsString('Location:', $output);
+    }
+
+    public function testDefaultOutputReturnsQuietlyWhenStreamIsUnavailable(): void
+    {
+        /** @psalm-suppress InvalidArgument */
+        $handler = new BootstrapErrorHandler(
+            $this->logger,
+            null,
+            function (int $code): void {
+                throw new RuntimeException('Fake terminate ' . $code);
+            },
+            static fn() => null,
+            'cli',
+            false
+        );
+
+        $this->logger->expects($this->once())
+            ->method('error');
+
+        try {
+            $handler->handleException(new RuntimeException('No stream'));
+        } catch (RuntimeException) {
+            // expected fake terminate
+        }
+
+        $this->assertSame('', $this->capturedOutput);
+    }
+
+    public function testHandleExceptionFormatsNamespacedExceptionShortName(): void
+    {
+        $handler = $this->createHandler(null, 'cli');
+
+        $this->logger->expects($this->once())
+            ->method('error');
+
+        try {
+            $handler->handleException(new NamespacedBootstrapTestException('Namespaced failure'));
+        } catch (RuntimeException) {
+            // expected fake terminate
+        }
+
+        $this->assertStringContainsString(
+            'Fatal error: NamespacedBootstrapTestException',
+            $this->capturedOutput
+        );
+        $this->assertStringContainsString('Message: Namespaced failure', $this->capturedOutput);
     }
 
     public function testExplicitOutputModeOverridesDetection(): void
@@ -295,6 +342,19 @@ final class BootstrapErrorHandlerTest extends TestCase
             ->method('error');
 
         $handler->handleShutdown();
+
+        $this->assertSame('', $this->capturedOutput);
+    }
+
+    public function testRegisterAndUnregisterAreIdempotent(): void
+    {
+        $handler = $this->createHandler();
+
+        $handler->unregister();
+        $handler->register();
+        $handler->register();
+        $handler->unregister();
+        $handler->unregister();
 
         $this->assertSame('', $this->capturedOutput);
     }

@@ -17,6 +17,7 @@ use Psr\Http\Message\ServerRequestInterface;
 use Tests\Unit\Application\Mocks\NoOpHttpKernel;
 use Tests\Unit\Application\Mocks\RecordingBootstrapErrorHandler;
 use Tests\Unit\Application\Mocks\RecordingErrorHandler;
+use Tests\Unit\Application\Mocks\ThrowingCliKernel;
 use Tests\Unit\Application\Mocks\ThrowingHttpKernel;
 use Throwable;
 
@@ -105,5 +106,46 @@ final class ApplicationErrorHandlingTest extends TestCase
         } finally {
             $application->reset();
         }
+    }
+
+    #[RunInSeparateProcess]
+    public function testHandleDelegatesCliExceptionToBootstrapHandler(): void
+    {
+        $bootstrapHandler = new RecordingBootstrapErrorHandler();
+        $kernel = new ThrowingCliKernel();
+
+        $container = new ArgonContainer();
+        $container->set(AppHandlerInterface::class, static fn() => $kernel)->shared();
+
+        $application = new Application($container, bootstrapErrorHandler: $bootstrapHandler);
+        $application->handle();
+
+        self::assertInstanceOf(Throwable::class, $bootstrapHandler->lastException);
+        self::assertSame('cli failure', $bootstrapHandler->lastException->getMessage());
+        self::assertNull($kernel->terminateCode);
+
+        $application->reset();
+    }
+
+    #[RunInSeparateProcess]
+    public function testProcessReturnsRuntimeHandlerFallbackResponse(): void
+    {
+        $response = new Response(503);
+        $errorHandler = new RecordingErrorHandler($response);
+        $kernel = new ThrowingHttpKernel();
+        $request = new ServerRequest('GET', '/fallback-response');
+
+        $container = new ArgonContainer();
+        $container->set(ServerRequestInterface::class, static fn() => $request)->shared();
+        $container->set(ErrorHandlerInterface::class, static fn() => $errorHandler)->shared();
+        $container->set(HttpKernelInterface::class, static fn() => $kernel)->shared();
+        $container->set(AppHandlerInterface::class, static fn() => $kernel)->shared();
+
+        $application = new Application($container);
+
+        self::assertSame($response, $application->process($request));
+        self::assertSame($request, $errorHandler->lastRequest);
+
+        $application->reset();
     }
 }

@@ -9,6 +9,7 @@ use Maduser\Argon\Contracts\Handler\AppHandlerInterface;
 use Maduser\Argon\Prophecy\Application;
 use PHPUnit\Framework\Attributes\RunInSeparateProcess;
 use PHPUnit\Framework\TestCase;
+use Psr\Log\LoggerInterface;
 use Tests\Unit\Application\Mocks\RecordingAppHandler;
 use Tests\Unit\Application\Mocks\RecordingLogger;
 
@@ -40,5 +41,22 @@ final class ApplicationLoggingTest extends TestCase
             self::assertArrayNotHasKey('bindings', $record['context']);
             self::assertStringNotContainsString('top-secret-value', serialize($record['context']));
         }
+    }
+
+    #[RunInSeparateProcess]
+    public function testContainerLoggerReplacesConstructorLoggerDuringBootstrap(): void
+    {
+        $constructorLogger = new RecordingLogger();
+        $containerLogger = new RecordingLogger();
+        $container = new ArgonContainer();
+        $container->set(LoggerInterface::class, static fn() => $containerLogger)->shared();
+        $container->set(AppHandlerInterface::class, static fn() => new RecordingAppHandler())->shared();
+
+        $application = new Application($container, $constructorLogger);
+        $application->handle();
+        $application->reset();
+
+        self::assertSame([], $constructorLogger->records);
+        self::assertNotSame([], $containerLogger->records);
     }
 }

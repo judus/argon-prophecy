@@ -4,11 +4,18 @@ declare(strict_types=1);
 
 namespace Tests\Unit\Application;
 
+use GuzzleHttp\Psr7\Response;
+use GuzzleHttp\Psr7\ServerRequest;
+use Maduser\Argon\Container\ArgonContainer;
+use Maduser\Argon\Contracts\Handler\AppHandlerInterface;
+use Maduser\Argon\Contracts\Handler\HttpKernelInterface;
 use Maduser\Argon\Prophecy\Argon;
 use Maduser\Argon\Prophecy\Exceptions\ProphecyException;
 use PHPUnit\Framework\Attributes\RunInSeparateProcess;
 use PHPUnit\Framework\TestCase;
 use RuntimeException;
+use Tests\Unit\Application\Mocks\RecordingAppHandler;
+use Tests\Unit\Application\Mocks\RecordingHttpKernel;
 
 final class ArgonFacadeTest extends TestCase
 {
@@ -139,6 +146,66 @@ final class ArgonFacadeTest extends TestCase
         });
 
         $this->assertNotSame($firstApplication, Argon::check());
+    }
+
+    #[RunInSeparateProcess]
+    public function testHandleDelegatesToBootedApplication(): void
+    {
+        $handler = new RecordingAppHandler(7);
+
+        Argon::boot(static function (ArgonContainer $container) use ($handler): void {
+            $container->set(AppHandlerInterface::class, static fn() => $handler)->shared();
+        });
+
+        Argon::handle();
+
+        self::assertTrue($handler->runCalled);
+        self::assertSame(7, $handler->terminateCode);
+    }
+
+    #[RunInSeparateProcess]
+    public function testProcessDelegatesToBootedApplication(): void
+    {
+        $request = new ServerRequest('GET', '/facade-process');
+        $response = new Response(202);
+        $kernel = new RecordingHttpKernel($response);
+
+        Argon::boot(static function (ArgonContainer $container) use ($kernel): void {
+            $container->set(AppHandlerInterface::class, static fn() => $kernel)->shared();
+            $container->set(HttpKernelInterface::class, static fn() => $kernel)->shared();
+        });
+
+        self::assertSame($response, Argon::process($request));
+        self::assertSame($request, $kernel->processedRequest);
+    }
+
+    #[RunInSeparateProcess]
+    public function testEmitDelegatesToBootedApplication(): void
+    {
+        $response = new Response(204);
+        $kernel = new RecordingHttpKernel();
+
+        Argon::boot(static function (ArgonContainer $container) use ($kernel): void {
+            $container->set(AppHandlerInterface::class, static fn() => $kernel)->shared();
+            $container->set(HttpKernelInterface::class, static fn() => $kernel)->shared();
+        });
+
+        Argon::emit($response);
+
+        self::assertSame($response, $kernel->emittedResponse);
+    }
+
+    #[RunInSeparateProcess]
+    public function testProphecyBootsAndHandlesApplication(): void
+    {
+        $handler = new RecordingAppHandler(3);
+
+        Argon::prophecy(static function (ArgonContainer $container) use ($handler): void {
+            $container->set(AppHandlerInterface::class, static fn() => $handler)->shared();
+        });
+
+        self::assertTrue($handler->runCalled);
+        self::assertSame(3, $handler->terminateCode);
     }
 
     private function clearCompileEnv(): void

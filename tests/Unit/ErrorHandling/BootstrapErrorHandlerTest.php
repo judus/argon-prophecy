@@ -99,17 +99,80 @@ final class BootstrapErrorHandlerTest extends TestCase
             }));
 
         // Now capture the real output
-        ob_start();
+        $previousStatusCode = http_response_code();
+        $initialOutputBufferLevel = ob_get_level();
+        $statusCode = null;
+        $output = '';
+
         try {
-            $handler->handleException($exception);
-        } catch (Throwable) {
-            // ignore fake terminate
+            ob_start();
+            try {
+                $handler->handleException($exception);
+            } catch (Throwable) {
+                // ignore fake terminate
+            }
+
+            $output = ob_get_clean();
+            self::assertIsString($output);
+            $statusCode = http_response_code();
+        } finally {
+            while (ob_get_level() > $initialOutputBufferLevel) {
+                ob_end_clean();
+            }
+
+            if (is_int($previousStatusCode)) {
+                http_response_code($previousStatusCode);
+            }
         }
-        $output = ob_get_clean();
-        self::assertIsString($output);
 
         $this->assertStringContainsString('<pre>', $output);
         $this->assertStringContainsString('Test Web Exception', $output);
+        $this->assertSame(500, $statusCode);
+    }
+
+    public function testHttpSapiPreservesValidThrowableStatusCode(): void
+    {
+        $handler = new BootstrapErrorHandler(
+            $this->logger,
+            null,
+            function (int $code): void {
+                throw new RuntimeException('Fake terminate ' . $code);
+            },
+            static fn() => null,
+            'apache'
+        );
+
+        $this->logger->expects($this->once())
+            ->method('error');
+
+        $previousStatusCode = http_response_code();
+        $initialOutputBufferLevel = ob_get_level();
+        $statusCode = null;
+        $output = '';
+
+        try {
+            ob_start();
+            try {
+                $handler->handleException(new RuntimeException('Missing route', 404));
+            } catch (RuntimeException) {
+                // expected fake terminate
+            }
+
+            $output = ob_get_clean();
+            self::assertIsString($output);
+            $statusCode = http_response_code();
+        } finally {
+            while (ob_get_level() > $initialOutputBufferLevel) {
+                ob_end_clean();
+            }
+
+            if (is_int($previousStatusCode)) {
+                http_response_code($previousStatusCode);
+            }
+        }
+
+        $this->assertStringContainsString('Missing route', $output);
+        $this->assertSame(404, $statusCode);
     }
 
     public function testHandleExceptionOutputsToStderrForCli(): void
@@ -272,6 +335,52 @@ final class BootstrapErrorHandlerTest extends TestCase
                 http_response_code($previousStatusCode);
             }
         }
+    }
+
+    public function testCliServerSapiPreservesValidThrowableStatusCode(): void
+    {
+        $handler = new BootstrapErrorHandler(
+            $this->logger,
+            null,
+            function (int $code): void {
+                throw new RuntimeException('Fake terminate ' . $code);
+            },
+            static fn() => null,
+            'cli-server'
+        );
+
+        $this->logger->expects($this->once())
+            ->method('error');
+
+        $previousStatusCode = http_response_code();
+        $initialOutputBufferLevel = ob_get_level();
+        $statusCode = null;
+        $output = '';
+
+        try {
+            ob_start();
+            try {
+                $handler->handleException(new RuntimeException('Missing route', 404));
+            } catch (RuntimeException) {
+                // expected fake terminate
+            }
+
+            $output = ob_get_clean();
+            self::assertIsString($output);
+            $statusCode = http_response_code();
+        } finally {
+            while (ob_get_level() > $initialOutputBufferLevel) {
+                ob_end_clean();
+            }
+
+            if (is_int($previousStatusCode)) {
+                http_response_code($previousStatusCode);
+            }
+        }
+
+        $this->assertStringContainsString('Missing route', $output);
+        $this->assertStringNotContainsString('<pre>', $output);
+        $this->assertSame(404, $statusCode);
     }
 
     public function testHandleShutdownOutputsFatalError(): void

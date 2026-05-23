@@ -31,6 +31,7 @@ final class BootstrapErrorHandler implements BootstrapErrorHandlerInterface
     private string $sapi;
     private ?BootstrapErrorHandlerMode $mode = null;
     private bool $registered = false;
+    private int $httpStatusCode = 500;
 
     /**
      * @var resource|null
@@ -74,7 +75,7 @@ final class BootstrapErrorHandler implements BootstrapErrorHandlerInterface
                     break;
 
                 case BootstrapErrorHandlerMode::CLI_SERVER:
-                    http_response_code(500);
+                    http_response_code($this->httpStatusCode);
                     if (!headers_sent()) {
                         header('Content-Type: text/plain; charset=UTF-8');
                     }
@@ -82,7 +83,7 @@ final class BootstrapErrorHandler implements BootstrapErrorHandlerInterface
                     break;
 
                 case BootstrapErrorHandlerMode::HTTP:
-                    http_response_code(500);
+                    http_response_code($this->httpStatusCode);
                     echo '<pre>' . htmlspecialchars($message, \ENT_QUOTES | \ENT_SUBSTITUTE, 'UTF-8') . '</pre>';
                     break;
             }
@@ -120,7 +121,13 @@ final class BootstrapErrorHandler implements BootstrapErrorHandlerInterface
     public function handleException(Throwable $exception): void
     {
         $this->log($exception);
-        ($this->outputCallback)($this->formatMessage($exception));
+        $this->httpStatusCode = $this->resolveHttpStatusCode($exception);
+        try {
+            ($this->outputCallback)($this->formatMessage($exception));
+        } finally {
+            $this->httpStatusCode = 500;
+        }
+
         ($this->terminateCallback)(1);
     }
 
@@ -194,6 +201,15 @@ final class BootstrapErrorHandler implements BootstrapErrorHandlerInterface
     private function resolveOrigin(Throwable $exception): Throwable
     {
         return $exception->getPrevious() ?? $exception;
+    }
+
+    private function resolveHttpStatusCode(Throwable $exception): int
+    {
+        $code = $exception->getCode();
+
+        return is_int($code) && $code >= 400 && $code <= 599
+            ? $code
+            : 500;
     }
 
     private function resolveMode(): BootstrapErrorHandlerMode

@@ -6,9 +6,9 @@ namespace Maduser\Argon\Prophecy;
 
 use Closure;
 use Maduser\Argon\Prophecy\Contracts\ApplicationInterface;
+use Maduser\Argon\Prophecy\Exceptions\ProphecyException;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
-use RuntimeException;
 
 /**
  * @psalm-api
@@ -30,7 +30,7 @@ final class Argon
     public static function check(): ApplicationInterface
     {
         if (self::$app === null) {
-            throw new RuntimeException('Application not booted yet.');
+            throw ProphecyException::applicationNotBooted();
         }
 
         return self::$app;
@@ -39,7 +39,7 @@ final class Argon
     public static function boot(Closure $callback, string|bool|null $shouldCompile = null): void
     {
         if (self::$app !== null) {
-            throw new RuntimeException('Application already booted.');
+            throw ProphecyException::applicationAlreadyBooted();
         }
 
         $shouldCompile = self::resolveCompileFlag($shouldCompile ?? $_ENV['APP_COMPILE_CONTAINER'] ?? null);
@@ -104,10 +104,7 @@ final class Argon
             return false;
         }
 
-        throw new RuntimeException(sprintf(
-            'Invalid container compilation flag value "%s". Expected one of: true, false, 1, 0, yes, no, on, off.',
-            $value
-        ));
+        throw ProphecyException::invalidCompileFlag($value);
     }
 
     /**
@@ -129,10 +126,7 @@ final class Argon
                 $missing[] = 'APP_COMPILE_CLASS_NAME';
             }
 
-            throw new RuntimeException(sprintf(
-                'Container compilation is enabled but compile configuration is incomplete. Missing: %s.',
-                implode(', ', $missing)
-            ));
+            throw ProphecyException::incompleteCompileConfiguration($missing);
         }
 
         return [

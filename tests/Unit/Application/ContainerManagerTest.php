@@ -5,8 +5,8 @@ declare(strict_types=1);
 namespace Maduser\Argon\Prophecy\Application;
 
 use Maduser\Argon\Container\ArgonContainer;
+use Maduser\Argon\Prophecy\Exceptions\ProphecyException;
 use PHPUnit\Framework\TestCase;
-use RuntimeException;
 
 final class ContainerManagerTest extends TestCase
 {
@@ -53,7 +53,7 @@ final class ContainerManagerTest extends TestCase
             $container->getParameters()->set('cwd', '/tmp/elsewhere');
         });
 
-        $this->expectException(RuntimeException::class);
+        $this->expectException(ProphecyException::class);
         $this->expectExceptionMessage('Service configuration attempted to mutate cwd parameter.');
 
         $manager->getContainer();
@@ -61,7 +61,7 @@ final class ContainerManagerTest extends TestCase
 
     public function testBuildRequiresCwd(): void
     {
-        $this->expectException(RuntimeException::class);
+        $this->expectException(ProphecyException::class);
         $this->expectExceptionMessage('Current working directory must be provided to ContainerManager.');
 
         (new ContainerManager())->getContainer();
@@ -88,7 +88,7 @@ final class ContainerManagerTest extends TestCase
         $manager->setCwd(__DIR__);
         $manager->configureCompilation($filePath, 'MissingCompiledContainer');
 
-        $this->expectException(RuntimeException::class);
+        $this->expectException(ProphecyException::class);
         $this->expectExceptionMessage("Compiled container class 'MissingCompiledContainer' not found.");
 
         $manager->getContainer();
@@ -104,7 +104,7 @@ final class ContainerManagerTest extends TestCase
         $manager->setCwd(__DIR__);
         $manager->configureCompilation($filePath, $className);
 
-        $this->expectException(RuntimeException::class);
+        $this->expectException(ProphecyException::class);
         $this->expectExceptionMessage('Compiled container must extend ArgonContainer.');
 
         $manager->getContainer();

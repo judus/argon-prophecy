@@ -10,11 +10,11 @@ use Maduser\Argon\Contracts\Handler\CliKernelInterface;
 use Maduser\Argon\Contracts\Handler\HttpKernelInterface;
 use Maduser\Argon\Prophecy\ErrorHandling\BootstrapErrorHandlerMode;
 use Maduser\Argon\Prophecy\Contracts\ErrorHandling\BootstrapErrorHandlerInterface;
+use Maduser\Argon\Prophecy\Exceptions\ProphecyException;
 use Maduser\Argon\Support\Contracts\ErrorHandlerInterface;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
 use Psr\Log\LoggerInterface;
-use RuntimeException;
 use Throwable;
 
 /**
@@ -55,20 +55,11 @@ final class ErrorHandlerManager
                 'exception' => $exception,
             ]);
 
-            throw new RuntimeException(
-                'Runtime error handler is registered but could not be resolved.',
-                0,
-                $exception
-            );
+            throw ProphecyException::runtimeErrorHandlerResolutionFailed($exception);
         }
 
         if (!$handler instanceof ErrorHandlerInterface) {
-            throw new RuntimeException(sprintf(
-                'Runtime error handler binding %s must resolve to %s; got %s.',
-                ErrorHandlerInterface::class,
-                ErrorHandlerInterface::class,
-                $handler::class
-            ));
+            throw ProphecyException::invalidRuntimeErrorHandlerBinding($handler);
         }
 
         try {
@@ -82,11 +73,7 @@ final class ErrorHandlerManager
                 'exception' => $exception,
             ]);
 
-            throw new RuntimeException(
-                'Runtime error handler is registered but failed during registration.',
-                0,
-                $exception
-            );
+            throw ProphecyException::runtimeErrorHandlerRegistrationFailed($exception);
         }
     }
 

@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Tests\Unit\Application;
 
 use Maduser\Argon\Prophecy\Argon;
+use Maduser\Argon\Prophecy\Exceptions\ProphecyException;
 use PHPUnit\Framework\Attributes\RunInSeparateProcess;
 use PHPUnit\Framework\TestCase;
 use RuntimeException;
@@ -22,7 +23,7 @@ final class ArgonFacadeTest extends TestCase
 
     public function testBootWithCompileEnabledRequiresCompileFileAndClass(): void
     {
-        $this->expectException(RuntimeException::class);
+        $this->expectException(ProphecyException::class);
         $this->expectExceptionMessage(
             'Container compilation is enabled but compile configuration is incomplete.'
         );
@@ -43,7 +44,7 @@ final class ArgonFacadeTest extends TestCase
             // expected
         }
 
-        $this->expectException(RuntimeException::class);
+        $this->expectException(ProphecyException::class);
         $this->expectExceptionMessage('Application not booted yet.');
 
         Argon::check();
@@ -67,7 +68,7 @@ final class ArgonFacadeTest extends TestCase
     {
         $_ENV['APP_COMPILE_CONTAINER'] = 'true';
 
-        $this->expectException(RuntimeException::class);
+        $this->expectException(ProphecyException::class);
         $this->expectExceptionMessage('APP_COMPILE_FILE_NAME');
 
         Argon::boot(static function (): void {
@@ -104,7 +105,7 @@ final class ArgonFacadeTest extends TestCase
     {
         $_ENV['APP_COMPILE_CONTAINER'] = 'definitely';
 
-        $this->expectException(RuntimeException::class);
+        $this->expectException(ProphecyException::class);
         $this->expectExceptionMessage('Invalid container compilation flag value "definitely".');
 
         Argon::boot(static function (): void {
@@ -115,7 +116,7 @@ final class ArgonFacadeTest extends TestCase
     #[RunInSeparateProcess]
     public function testBootRejectsInvalidCompileArgument(): void
     {
-        $this->expectException(RuntimeException::class);
+        $this->expectException(ProphecyException::class);
         $this->expectExceptionMessage('Invalid container compilation flag value "sometimes".');
 
         Argon::boot(static function (): void {

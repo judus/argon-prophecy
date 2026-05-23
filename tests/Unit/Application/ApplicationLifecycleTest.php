@@ -10,9 +10,9 @@ use Maduser\Argon\Container\ArgonContainer;
 use Maduser\Argon\Contracts\Handler\AppHandlerInterface;
 use Maduser\Argon\Contracts\Handler\HttpKernelInterface;
 use Maduser\Argon\Prophecy\Application;
+use Maduser\Argon\Prophecy\Exceptions\ProphecyException;
 use PHPUnit\Framework\Attributes\RunInSeparateProcess;
 use PHPUnit\Framework\TestCase;
-use RuntimeException;
 use Tests\Unit\Application\Mocks\RecordingAppHandler;
 use Tests\Unit\Application\Mocks\RecordingHttpKernel;
 
@@ -78,7 +78,7 @@ final class ApplicationLifecycleTest extends TestCase
 
         $application = new Application($container);
 
-        $this->expectException(RuntimeException::class);
+        $this->expectException(ProphecyException::class);
         $this->expectExceptionMessage('Active handler does not support HTTP processing.');
 
         try {
@@ -96,7 +96,7 @@ final class ApplicationLifecycleTest extends TestCase
 
         $application = new Application($container);
 
-        $this->expectException(RuntimeException::class);
+        $this->expectException(ProphecyException::class);
         $this->expectExceptionMessage('Active handler does not support HTTP emission.');
 
         try {

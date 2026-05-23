@@ -17,11 +17,11 @@ use Maduser\Argon\Prophecy\Application\ErrorHandlerManager;
 use Maduser\Argon\Prophecy\Contracts\ApplicationInterface;
 use Maduser\Argon\Prophecy\Contracts\ErrorHandling\BootstrapErrorHandlerInterface;
 use Maduser\Argon\Prophecy\ErrorHandling\BootstrapErrorHandler;
+use Maduser\Argon\Prophecy\Exceptions\ProphecyException;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
 use Psr\Log\LoggerInterface;
 use ReflectionException;
-use RuntimeException;
 use Throwable;
 
 final class Application implements ApplicationInterface
@@ -115,7 +115,7 @@ final class Application implements ApplicationInterface
         $handler = $this->bootstrap();
 
         if (!$handler instanceof HttpKernelInterface) {
-            throw new RuntimeException('Active handler does not support HTTP processing.');
+            throw ProphecyException::unsupportedHttpProcessing();
         }
 
         try {
@@ -146,7 +146,7 @@ final class Application implements ApplicationInterface
         $handler = $this->bootstrap();
 
         if (!$handler instanceof HttpKernelInterface) {
-            throw new RuntimeException('Active handler does not support HTTP emission.');
+            throw ProphecyException::unsupportedHttpEmission();
         }
 
         $handler->emit($response);
@@ -204,14 +204,14 @@ final class Application implements ApplicationInterface
             $cwd = getcwd();
 
             if ($cwd === false) {
-                throw new RuntimeException('Unable to determine working directory from current environment.');
+                throw ProphecyException::unableToDetermineWorkingDirectory();
             }
 
             return $cwd;
         }
 
         if (!isset($_SERVER['SCRIPT_FILENAME'])) {
-            throw new RuntimeException('Unable to determine working directory; SCRIPT_FILENAME is not defined.');
+            throw ProphecyException::scriptFilenameMissing();
         }
 
         return dirname($_SERVER['SCRIPT_FILENAME']);

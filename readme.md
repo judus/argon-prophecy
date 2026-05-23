@@ -221,6 +221,12 @@ $container->register(LoggerServiceProvider::class);
 
 Logging is optional. You can also bind your own PSR-3 logger directly.
 
+## Exceptions
+
+Product-level runtime and configuration failures throw
+`Maduser\Argon\Prophecy\Exceptions\ProphecyException`. Lower-level container and
+reflection failures keep their original exception types.
+
 ## Error Handling
 
 Prophecy registers a bootstrap error handler while the application is starting.

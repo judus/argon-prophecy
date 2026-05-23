@@ -8,6 +8,7 @@ use GuzzleHttp\Psr7\Response;
 use GuzzleHttp\Psr7\ServerRequest;
 use Maduser\Argon\Container\ArgonContainer;
 use Maduser\Argon\Prophecy\ErrorHandling\BootstrapErrorHandlerMode;
+use Maduser\Argon\Prophecy\Exceptions\ProphecyException;
 use Maduser\Argon\Support\Contracts\ErrorHandlerInterface;
 use PHPUnit\Framework\TestCase;
 use Psr\Http\Message\ServerRequestInterface;
@@ -80,7 +81,7 @@ final class ErrorHandlerManagerTest extends TestCase
         $container = new ArgonContainer();
         $container->set(ErrorHandlerInterface::class, static fn() => new stdClass())->shared();
 
-        $this->expectException(RuntimeException::class);
+        $this->expectException(ProphecyException::class);
         $this->expectExceptionMessage('Runtime error handler binding');
         $this->expectExceptionMessage(ErrorHandlerInterface::class);
 
@@ -94,13 +95,13 @@ final class ErrorHandlerManagerTest extends TestCase
             throw new RuntimeException('container failure');
         })->shared();
 
-        $this->expectException(RuntimeException::class);
+        $this->expectException(ProphecyException::class);
         $this->expectExceptionMessage('Runtime error handler is registered but could not be resolved.');
 
         try {
             (new ErrorHandlerManager(new RecordingBootstrapErrorHandler()))
                 ->registerRuntimeHandlerIfAvailable($container);
-        } catch (RuntimeException $exception) {
+        } catch (ProphecyException $exception) {
             self::assertInstanceOf(RuntimeException::class, $exception->getPrevious());
             throw $exception;
         }
@@ -126,13 +127,13 @@ final class ErrorHandlerManagerTest extends TestCase
             }
         )->shared();
 
-        $this->expectException(RuntimeException::class);
+        $this->expectException(ProphecyException::class);
         $this->expectExceptionMessage('Runtime error handler is registered but failed during registration.');
 
         try {
             (new ErrorHandlerManager(new RecordingBootstrapErrorHandler()))
                 ->registerRuntimeHandlerIfAvailable($container);
-        } catch (RuntimeException $exception) {
+        } catch (ProphecyException $exception) {
             self::assertInstanceOf(RuntimeException::class, $exception->getPrevious());
             throw $exception;
         }

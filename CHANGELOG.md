@@ -2,6 +2,7 @@
 
 ## Unreleased
 
+- Made bootstrap debug logging secret-safe by replacing raw container dumps with metadata counts.
 - Added `ProphecyException` as the stable exception type for Prophecy runtime and configuration failures.
 - Made container compilation flag parsing strict so invalid non-empty values fail during boot.
 - Made explicit runtime error-handler resolution and registration failures fail during bootstrap instead of falling back silently.

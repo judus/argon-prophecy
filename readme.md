@@ -221,6 +221,9 @@ $container->register(LoggerServiceProvider::class);
 
 Logging is optional. You can also bind your own PSR-3 logger directly.
 
+Prophecy logs lifecycle events and safe container metadata only. It does not log
+raw container parameters or binding definitions by default.
+
 ## Exceptions
 
 Product-level runtime and configuration failures throw

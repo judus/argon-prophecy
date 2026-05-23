@@ -63,18 +63,20 @@ trait ApplicationLogging
         }
 
         $info = [
-            'parameters'       => $container->getParameters()->all(),
-            'bindings'         => $container->getBindings(),
-            'preInterceptors'  => $container->getPreInterceptors(),
-            'postInterceptors' => $container->getPostInterceptors(),
+            'class' => $container::class,
+            'stage' => $stage,
+            'parameterCount' => count($container->getParameters()->all()),
+            'bindingCount' => count($container->getBindings()),
+            'preInterceptorCount' => count($container->getPreInterceptors()),
+            'postInterceptorCount' => count($container->getPostInterceptors()),
         ];
 
         if ($container::class !== ArgonContainer::class && method_exists($container, 'getServiceMap')) {
             $info['compiled'] = true;
             try {
-                $info['serviceMap'] = (array) $container->getServiceMap();
+                $info['serviceMapCount'] = count((array) $container->getServiceMap());
             } catch (Throwable) {
-                $info['serviceMap'] = ['error' => 'Could not fetch service map'];
+                $info['serviceMapAvailable'] = false;
             }
         } else {
             $info['compiled'] = false;

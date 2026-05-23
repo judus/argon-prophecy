@@ -15,6 +15,8 @@ use Psr\Http\Message\ServerRequestInterface;
 use RuntimeException;
 use stdClass;
 use Throwable;
+use Tests\Unit\Application\Mocks\EmitFailingHttpKernel;
+use Tests\Unit\Application\Mocks\MinimalBootstrapErrorHandler;
 use Tests\Unit\Application\Mocks\RecordingAppHandler;
 use Tests\Unit\Application\Mocks\RecordingBootstrapErrorHandler;
 use Tests\Unit\Application\Mocks\RecordingCliKernel;
@@ -41,6 +43,15 @@ final class ErrorHandlerManagerTest extends TestCase
         (new ErrorHandlerManager($bootstrapHandler))->configureBootstrapModeFor(new RecordingAppHandler());
 
         self::assertSame(BootstrapErrorHandlerMode::HTTP, $bootstrapHandler->outputMode);
+    }
+
+    public function testBootstrapModeConfigurationAllowsHandlersWithoutOutputModeSupport(): void
+    {
+        $bootstrapHandler = new MinimalBootstrapErrorHandler();
+
+        (new ErrorHandlerManager($bootstrapHandler))->configureBootstrapModeFor(new RecordingCliKernel());
+
+        self::assertNull($bootstrapHandler->lastException);
     }
 
     public function testHttpThrowableFallsBackToBootstrapHandlerWhenRuntimeHandlerIsMissing(): void
@@ -74,6 +85,44 @@ final class ErrorHandlerManagerTest extends TestCase
         self::assertSame($throwable, $runtimeHandler->lastException);
         self::assertSame($request, $runtimeHandler->lastRequest);
         self::assertNull($bootstrapHandler->lastException);
+    }
+
+    public function testHttpThrowableFallsBackWhenRuntimeHandlerHasNoRequest(): void
+    {
+        $throwable = new RuntimeException('boom');
+        $runtimeHandler = new RecordingErrorHandler(new Response(418));
+        $bootstrapHandler = new RecordingBootstrapErrorHandler();
+        $container = new ArgonContainer();
+        $container->set(ErrorHandlerInterface::class, static fn() => $runtimeHandler)->shared();
+
+        $manager = new ErrorHandlerManager($bootstrapHandler);
+        $manager->registerRuntimeHandlerIfAvailable($container);
+
+        self::assertNull($manager->handleHttpThrowable($throwable, null, $container));
+        self::assertNull($runtimeHandler->lastException);
+        self::assertSame($throwable, $bootstrapHandler->lastException);
+    }
+
+    public function testHttpThrowableFallsBackWhenRequestResolutionFails(): void
+    {
+        $throwable = new RuntimeException('boom');
+        $runtimeHandler = new RecordingErrorHandler(new Response(418));
+        $bootstrapHandler = new RecordingBootstrapErrorHandler();
+        $container = new ArgonContainer();
+        $container->set(ErrorHandlerInterface::class, static fn() => $runtimeHandler)->shared();
+        $container->set(
+            ServerRequestInterface::class,
+            static function (): ServerRequestInterface {
+                throw new RuntimeException('request failure');
+            }
+        )->shared();
+
+        $manager = new ErrorHandlerManager($bootstrapHandler);
+        $manager->registerRuntimeHandlerIfAvailable($container);
+
+        self::assertNull($manager->handleHttpThrowable($throwable, null, $container));
+        self::assertNull($runtimeHandler->lastException);
+        self::assertSame($throwable, $bootstrapHandler->lastException);
     }
 
     public function testExplicitRuntimeHandlerBindingMustResolveToRuntimeHandler(): void
@@ -190,6 +239,18 @@ final class ErrorHandlerManagerTest extends TestCase
 
         self::assertSame($response, $kernel->emittedResponse);
         self::assertSame(1, $kernel->terminateCode);
+    }
+
+    public function testEmitResponseDelegatesEmitFailuresToBootstrapHandler(): void
+    {
+        $kernel = new EmitFailingHttpKernel();
+        $bootstrapHandler = new RecordingBootstrapErrorHandler();
+
+        (new ErrorHandlerManager($bootstrapHandler))->emitResponse($kernel, new Response(500));
+
+        self::assertInstanceOf(RuntimeException::class, $bootstrapHandler->lastException);
+        self::assertSame('emit failure', $bootstrapHandler->lastException->getMessage());
+        self::assertFalse($kernel->terminateCalled);
     }
 
     public function testCliThrowableDelegatesToBootstrapHandler(): void

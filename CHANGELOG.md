@@ -2,6 +2,7 @@
 
 ## Unreleased
 
+- Added coverage for `ErrorHandlerManager` fallback edge cases around request resolution and response emission.
 - Added coverage for HTTP fallback paths when runtime error handling cannot produce a response.
 - Defined direct `Application::reset()` as idempotent terminal teardown and guarded post-reset calls.
 - Made bootstrap debug logging secret-safe by replacing raw container dumps with metadata counts.

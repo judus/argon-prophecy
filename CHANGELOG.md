@@ -2,6 +2,7 @@
 
 ## Unreleased
 
+- Expanded Prophecy runtime tests around handler resolution, container setup, lifecycle dispatch, error-manager fallbacks, and tag helpers.
 - Tightened the public README around Prophecy as a bootstrap/runtime shell rather than an application framework.
 - Linked framework-composition and application-integration examples from the README to wiki how-to pages.
 - Fixed the local quality gate so `composer check` runs tests, Psalm, and PHPCS without requiring a coverage driver or mutating files.

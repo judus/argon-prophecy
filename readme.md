@@ -79,6 +79,10 @@ Prophecy runs whatever handler you bind. Register one of these container ids:
 - `Maduser\Argon\Contracts\Handler\HttpKernelInterface`
 - `Maduser\Argon\Contracts\Handler\CliKernelInterface`
 
+Register exactly one lifecycle handler. If both HTTP and CLI handlers are bound,
+also bind `AppHandlerInterface` explicitly so Prophecy knows which handler owns
+the current entry point. Invalid handler bindings fail during bootstrap.
+
 `AppHandlerInterface` is the common lifecycle:
 
 ```php

@@ -14,6 +14,7 @@ use Maduser\Argon\Support\Contracts\ErrorHandlerInterface;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
 use Psr\Log\LoggerInterface;
+use RuntimeException;
 use Throwable;
 
 /**
@@ -54,7 +55,20 @@ final class ErrorHandlerManager
                 'exception' => $exception,
             ]);
 
-            return;
+            throw new RuntimeException(
+                'Runtime error handler is registered but could not be resolved.',
+                0,
+                $exception
+            );
+        }
+
+        if (!$handler instanceof ErrorHandlerInterface) {
+            throw new RuntimeException(sprintf(
+                'Runtime error handler binding %s must resolve to %s; got %s.',
+                ErrorHandlerInterface::class,
+                ErrorHandlerInterface::class,
+                $handler::class
+            ));
         }
 
         try {
@@ -67,6 +81,12 @@ final class ErrorHandlerManager
             $this->logger?->critical('Runtime error handler failed during registration.', [
                 'exception' => $exception,
             ]);
+
+            throw new RuntimeException(
+                'Runtime error handler is registered but failed during registration.',
+                0,
+                $exception
+            );
         }
     }
 

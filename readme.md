@@ -229,7 +229,9 @@ Once the container is available, it will use a bound
 exceptions when one is registered.
 
 If no runtime error handler is bound, Prophecy falls back to the bootstrap error
-handler.
+handler. If a runtime error handler is bound but cannot be resolved or
+registered, Prophecy treats that as an application configuration error and fails
+during bootstrap.
 
 ## Container Compilation
 

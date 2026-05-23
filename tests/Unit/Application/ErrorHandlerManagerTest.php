@@ -12,6 +12,8 @@ use Maduser\Argon\Support\Contracts\ErrorHandlerInterface;
 use PHPUnit\Framework\TestCase;
 use Psr\Http\Message\ServerRequestInterface;
 use RuntimeException;
+use stdClass;
+use Throwable;
 use Tests\Unit\Application\Mocks\RecordingAppHandler;
 use Tests\Unit\Application\Mocks\RecordingBootstrapErrorHandler;
 use Tests\Unit\Application\Mocks\RecordingCliKernel;
@@ -45,10 +47,11 @@ final class ErrorHandlerManagerTest extends TestCase
         $throwable = new RuntimeException('boom');
         $bootstrapHandler = new RecordingBootstrapErrorHandler();
         $manager = new ErrorHandlerManager($bootstrapHandler);
+        $container = new ArgonContainer();
 
-        self::assertNull(
-            $manager->handleHttpThrowable($throwable, new ServerRequest('GET', '/'), new ArgonContainer())
-        );
+        $manager->registerRuntimeHandlerIfAvailable($container);
+
+        self::assertNull($manager->handleHttpThrowable($throwable, new ServerRequest('GET', '/'), $container));
         self::assertSame($throwable, $bootstrapHandler->lastException);
     }
 
@@ -70,6 +73,69 @@ final class ErrorHandlerManagerTest extends TestCase
         self::assertSame($throwable, $runtimeHandler->lastException);
         self::assertSame($request, $runtimeHandler->lastRequest);
         self::assertNull($bootstrapHandler->lastException);
+    }
+
+    public function testExplicitRuntimeHandlerBindingMustResolveToRuntimeHandler(): void
+    {
+        $container = new ArgonContainer();
+        $container->set(ErrorHandlerInterface::class, static fn() => new stdClass())->shared();
+
+        $this->expectException(RuntimeException::class);
+        $this->expectExceptionMessage('Runtime error handler binding');
+        $this->expectExceptionMessage(ErrorHandlerInterface::class);
+
+        (new ErrorHandlerManager(new RecordingBootstrapErrorHandler()))->registerRuntimeHandlerIfAvailable($container);
+    }
+
+    public function testExplicitRuntimeHandlerResolutionFailureIsMisconfiguration(): void
+    {
+        $container = new ArgonContainer();
+        $container->set(ErrorHandlerInterface::class, static function (): object {
+            throw new RuntimeException('container failure');
+        })->shared();
+
+        $this->expectException(RuntimeException::class);
+        $this->expectExceptionMessage('Runtime error handler is registered but could not be resolved.');
+
+        try {
+            (new ErrorHandlerManager(new RecordingBootstrapErrorHandler()))
+                ->registerRuntimeHandlerIfAvailable($container);
+        } catch (RuntimeException $exception) {
+            self::assertInstanceOf(RuntimeException::class, $exception->getPrevious());
+            throw $exception;
+        }
+    }
+
+    public function testExplicitRuntimeHandlerRegistrationFailureIsMisconfiguration(): void
+    {
+        $container = new ArgonContainer();
+        $container->set(
+            ErrorHandlerInterface::class,
+            static fn() => new class implements ErrorHandlerInterface {
+                #[\Override]
+                public function register(): void
+                {
+                    throw new RuntimeException('registration failure');
+                }
+
+                #[\Override]
+                public function handle(Throwable $e, ServerRequestInterface $request): Response
+                {
+                    return new Response();
+                }
+            }
+        )->shared();
+
+        $this->expectException(RuntimeException::class);
+        $this->expectExceptionMessage('Runtime error handler is registered but failed during registration.');
+
+        try {
+            (new ErrorHandlerManager(new RecordingBootstrapErrorHandler()))
+                ->registerRuntimeHandlerIfAvailable($container);
+        } catch (RuntimeException $exception) {
+            self::assertInstanceOf(RuntimeException::class, $exception->getPrevious());
+            throw $exception;
+        }
     }
 
     public function testHttpThrowableFallsBackWhenRuntimeHandlerFails(): void

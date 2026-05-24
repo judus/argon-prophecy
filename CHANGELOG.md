@@ -1,6 +1,8 @@
 # Changelog
 
-## Unreleased
+## [Unreleased]
+
+## [1.0.2] - 2026-05-24
 
 - Removed the unused Twig development dependency so Prophecy stays view-library agnostic.
 - Preserved valid HTTP exception status codes in bootstrap fallback responses.

@@ -2,6 +2,7 @@
 
 ## Unreleased
 
+- Removed the unused Twig development dependency so Prophecy stays view-library agnostic.
 - Preserved valid HTTP exception status codes in bootstrap fallback responses.
 - Added coverage for `BootstrapErrorHandler` defensive registration, stream, and exception-formatting branches.
 - Added coverage for compiled-container debug logging metadata and unavailable service-map handling.
